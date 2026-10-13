@@ -1,0 +1,51 @@
+# OS and editors
+.DS_Store
+.idea/
+*.iml
+.vscode/
+.history/
+
+# Node and build output
+node_modules/
+dist/
+coverage/
+*.tgz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+tsconfig.tsbuildinfo
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Android
+**/android/.gradle/
+**/android/.kotlin/
+**/android/.cxx/
+**/android/build/
+**/android/local.properties
+**/android/captures/
+*.jks
+*.keystore
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+**/xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# App configuration and secrets: never commit
+google-services.json
+GoogleService-Info.plist
+*.p8
+*.p12
+.env
+.env.*
