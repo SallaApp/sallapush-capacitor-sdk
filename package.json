@@ -45,10 +45,11 @@
     }
   },
   "scripts": {
+    "example": "yarn workspace @salla.sa/sallapush-capacitor-example",
     "clean": "del-cli dist",
     "build": "yarn clean && tsc -p tsconfig.build.json && rollup -c rollup.config.mjs",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && yarn workspace @salla.sa/sallapush-capacitor-example typecheck",
     "test": "jest"
   },
   "peerDependencies": {
@@ -77,6 +78,9 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2"
   },
+  "workspaces": [
+    "example-app"
+  ],
   "packageManager": "yarn@4.11.0",
   "prettier": {
     "quoteProps": "consistent",

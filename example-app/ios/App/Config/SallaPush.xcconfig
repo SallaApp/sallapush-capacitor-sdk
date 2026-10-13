@@ -1,0 +1,16 @@
+// The example's SallaPush settings, the project's base configuration. Set your own values in SallaPush.local.xcconfig,
+// which git ignores.
+
+// The SallaPush app id for iOS. Empty: SallaPush doesn't start at launch.
+SALLAPUSH_APP_ID =
+
+// The push-service URL. "/$()/" keeps xcconfig from reading "//" as a comment.
+SALLAPUSH_API_BASE_URL = https:/$()/api.salla.dev/notifications/v1/sallapush
+
+// The app's bundle id. The SallaPush team sets up the app id for one bundle id.
+SALLAPUSH_EXAMPLE_BUNDLE_ID = sa.salla.sallapush.example
+
+// The App Group the app and its Notification Service Extension share. Empty: none.
+SALLAPUSH_APP_GROUP =
+
+#include? "SallaPush.local.xcconfig"
