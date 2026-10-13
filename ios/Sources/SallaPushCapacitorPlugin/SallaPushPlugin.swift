@@ -13,7 +13,7 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
     private let native: NativeSallaPush = LiveNativeSallaPush()
 
     override public func load() {
-        SallaPushCapacitor.shared.pluginLoaded()
+        SallaPushCapacitor.shared.pluginLoaded(pluginConfigIsEmpty: getConfig().isEmpty())
     }
 
     @objc func getSdkVersion(_ call: CAPPluginCall) {
