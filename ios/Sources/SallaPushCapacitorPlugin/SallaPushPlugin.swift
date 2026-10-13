@@ -15,7 +15,22 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setConsentRequired", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "setConsentGiven", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "login", returnType: CAPPluginReturnNone),
-        CAPPluginMethod(name: "logout", returnType: CAPPluginReturnNone)
+        CAPPluginMethod(name: "logout", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getExternalId", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isLoggedIn", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "addTag", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "addTags", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeTag", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeTags", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "getTags", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setLanguage", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getPushSubscriptionId", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPushSubscriptionToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPushSubscriptionOptedIn", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "optIn", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "optOut", returnType: CAPPluginReturnNone)
     ]
 
     /// The method logic. load() creates it over the live SDK; SallaPushPluginTests set it over FakeNativeSallaPush.
@@ -70,6 +85,78 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func logout(_ call: CAPPluginCall) {
         onMain { self.logic?.logout() }
+    }
+}
+
+// MARK: - User
+
+extension SallaPushPlugin {
+    @objc func getExternalId(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.externalId) }
+    }
+
+    @objc func isLoggedIn(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.isLoggedIn ?? false) }
+    }
+
+    @objc func addTag(_ call: CAPPluginCall) {
+        guard let key = call.getString("key"), let value = call.getString("value") else { return }
+        onMain { self.logic?.addTag(key: key, value: value) }
+    }
+
+    /// The tags from JavaScript, entries unchecked: native skips and logs the ones that aren't strings.
+    @objc func addTags(_ call: CAPPluginCall) {
+        guard let tags = call.getObject("tags") else { return }
+        let entries: [AnyHashable: Any] = tags
+        onMain { self.logic?.addTags(entries) }
+    }
+
+    @objc func removeTag(_ call: CAPPluginCall) {
+        guard let key = call.getString("key") else { return }
+        onMain { self.logic?.removeTag(key) }
+    }
+
+    /// The keys from JavaScript, unchecked: native skips and logs the ones that aren't strings.
+    @objc func removeTags(_ call: CAPPluginCall) {
+        guard let keys = call.getArray("keys") else { return }
+        let items: [Any] = keys
+        onMain { self.logic?.removeTags(items) }
+    }
+
+    @objc func getTags(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.tags ?? [:]) }
+    }
+
+    /// Null, not a missing option, means the device language.
+    @objc func setLanguage(_ call: CAPPluginCall) {
+        let language = call.getValue("language")
+        guard language is String || language is NSNull else { return }
+        let name = language as? String
+        onMain { self.logic?.setLanguage(name) }
+    }
+}
+
+// MARK: - Push subscription
+
+extension SallaPushPlugin {
+    @objc func getPushSubscriptionId(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionId) }
+    }
+
+    @objc func getPushSubscriptionToken(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionToken) }
+    }
+
+    @objc func getPushSubscriptionOptedIn(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionOptedIn ?? false) }
+    }
+
+    @objc func optIn(_ call: CAPPluginCall) {
+        onMain { self.logic?.optIn() }
+    }
+
+    @objc func optOut(_ call: CAPPluginCall) {
+        onMain { self.logic?.optOut() }
     }
 }
 

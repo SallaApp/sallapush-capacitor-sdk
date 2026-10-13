@@ -89,6 +89,70 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     seams.native.logout()
   }
 
+  @PluginMethod
+  fun getExternalId(call: PluginCall) = call.resolveWith { seams.native.externalId }
+
+  @PluginMethod
+  fun isLoggedIn(call: PluginCall) = call.resolveWith { seams.native.isLoggedIn }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun addTag(call: PluginCall) {
+    val key = call.getString("key") ?: return
+    val value = call.getString("value") ?: return
+    seams.native.addTag(key, value)
+  }
+
+  // The entries from JavaScript go to native unchecked: native skips and logs the ones that aren't strings.
+  @Suppress("UNCHECKED_CAST")
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun addTags(call: PluginCall) {
+    val tags = call.getObject("tags") ?: return
+    seams.native.addTags(Conversions.entries(tags) as Map<String, String>)
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun removeTag(call: PluginCall) {
+    val key = call.getString("key") ?: return
+    seams.native.removeTag(key)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun removeTags(call: PluginCall) {
+    val keys = call.getArray("keys") ?: return
+    seams.native.removeTags(Conversions.items(keys) as Collection<String>)
+  }
+
+  @PluginMethod
+  fun getTags(call: PluginCall) = call.resolveWith { JSONObject(seams.native.tags) }
+
+  /** JSON null, not a missing option, means the device language. */
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun setLanguage(call: PluginCall) {
+    val language = call.data.opt("language")
+    if (language != JSONObject.NULL && language !is String) return
+    seams.native.setLanguage(language as? String)
+  }
+
+  @PluginMethod
+  fun getPushSubscriptionId(call: PluginCall) = call.resolveWith { seams.native.pushSubscriptionId }
+
+  @PluginMethod
+  fun getPushSubscriptionToken(call: PluginCall) = call.resolveWith { seams.native.pushSubscriptionToken }
+
+  @PluginMethod
+  fun getPushSubscriptionOptedIn(call: PluginCall) = call.resolveWith { seams.native.pushSubscriptionOptedIn }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun optIn(call: PluginCall) {
+    seams.native.optIn()
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun optOut(call: PluginCall) {
+    seams.native.optOut()
+  }
+
   /** The application context, which native keeps; the bridge's context is the activity. */
   private fun applicationContext(): Context = seams.context ?: context.applicationContext
 

@@ -3,6 +3,7 @@ package sa.salla.sallapush.capacitor
 import android.content.Context
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
+import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginResult
@@ -395,6 +396,78 @@ class SallaPushPluginTest {
       native.calls
     )
     assertTrue(calls.all { it.resolved.isEmpty() && it.rejected.isEmpty() })
+  }
+
+  // User and push subscription
+
+  @Test
+  fun resolvesTheUserAndThePushSubscriptionAtCallTime() {
+    val plugin = plugin()
+    assertNull(resolved { plugin.getExternalId(it) })
+    assertEquals(false, resolved { plugin.isLoggedIn(it) })
+    assertEquals("{}", resolved { plugin.getTags(it) }.toString())
+    assertNull(resolved { plugin.getPushSubscriptionId(it) })
+    assertNull(resolved { plugin.getPushSubscriptionToken(it) })
+    assertEquals(false, resolved { plugin.getPushSubscriptionOptedIn(it) })
+
+    native.externalId = "customer-7"
+    native.isLoggedIn = true
+    native.tags = mapOf("level" to "gold", "city" to "riyadh")
+    native.pushSubscriptionId = "3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40"
+    native.pushSubscriptionToken = "fcm-token"
+    native.pushSubscriptionOptedIn = true
+
+    assertEquals("customer-7", resolved { plugin.getExternalId(it) })
+    assertEquals(true, resolved { plugin.isLoggedIn(it) })
+    val tags = resolved { plugin.getTags(it) } as JSONObject
+    assertEquals(mapOf("level" to "gold", "city" to "riyadh"), Conversions.entries(tags))
+    assertEquals("3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40", resolved { plugin.getPushSubscriptionId(it) })
+    assertEquals("fcm-token", resolved { plugin.getPushSubscriptionToken(it) })
+    assertEquals(true, resolved { plugin.getPushSubscriptionOptedIn(it) })
+  }
+
+  @Test
+  fun passesTagEntriesToNativeUncheckedForItsPerEntryRule() {
+    val plugin = plugin()
+
+    plugin.addTags(call("addTags", "tags" to json("level" to "gold", "visits" to 3, "vip" to true, "note" to null)))
+    plugin.removeTags(call("removeTags", "keys" to JSArray().put("level").put(3).put(JSONObject.NULL)))
+
+    assertEquals(listOf(mapOf("level" to "gold", "visits" to 3, "vip" to true, "note" to null)), native.addedTags)
+    assertEquals(listOf(listOf("level", 3, null)), native.removedTags)
+  }
+
+  @Test
+  fun passesTagLanguageAndSubscriptionCallsUnchangedWithJsonNullAsTheDeviceLanguage() {
+    val plugin = plugin()
+
+    plugin.addTag(call("addTag", "key" to " Level ", "value" to ""))
+    plugin.removeTag(call("removeTag", "key" to " City "))
+    plugin.setLanguage(call("setLanguage", "language" to "ar"))
+    plugin.setLanguage(call("setLanguage", "language" to null))
+    plugin.optIn(call("optIn"))
+    plugin.optOut(call("optOut"))
+
+    assertEquals(
+      listOf("addTag( Level , )", "removeTag( City )", "setLanguage(ar)", "setLanguage(null)", "optIn()", "optOut()"),
+      native.calls
+    )
+  }
+
+  // The TypeScript API validates every argument first, so only another caller could send these.
+  @Test
+  fun doesNothingForAMissingOrMistypedUserOption() {
+    val plugin = plugin()
+
+    plugin.addTag(call("addTag", "key" to "level"))
+    plugin.addTag(call("addTag", "key" to "vip", "value" to true))
+    plugin.addTags(call("addTags", "tags" to "level=gold"))
+    plugin.removeTag(call("removeTag"))
+    plugin.removeTags(call("removeTags", "keys" to "level"))
+    plugin.setLanguage(call("setLanguage"))
+    plugin.setLanguage(call("setLanguage", "language" to 1))
+
+    assertTrue(native.calls.isEmpty())
   }
 
   // The TypeScript API validates every argument first, so only another caller could send these.

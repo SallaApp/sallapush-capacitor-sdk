@@ -179,6 +179,64 @@ final class SallaPushBridgeTests: XCTestCase {
         ])
     }
 
+    // MARK: - User and push subscription
+
+    func testReadsTheUserAndThePushSubscriptionAtCallTime() {
+        let bridge = makeBridge()
+        XCTAssertNil(bridge.externalId)
+        XCTAssertFalse(bridge.isLoggedIn)
+        XCTAssertEqual(bridge.tags, [:])
+        XCTAssertNil(bridge.pushSubscriptionId)
+        XCTAssertNil(bridge.pushSubscriptionToken)
+        XCTAssertFalse(bridge.pushSubscriptionOptedIn)
+
+        native.externalId = "customer-7"
+        native.isLoggedIn = true
+        native.tags = ["level": "gold"]
+        native.pushSubscriptionId = "3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40"
+        native.pushSubscriptionToken = "a1b2c3"
+        native.pushSubscriptionOptedIn = true
+
+        XCTAssertEqual(bridge.externalId, "customer-7")
+        XCTAssertTrue(bridge.isLoggedIn)
+        XCTAssertEqual(bridge.tags, ["level": "gold"])
+        XCTAssertEqual(bridge.pushSubscriptionId, "3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40")
+        XCTAssertEqual(bridge.pushSubscriptionToken, "a1b2c3")
+        XCTAssertTrue(bridge.pushSubscriptionOptedIn)
+    }
+
+    func testPassesTagEntriesUnchangedForNativesObjectiveCForms() {
+        let tags: [AnyHashable: Any] = ["level": "gold", "visits": 3, "vip": true, "note": NSNull()]
+        let keys: [Any] = ["level", 3, NSNull()]
+        let bridge = makeBridge()
+
+        bridge.addTags(tags)
+        bridge.removeTags(keys)
+
+        XCTAssertEqual(native.addedTags.map { NSDictionary(dictionary: $0) }, [NSDictionary(dictionary: tags)])
+        XCTAssertEqual(native.removedTags.map { NSArray(array: $0) }, [NSArray(array: keys)])
+    }
+
+    func testNativeHasTheObjectiveCTagFormsTheLiveBridgeSends() {
+        XCTAssertTrue(SallaPush.User.responds(to: NSSelectorFromString("addTags:")))
+        XCTAssertTrue(SallaPush.User.responds(to: NSSelectorFromString("removeTags:")))
+    }
+
+    func testPassesTagLanguageAndSubscriptionCallsUnchanged() {
+        let bridge = makeBridge()
+
+        bridge.addTag(key: " Level ", value: "")
+        bridge.removeTag(" City ")
+        bridge.setLanguage("ar")
+        bridge.setLanguage(nil)
+        bridge.optIn()
+        bridge.optOut()
+
+        XCTAssertEqual(native.calls, [
+            "addTag( Level , )", "removeTag( City )", "setLanguage(ar)", "setLanguage(nil)", "optIn()", "optOut()"
+        ])
+    }
+
     private func makeBridge(earlyInit: StaticConfig? = nil) -> SallaPushBridge {
         SallaPushBridge(native: native, console: console) { earlyInit }
     }

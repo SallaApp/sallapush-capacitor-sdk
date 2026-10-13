@@ -19,6 +19,8 @@ export const boolean: Rule = {
 
 export const record: Rule = { test: isRecord, expected: 'a plain object' };
 
+export const array: Rule = { test: Array.isArray, expected: 'an array' };
+
 export function oneOf(values: readonly string[]): Rule {
   return {
     test: (value) => typeof value === 'string' && values.includes(value),
@@ -29,6 +31,14 @@ export function oneOf(values: readonly string[]): Rule {
 export const logLevel = oneOf(Object.values(SallaPushLogLevel));
 
 export const apnsEnvironment = oneOf(Object.values(SallaPushAPNsEnvironment));
+
+/** The rule for an argument that may be null. */
+export function nullable(rule: Rule): Rule {
+  return {
+    test: (value) => value === null || rule.test(value),
+    expected: `${rule.expected} or null`,
+  };
+}
 
 /** The rule for an argument that may be left out: undefined and null pass. */
 export function optional(rule: Rule): Rule {

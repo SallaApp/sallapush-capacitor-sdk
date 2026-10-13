@@ -26,9 +26,17 @@ final class FakeNativeSallaPush: NativeSallaPush {
     private(set) var calls: [String] = []
     private(set) var initializedAppIds: [String] = []
     private(set) var configurations: [SallaPushConfiguration] = []
+    private(set) var addedTags: [[AnyHashable: Any]] = []
+    private(set) var removedTags: [[Any]] = []
     var isInitialized = false
     var appId: String?
     var sdkVersion = "1.0.2"
+    var externalId: String?
+    var isLoggedIn = false
+    var tags: [String: String] = [:]
+    var pushSubscriptionId: String?
+    var pushSubscriptionToken: String?
+    var pushSubscriptionOptedIn = false
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)
@@ -49,6 +57,36 @@ final class FakeNativeSallaPush: NativeSallaPush {
 
     func logout() {
         calls.append("logout()")
+    }
+
+    func addTag(key: String, value: String) {
+        calls.append("addTag(\(key), \(value))")
+    }
+
+    func addTags(_ tags: [AnyHashable: Any]) {
+        calls.append("addTags")
+        addedTags.append(tags)
+    }
+
+    func removeTag(_ key: String) {
+        calls.append("removeTag(\(key))")
+    }
+
+    func removeTags(_ keys: [Any]) {
+        calls.append("removeTags")
+        removedTags.append(keys)
+    }
+
+    func setLanguage(_ language: String?) {
+        calls.append("setLanguage(\(language ?? "nil"))")
+    }
+
+    func optIn() {
+        calls.append("optIn()")
+    }
+
+    func optOut() {
+        calls.append("optOut()")
     }
 }
 

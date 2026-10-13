@@ -23,6 +23,21 @@ export interface SallaPushNativePlugin {
   setConsentGiven(options: { given: boolean }): Promise<void>;
   login(options: { externalId: string; identityToken: string }): Promise<void>;
   logout(): Promise<void>;
+
+  getExternalId(): Promise<Value<string | null>>;
+  isLoggedIn(): Promise<Value<boolean>>;
+  addTag(options: { key: string; value: string }): Promise<void>;
+  addTags(options: { tags: Record<string, unknown> }): Promise<void>;
+  removeTag(options: { key: string }): Promise<void>;
+  removeTags(options: { keys: unknown[] }): Promise<void>;
+  getTags(): Promise<Value<Record<string, string>>>;
+  setLanguage(options: { language: string | null }): Promise<void>;
+
+  getPushSubscriptionId(): Promise<Value<string | null>>;
+  getPushSubscriptionToken(): Promise<Value<string | null>>;
+  getPushSubscriptionOptedIn(): Promise<Value<boolean>>;
+  optIn(): Promise<void>;
+  optOut(): Promise<void>;
 }
 
 /**

@@ -15,7 +15,11 @@ final class SallaPushPluginTests: XCTestCase {
 
         XCTAssertEqual(methods, [
             "initialize none", "isInitialized promise", "getSallaPushAppId promise", "getSdkVersion promise",
-            "setConsentRequired none", "setConsentGiven none", "login none", "logout none"
+            "setConsentRequired none", "setConsentGiven none", "login none", "logout none",
+            "getExternalId promise", "isLoggedIn promise", "addTag none", "addTags none", "removeTag none",
+            "removeTags none", "getTags promise", "setLanguage none",
+            "getPushSubscriptionId promise", "getPushSubscriptionToken promise", "getPushSubscriptionOptedIn promise",
+            "optIn none", "optOut none"
         ])
     }
 
@@ -107,6 +111,75 @@ final class SallaPushPluginTests: XCTestCase {
         XCTAssertEqual(native.calls, ["setConsentGiven(true)", "login(customer-7, token)", "setConsentGiven(false)"])
     }
 
+    // MARK: - User and push subscription
+
+    func testUserAndSubscriptionRequestsResolveTheValuesNativeReadsAtCallTime() {
+        let plugin = makePlugin()
+        XCTAssertTrue(value(of: plugin.getExternalId) is NSNull)
+        XCTAssertEqual(value(of: plugin.isLoggedIn) as? Bool, false)
+        XCTAssertEqual(value(of: plugin.getTags) as? [String: String], [:])
+        XCTAssertTrue(value(of: plugin.getPushSubscriptionId) is NSNull)
+        XCTAssertTrue(value(of: plugin.getPushSubscriptionToken) is NSNull)
+        XCTAssertEqual(value(of: plugin.getPushSubscriptionOptedIn) as? Bool, false)
+
+        native.externalId = "customer-7"
+        native.isLoggedIn = true
+        native.tags = ["level": "gold", "city": "riyadh"]
+        native.pushSubscriptionId = "3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40"
+        native.pushSubscriptionToken = "a1b2c3"
+        native.pushSubscriptionOptedIn = true
+
+        XCTAssertEqual(value(of: plugin.getExternalId) as? String, "customer-7")
+        XCTAssertEqual(value(of: plugin.isLoggedIn) as? Bool, true)
+        XCTAssertEqual(value(of: plugin.getTags) as? [String: String], ["level": "gold", "city": "riyadh"])
+        XCTAssertEqual(value(of: plugin.getPushSubscriptionId) as? String, "3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40")
+        XCTAssertEqual(value(of: plugin.getPushSubscriptionToken) as? String, "a1b2c3")
+        XCTAssertEqual(value(of: plugin.getPushSubscriptionOptedIn) as? Bool, true)
+    }
+
+    func testPassesTheTagEntriesJavaScriptSendsUncheckedToNativesObjectiveCForms() {
+        let plugin = makePlugin()
+
+        plugin.addTags(call(["tags": ["level": "gold", "visits": 3, "vip": true, "note": NSNull()]]))
+        plugin.removeTags(call(["keys": ["level", 3, NSNull()]]))
+
+        XCTAssertEqual(native.calls, ["addTags", "removeTags"])
+        XCTAssertEqual(native.addedTags.map { NSDictionary(dictionary: $0) }, [
+            ["level": "gold", "visits": 3, "vip": true, "note": NSNull()] as NSDictionary
+        ])
+        XCTAssertEqual(native.removedTags.map { NSArray(array: $0) }, [["level", 3, NSNull()] as NSArray])
+    }
+
+    func testPassesTagLanguageAndSubscriptionOptionsWithNullAsTheDeviceLanguage() {
+        let plugin = makePlugin()
+
+        plugin.addTag(call(["key": " Level ", "value": ""]))
+        plugin.removeTag(call(["key": " City "]))
+        plugin.setLanguage(call(["language": "ar"]))
+        plugin.setLanguage(call(["language": NSNull()]))
+        plugin.optIn(call())
+        plugin.optOut(call())
+
+        XCTAssertEqual(native.calls, [
+            "addTag( Level , )", "removeTag( City )", "setLanguage(ar)", "setLanguage(nil)", "optIn()", "optOut()"
+        ])
+    }
+
+    // The TypeScript API validates every argument first, so only another caller could send these.
+    func testDoesNothingForAMissingOrMistypedUserOption() {
+        let plugin = makePlugin()
+
+        plugin.addTag(call(["key": "level"]))
+        plugin.addTag(call(["key": "vip", "value": true]))
+        plugin.addTags(call(["tags": "level=gold"]))
+        plugin.removeTag(call())
+        plugin.removeTags(call(["keys": "level"]))
+        plugin.setLanguage(call())
+        plugin.setLanguage(call(["language": 1]))
+
+        XCTAssertEqual(native.calls, [])
+    }
+
     // MARK: - A plugin without logic
 
     // Capacitor loads every plugin it creates; only a test makes one that was never loaded.
@@ -117,6 +190,12 @@ final class SallaPushPluginTests: XCTestCase {
         XCTAssertEqual(value(of: plugin.isInitialized) as? Bool, false)
         XCTAssertTrue(value(of: plugin.getSallaPushAppId) is NSNull)
         XCTAssertTrue(value(of: plugin.getSdkVersion) is NSNull)
+        XCTAssertTrue(value(of: plugin.getExternalId) is NSNull)
+        XCTAssertEqual(value(of: plugin.isLoggedIn) as? Bool, false)
+        XCTAssertEqual(value(of: plugin.getTags) as? [String: String], [:])
+        XCTAssertTrue(value(of: plugin.getPushSubscriptionId) is NSNull)
+        XCTAssertTrue(value(of: plugin.getPushSubscriptionToken) is NSNull)
+        XCTAssertEqual(value(of: plugin.getPushSubscriptionOptedIn) as? Bool, false)
     }
 
     func testAPluginThatWasNeverLoadedIsReleasedCleanly() {

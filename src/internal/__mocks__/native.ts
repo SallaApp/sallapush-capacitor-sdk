@@ -27,4 +27,37 @@ export const native = {
   ),
   login: jest.fn<SallaPushNativePlugin['login']>(() => Promise.resolve()),
   logout: jest.fn<SallaPushNativePlugin['logout']>(() => Promise.resolve()),
+
+  getExternalId: jest.fn<SallaPushNativePlugin['getExternalId']>(() =>
+    Promise.resolve({ value: null })
+  ),
+  isLoggedIn: jest.fn<SallaPushNativePlugin['isLoggedIn']>(() =>
+    Promise.resolve({ value: false })
+  ),
+  addTag: jest.fn<SallaPushNativePlugin['addTag']>(() => Promise.resolve()),
+  addTags: jest.fn<SallaPushNativePlugin['addTags']>(() => Promise.resolve()),
+  removeTag: jest.fn<SallaPushNativePlugin['removeTag']>(() =>
+    Promise.resolve()
+  ),
+  removeTags: jest.fn<SallaPushNativePlugin['removeTags']>(() =>
+    Promise.resolve()
+  ),
+  getTags: jest.fn<SallaPushNativePlugin['getTags']>(() =>
+    Promise.resolve({ value: {} })
+  ),
+  setLanguage: jest.fn<SallaPushNativePlugin['setLanguage']>(() =>
+    Promise.resolve()
+  ),
+
+  getPushSubscriptionId: jest.fn<
+    SallaPushNativePlugin['getPushSubscriptionId']
+  >(() => Promise.resolve({ value: null })),
+  getPushSubscriptionToken: jest.fn<
+    SallaPushNativePlugin['getPushSubscriptionToken']
+  >(() => Promise.resolve({ value: null })),
+  getPushSubscriptionOptedIn: jest.fn<
+    SallaPushNativePlugin['getPushSubscriptionOptedIn']
+  >(() => Promise.resolve({ value: false })),
+  optIn: jest.fn<SallaPushNativePlugin['optIn']>(() => Promise.resolve()),
+  optOut: jest.fn<SallaPushNativePlugin['optOut']>(() => Promise.resolve()),
 };

@@ -11,6 +11,23 @@ protocol NativeSallaPush: AnyObject {
     func setConsentGiven(_ given: Bool)
     func login(externalId: String, identityToken: String)
     func logout()
+
+    var externalId: String? { get }
+    var isLoggedIn: Bool { get }
+    func addTag(key: String, value: String)
+    /// Native's Objective-C `addTags:`, which skips and logs the entries that aren't strings.
+    func addTags(_ tags: [AnyHashable: Any])
+    func removeTag(_ key: String)
+    /// Native's Objective-C `removeTags:`, which skips and logs the keys that aren't strings.
+    func removeTags(_ keys: [Any])
+    var tags: [String: String] { get }
+    func setLanguage(_ language: String?)
+
+    var pushSubscriptionId: String? { get }
+    var pushSubscriptionToken: String? { get }
+    var pushSubscriptionOptedIn: Bool { get }
+    func optIn()
+    func optOut()
 }
 
 final class LiveNativeSallaPush: NativeSallaPush {
@@ -38,5 +55,46 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func logout() {
         SallaPush.logout()
+    }
+
+    var externalId: String? { SallaPush.User.externalId }
+
+    var isLoggedIn: Bool { SallaPush.User.isLoggedIn }
+
+    func addTag(key: String, value: String) {
+        SallaPush.User.addTag(key: key, value: value)
+    }
+
+    // Swift can't name the Objective-C forms (`@available(swift, obsoleted: 1)`), so their selectors are sent.
+    func addTags(_ tags: [AnyHashable: Any]) {
+        _ = SallaPush.User.perform(NSSelectorFromString("addTags:"), with: tags)
+    }
+
+    func removeTag(_ key: String) {
+        SallaPush.User.removeTag(key)
+    }
+
+    func removeTags(_ keys: [Any]) {
+        _ = SallaPush.User.perform(NSSelectorFromString("removeTags:"), with: keys)
+    }
+
+    var tags: [String: String] { SallaPush.User.getTags() }
+
+    func setLanguage(_ language: String?) {
+        SallaPush.User.setLanguage(language)
+    }
+
+    var pushSubscriptionId: String? { SallaPush.User.pushSubscription.id }
+
+    var pushSubscriptionToken: String? { SallaPush.User.pushSubscription.token }
+
+    var pushSubscriptionOptedIn: Bool { SallaPush.User.pushSubscription.optedIn }
+
+    func optIn() {
+        SallaPush.User.pushSubscription.optIn()
+    }
+
+    func optOut() {
+        SallaPush.User.pushSubscription.optOut()
     }
 }

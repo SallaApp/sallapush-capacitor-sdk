@@ -1,3 +1,4 @@
+import { User } from './User';
 import { nullable, send, value } from './internal/calls';
 import { native, type ConfigSpec } from './internal/native';
 import {
@@ -34,6 +35,7 @@ export const SallaPush: {
   setConsentGiven(given: boolean): void;
   login(externalId: string, identityToken: string): void;
   logout(): void;
+  readonly User: typeof User;
 } = {
   initialize(appId, config) {
     if (
@@ -83,6 +85,7 @@ export const SallaPush: {
     }
   },
   logout: () => send('SallaPush.logout', () => native.logout()),
+  User,
 };
 
 /** The config as the native plugin takes it, with only the options that are set; null when an option is mistyped. */

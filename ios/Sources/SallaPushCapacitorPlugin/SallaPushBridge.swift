@@ -55,6 +55,52 @@ final class SallaPushBridge {
         native.logout()
     }
 
+    // MARK: - User
+
+    var externalId: String? { native.externalId }
+
+    var isLoggedIn: Bool { native.isLoggedIn }
+
+    func addTag(key: String, value: String) {
+        native.addTag(key: key, value: value)
+    }
+
+    /// The tags from JavaScript, entries unchecked: native skips and logs the ones that aren't strings.
+    func addTags(_ tags: [AnyHashable: Any]) {
+        native.addTags(tags)
+    }
+
+    func removeTag(_ key: String) {
+        native.removeTag(key)
+    }
+
+    /// The keys from JavaScript, unchecked: native skips and logs the ones that aren't strings.
+    func removeTags(_ keys: [Any]) {
+        native.removeTags(keys)
+    }
+
+    var tags: [String: String] { native.tags }
+
+    func setLanguage(_ language: String?) {
+        native.setLanguage(language)
+    }
+
+    // MARK: - Push subscription
+
+    var pushSubscriptionId: String? { native.pushSubscriptionId }
+
+    var pushSubscriptionToken: String? { native.pushSubscriptionToken }
+
+    var pushSubscriptionOptedIn: Bool { native.pushSubscriptionOptedIn }
+
+    func optIn() {
+        native.optIn()
+    }
+
+    func optOut() {
+        native.optOut()
+    }
+
     // MARK: - Console
 
     /// A second initialize with the static app id and API host changes nothing natively, its options included.
