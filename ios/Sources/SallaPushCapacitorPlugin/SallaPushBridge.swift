@@ -1,16 +1,20 @@
 import Foundation
 import SallaPush
+import UserNotifications
 
 /// The plugin's method logic. SallaPushPlugin reads each call's options and calls it on the main thread; apps don't use
 /// it.
 final class SallaPushBridge {
     private let native: NativeSallaPush
     private let console: ConsoleOutput
+    private let once: OncePerProcess
     private let earlyInit: () -> StaticConfig?
 
-    init(native: NativeSallaPush, console: ConsoleOutput, earlyInit: @escaping () -> StaticConfig?) {
+    init(native: NativeSallaPush, console: ConsoleOutput, once: OncePerProcess,
+         earlyInit: @escaping () -> StaticConfig?) {
         self.native = native
         self.console = console
+        self.once = once
         self.earlyInit = earlyInit
     }
 
@@ -99,6 +103,59 @@ final class SallaPushBridge {
 
     func optOut() {
         native.optOut()
+    }
+
+    // MARK: - Notifications
+
+    var permission: Bool { native.permission }
+
+    var canRequestPermission: Bool { native.canRequestPermission }
+
+    var permissionStatus: String { native.permissionStatus.name }
+
+    func requestPermission(fallbackToSettings: Bool, completion: @escaping (Bool) -> Void) {
+        native.requestPermission(fallbackToSettings: fallbackToSettings, completion: completion)
+    }
+
+    func registerForProvisionalAuthorization(completion: @escaping (Bool) -> Void) {
+        native.registerForProvisionalAuthorization(completion: completion)
+    }
+
+    func refreshPermission() {
+        native.refreshPermission()
+    }
+
+    func registerForRemoteNotifications() {
+        native.registerForRemoteNotifications()
+    }
+
+    /// Forwards the APNs token another SDK holds, given as hexadecimal text, as native's token data.
+    func forwardApnsToken(_ apnsToken: String) {
+        guard let deviceToken = Data(hexadecimal: apnsToken) else {
+            console.error("Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even "
+                + "length, as @capacitor-firebase/messaging's apnsTokenReceived event gives it.")
+            return
+        }
+        native.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+    }
+
+    func clearAll() {
+        native.clearAll()
+    }
+
+    func removeNotification() {
+        once.info("Notifications.removeNotification is Android only and does nothing on iOS.", to: console)
+    }
+
+    /// Whether a payload from JavaScript is SallaPush's; its null values are dropped first.
+    func isSallaPushNotification(_ payload: [String: Any]) -> Bool {
+        native.isSallaPushNotification(payload.filter { !($0.value is NSNull) })
+    }
+
+    func trackOpened() -> Bool {
+        once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
+            + "SallaPush notifications reach SallaPush through its notification-center delegate.", to: console)
+        return false
     }
 
     // MARK: - Console
@@ -207,6 +264,45 @@ extension SallaPushAPNsEnvironment {
         case "automatic": self = .automatic
         case "sandbox": self = .sandbox
         case "production": self = .production
+        default: return nil
+        }
+    }
+}
+
+extension UNAuthorizationStatus {
+    /// The status as JavaScript names it; a status newer than this SDK reads as notDetermined.
+    var name: String {
+        switch self {
+        case .notDetermined: return "notDetermined"
+        case .denied: return "denied"
+        case .authorized: return "authorized"
+        case .provisional: return "provisional"
+        case .ephemeral: return "ephemeral"
+        @unknown default: return "notDetermined"
+        }
+    }
+}
+
+extension Data {
+    /// The bytes of hexadecimal text of even length, in either case; nil for any other text.
+    init?(hexadecimal text: String) {
+        let digits = Array(text.utf8)
+        guard !digits.isEmpty, digits.count.isMultiple(of: 2) else { return nil }
+        var bytes: [UInt8] = []
+        bytes.reserveCapacity(digits.count / 2)
+        for index in stride(from: 0, to: digits.count, by: 2) {
+            guard let high = Self.hexadecimalValue(digits[index]),
+                  let low = Self.hexadecimalValue(digits[index + 1]) else { return nil }
+            bytes.append(high << 4 | low)
+        }
+        self.init(bytes)
+    }
+
+    private static func hexadecimalValue(_ digit: UInt8) -> UInt8? {
+        switch digit {
+        case UInt8(ascii: "0")...UInt8(ascii: "9"): return digit - UInt8(ascii: "0")
+        case UInt8(ascii: "a")...UInt8(ascii: "f"): return digit - UInt8(ascii: "a") + 10
+        case UInt8(ascii: "A")...UInt8(ascii: "F"): return digit - UInt8(ascii: "A") + 10
         default: return nil
         }
     }

@@ -470,6 +470,129 @@ class SallaPushPluginTest {
     assertTrue(native.calls.isEmpty())
   }
 
+  // Permission and notifications
+
+  @Test
+  fun resolvesThePermissionAtCallTime() {
+    val plugin = plugin()
+    assertEquals(false, resolved { plugin.getPermission(it) })
+    assertEquals(false, resolved { plugin.canRequestPermission(it) })
+
+    native.permission = true
+    native.canRequest = true
+
+    assertEquals(true, resolved { plugin.getPermission(it) })
+    assertEquals(true, resolved { plugin.canRequestPermission(it) })
+  }
+
+  @Test
+  fun requestsThePermissionAndResolvesNativesAnswer() {
+    native.permissionAnswer = true
+    val plugin = plugin()
+
+    assertEquals(true, resolved(json("fallbackToSettings" to true)) { plugin.requestPermission(it) })
+    assertEquals(true, resolved(json("fallbackToSettings" to false)) { plugin.requestPermission(it) })
+    assertEquals(true, resolved { plugin.requestPermission(it) })
+    assertEquals(listOf("requestPermission(true)", "requestPermission(false)", "requestPermission(false)"), native.calls)
+  }
+
+  @Test
+  fun iosOnlyCallsResolveNeutralValuesAndSayItOncePerProcess() {
+    val plugin = plugin()
+
+    repeat(2) {
+      assertNull(resolved { plugin.getPermissionStatus(it) })
+      assertEquals(false, resolved { plugin.registerForProvisionalAuthorization(it) })
+      plugin.registerForRemoteNotifications(call("registerForRemoteNotifications"))
+      plugin.forwardApnsToken(call("forwardApnsToken", "apnsToken" to "0A1BFF7C"))
+    }
+    plugin(native = native).registerForRemoteNotifications(call("registerForRemoteNotifications"))
+
+    assertTrue(native.calls.isEmpty())
+    assertEquals(
+      listOf(
+        "[SallaPush] Notifications.getPermissionStatus is iOS only and resolves null on Android.",
+        "[SallaPush] Notifications.registerForProvisionalAuthorization is iOS only and resolves false on Android.",
+        "[SallaPush] Notifications.registerForRemoteNotifications is iOS only and does nothing on Android.",
+        "[SallaPush] Notifications.forwardApnsToken is iOS only and does nothing on Android.",
+      ),
+      infos()
+    )
+  }
+
+  @Test
+  fun passesRefreshClearAllAndRemoveNotificationAndNeverSettlesThem() {
+    val plugin = plugin()
+    val calls = listOf(
+      call("refreshPermission"),
+      call("clearAll"),
+      call("removeNotification", "androidNotificationId" to 42),
+      call("removeNotification", "androidNotificationId" to Int.MIN_VALUE),
+    )
+
+    plugin.refreshPermission(calls[0])
+    plugin.clearAll(calls[1])
+    plugin.removeNotification(calls[2])
+    plugin.removeNotification(calls[3])
+
+    assertEquals(
+      listOf(
+        "refreshPermission()",
+        "clearAllNotifications()",
+        "removeNotification(42)",
+        "removeNotification(-2147483648)",
+      ),
+      native.calls
+    )
+    assertTrue(calls.all { it.resolved.isEmpty() && it.rejected.isEmpty() })
+  }
+
+  @Test
+  fun checksAPayloadAsAnFcmDataMapAndResolvesNativesAnswer() {
+    native.recognizesMessages = true
+    val custom = json("i" to "os-id", "a" to json("push_ref" to "msg_1a2b"))
+
+    val payload = json("alert" to "Hi", "custom" to custom, "badge" to 2, "none" to null)
+
+    val recognized = resolved(json("payload" to payload)) { plugin().isSallaPushNotification(it) }
+
+    assertEquals(true, recognized)
+    val data = native.checkedMessages.single()
+    assertEquals(setOf("alert", "custom", "badge"), data.keys)
+    assertEquals("Hi", data["alert"])
+    assertEquals("2", data["badge"])
+    assertEquals("msg_1a2b", JSONObject(data.getValue("custom")).getJSONObject("a").getString("push_ref"))
+  }
+
+  @Test
+  fun tracksOpenedWithTheDataAsAJsonObject() {
+    native.tracksOpened = true
+    val plugin = plugin()
+
+    val data = json("additionalData" to json("push_ref" to "msg_1a2b", "screen" to "offers"))
+    assertEquals(true, resolved(data) { plugin.trackOpened(it) })
+    assertEquals(true, resolved(json("additionalData" to null)) { plugin.trackOpened(it) })
+
+    assertEquals("msg_1a2b", native.openedData.first()?.getString("push_ref"))
+    assertEquals("offers", native.openedData.first()?.getString("screen"))
+    assertNull(native.openedData.last())
+  }
+
+  // The TypeScript API validates every argument first, so only another caller could send these.
+  @Test
+  fun usesTheDefaultsOrDoesNothingForAMissingOrMistypedNotificationOption() {
+    val plugin = plugin()
+
+    assertEquals(false, resolved(json("fallbackToSettings" to "yes")) { plugin.requestPermission(it) })
+    assertEquals(false, resolved(json("payload" to "sp_v")) { plugin.isSallaPushNotification(it) })
+    plugin.removeNotification(call("removeNotification", "androidNotificationId" to "42"))
+    plugin.removeNotification(call("removeNotification", "androidNotificationId" to 1.5))
+    plugin.removeNotification(call("removeNotification"))
+
+    assertEquals(listOf("requestPermission(false)"), native.calls)
+    assertEquals(listOf(emptyMap<String, String>()), native.checkedMessages)
+  }
+
   // The TypeScript API validates every argument first, so only another caller could send these.
   @Test
   fun doesNothingForAMissingOrMistypedOption() {
@@ -504,14 +627,16 @@ class SallaPushPluginTest {
     JSObject().apply { entries.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }
 
   /** The `value` a request resolved once, with JSON null as null. */
-  private fun resolved(invoke: (PluginCall) -> Unit): Any? {
-    val call = RecordingCall("request")
+  private fun resolved(data: JSObject = JSObject(), invoke: (PluginCall) -> Unit): Any? {
+    val call = RecordingCall("request", data)
     invoke(call)
     assertTrue(call.rejected.isEmpty())
     return call.resolved.single().opt("value").takeUnless { it == JSONObject.NULL }
   }
 
   private fun errors(): List<String> = logs(Log.ERROR)
+
+  private fun infos(): List<String> = logs(Log.INFO)
 
   private fun logs(type: Int): List<String> =
     ShadowLog.getLogsForTag("SallaPush").filter { it.type == type }.map { it.msg }

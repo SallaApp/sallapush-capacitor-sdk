@@ -28,6 +28,8 @@ final class FakeNativeSallaPush: NativeSallaPush {
     private(set) var configurations: [SallaPushConfiguration] = []
     private(set) var addedTags: [[AnyHashable: Any]] = []
     private(set) var removedTags: [[Any]] = []
+    private(set) var deviceTokens: [Data] = []
+    private(set) var checkedPayloads: [[AnyHashable: Any]] = []
     var isInitialized = false
     var appId: String?
     var sdkVersion = "1.0.2"
@@ -37,6 +39,11 @@ final class FakeNativeSallaPush: NativeSallaPush {
     var pushSubscriptionId: String?
     var pushSubscriptionToken: String?
     var pushSubscriptionOptedIn = false
+    var permission = false
+    var canRequestPermission = false
+    var permissionStatus: UNAuthorizationStatus = .notDetermined
+    var permissionAnswer = false
+    var recognizesPayloads = false
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)
@@ -87,6 +94,38 @@ final class FakeNativeSallaPush: NativeSallaPush {
 
     func optOut() {
         calls.append("optOut()")
+    }
+
+    func requestPermission(fallbackToSettings: Bool, completion: @escaping (Bool) -> Void) {
+        calls.append("requestPermission(\(fallbackToSettings))")
+        completion(permissionAnswer)
+    }
+
+    func registerForProvisionalAuthorization(completion: @escaping (Bool) -> Void) {
+        calls.append("registerForProvisionalAuthorization()")
+        completion(permissionAnswer)
+    }
+
+    func refreshPermission() {
+        calls.append("refreshPermission()")
+    }
+
+    func registerForRemoteNotifications() {
+        calls.append("registerForRemoteNotifications()")
+    }
+
+    func didRegisterForRemoteNotifications(deviceToken: Data) {
+        calls.append("didRegisterForRemoteNotifications")
+        deviceTokens.append(deviceToken)
+    }
+
+    func clearAll() {
+        calls.append("clearAll()")
+    }
+
+    func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool {
+        checkedPayloads.append(userInfo)
+        return recognizesPayloads
     }
 }
 

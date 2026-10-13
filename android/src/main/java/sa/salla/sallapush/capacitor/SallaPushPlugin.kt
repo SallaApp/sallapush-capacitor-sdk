@@ -153,6 +153,67 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     seams.native.optOut()
   }
 
+  @PluginMethod
+  fun getPermission(call: PluginCall) = call.resolveWith { seams.native.permission }
+
+  @PluginMethod
+  fun canRequestPermission(call: PluginCall) = call.resolveWith { seams.native.canRequestPermission() }
+
+  @PluginMethod
+  fun getPermissionStatus(call: PluginCall) {
+    seams.once.info("Notifications.getPermissionStatus is iOS only and resolves null on Android.")
+    call.resolveWith { null }
+  }
+
+  @PluginMethod
+  fun requestPermission(call: PluginCall) {
+    val fallbackToSettings = call.getBoolean("fallbackToSettings") ?: false
+    seams.native.requestPermission(fallbackToSettings) { granted -> call.resolveWith { granted } }
+  }
+
+  @PluginMethod
+  fun registerForProvisionalAuthorization(call: PluginCall) {
+    seams.once.info("Notifications.registerForProvisionalAuthorization is iOS only and resolves false on Android.")
+    call.resolveWith { false }
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun refreshPermission(call: PluginCall) {
+    seams.native.refreshPermission()
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun registerForRemoteNotifications(call: PluginCall) {
+    seams.once.info("Notifications.registerForRemoteNotifications is iOS only and does nothing on Android.")
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun forwardApnsToken(call: PluginCall) {
+    seams.once.info("Notifications.forwardApnsToken is iOS only and does nothing on Android.")
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun clearAll(call: PluginCall) {
+    seams.native.clearAllNotifications()
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun removeNotification(call: PluginCall) {
+    val androidNotificationId = call.getInt("androidNotificationId") ?: return
+    seams.native.removeNotification(androidNotificationId)
+  }
+
+  @PluginMethod
+  fun isSallaPushNotification(call: PluginCall) = call.resolveWith {
+    seams.native.isSallaPushMessage(Conversions.messageData(call.getObject("payload") ?: JSObject()))
+  }
+
+  /** Native reads only the push_ref of the data: a JSObject, which is a JSONObject, or null. */
+  @PluginMethod
+  fun trackOpened(call: PluginCall) = call.resolveWith {
+    seams.native.trackOpened(call.getObject("additionalData"))
+  }
+
   /** The application context, which native keeps; the bridge's context is the activity. */
   private fun applicationContext(): Context = seams.context ?: context.applicationContext
 
@@ -220,6 +281,8 @@ private inline fun PluginCall.resolveWith(value: () -> Any?) {
 
 // An option that is absent, JSON null or mistyped is left out, so native keeps its default. The optString family would
 // read an absent option as "" or false, and getBoolean would throw on a mistyped one.
-private fun JSONObject.stringOrNull(key: String): String? = if (has(key) && !isNull(key)) opt(key) as? String else null
+private fun JSONObject.stringOrNull(key: String): String? =
+  if (has(key) && !isNull(key)) opt(key) as? String else null
 
-private fun JSONObject.booleanOrNull(key: String): Boolean? = if (has(key) && !isNull(key)) opt(key) as? Boolean else null
+private fun JSONObject.booleanOrNull(key: String): Boolean? =
+  if (has(key) && !isNull(key)) opt(key) as? Boolean else null

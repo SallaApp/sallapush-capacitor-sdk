@@ -17,6 +17,16 @@ export const boolean: Rule = {
   expected: 'a boolean',
 };
 
+// Native takes a Java int: a fraction or a larger number would reach it as another notification's id.
+export const integer: Rule = {
+  test: (value) =>
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= -2147483648 &&
+    value <= 2147483647,
+  expected: 'a 32-bit integer',
+};
+
 export const record: Rule = { test: isRecord, expected: 'a plain object' };
 
 export const array: Rule = { test: Array.isArray, expected: 'an array' };

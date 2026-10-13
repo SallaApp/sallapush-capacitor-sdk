@@ -60,4 +60,39 @@ export const native = {
   >(() => Promise.resolve({ value: false })),
   optIn: jest.fn<SallaPushNativePlugin['optIn']>(() => Promise.resolve()),
   optOut: jest.fn<SallaPushNativePlugin['optOut']>(() => Promise.resolve()),
+
+  getPermission: jest.fn<SallaPushNativePlugin['getPermission']>(() =>
+    Promise.resolve({ value: false })
+  ),
+  canRequestPermission: jest.fn<SallaPushNativePlugin['canRequestPermission']>(
+    () => Promise.resolve({ value: false })
+  ),
+  getPermissionStatus: jest.fn<SallaPushNativePlugin['getPermissionStatus']>(
+    () => Promise.resolve({ value: null })
+  ),
+  requestPermission: jest.fn<SallaPushNativePlugin['requestPermission']>(() =>
+    Promise.resolve({ value: false })
+  ),
+  registerForProvisionalAuthorization: jest.fn<
+    SallaPushNativePlugin['registerForProvisionalAuthorization']
+  >(() => Promise.resolve({ value: false })),
+  refreshPermission: jest.fn<SallaPushNativePlugin['refreshPermission']>(() =>
+    Promise.resolve()
+  ),
+  registerForRemoteNotifications: jest.fn<
+    SallaPushNativePlugin['registerForRemoteNotifications']
+  >(() => Promise.resolve()),
+  forwardApnsToken: jest.fn<SallaPushNativePlugin['forwardApnsToken']>(() =>
+    Promise.resolve()
+  ),
+  clearAll: jest.fn<SallaPushNativePlugin['clearAll']>(() => Promise.resolve()),
+  removeNotification: jest.fn<SallaPushNativePlugin['removeNotification']>(() =>
+    Promise.resolve()
+  ),
+  isSallaPushNotification: jest.fn<
+    SallaPushNativePlugin['isSallaPushNotification']
+  >(() => Promise.resolve({ value: false })),
+  trackOpened: jest.fn<SallaPushNativePlugin['trackOpened']>(() =>
+    Promise.resolve({ value: false })
+  ),
 };

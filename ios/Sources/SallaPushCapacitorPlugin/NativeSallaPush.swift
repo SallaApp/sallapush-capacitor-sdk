@@ -1,5 +1,6 @@
 import Foundation
 import SallaPush
+import UserNotifications
 
 /// The native SallaPush calls the wrapper makes. Tests replace it with a fake.
 protocol NativeSallaPush: AnyObject {
@@ -28,6 +29,17 @@ protocol NativeSallaPush: AnyObject {
     var pushSubscriptionOptedIn: Bool { get }
     func optIn()
     func optOut()
+
+    var permission: Bool { get }
+    var canRequestPermission: Bool { get }
+    var permissionStatus: UNAuthorizationStatus { get }
+    func requestPermission(fallbackToSettings: Bool, completion: @escaping (Bool) -> Void)
+    func registerForProvisionalAuthorization(completion: @escaping (Bool) -> Void)
+    func refreshPermission()
+    func registerForRemoteNotifications()
+    func didRegisterForRemoteNotifications(deviceToken: Data)
+    func clearAll()
+    func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool
 }
 
 final class LiveNativeSallaPush: NativeSallaPush {
@@ -96,5 +108,39 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func optOut() {
         SallaPush.User.pushSubscription.optOut()
+    }
+
+    var permission: Bool { SallaPush.Notifications.permission }
+
+    var canRequestPermission: Bool { SallaPush.Notifications.canRequestPermission }
+
+    var permissionStatus: UNAuthorizationStatus { SallaPush.Notifications.permissionStatus }
+
+    func requestPermission(fallbackToSettings: Bool, completion: @escaping (Bool) -> Void) {
+        SallaPush.Notifications.requestPermission(fallbackToSettings: fallbackToSettings) { completion($0) }
+    }
+
+    func registerForProvisionalAuthorization(completion: @escaping (Bool) -> Void) {
+        SallaPush.Notifications.registerForProvisionalAuthorization { completion($0) }
+    }
+
+    func refreshPermission() {
+        SallaPush.Notifications.refreshPermission()
+    }
+
+    func registerForRemoteNotifications() {
+        SallaPush.Notifications.registerForRemoteNotifications()
+    }
+
+    func didRegisterForRemoteNotifications(deviceToken: Data) {
+        SallaPush.Notifications.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+    }
+
+    func clearAll() {
+        SallaPush.Notifications.clearAll()
+    }
+
+    func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool {
+        SallaPush.Notifications.isSallaPushNotification(userInfo)
     }
 }

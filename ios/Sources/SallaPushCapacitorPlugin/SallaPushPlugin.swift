@@ -30,7 +30,20 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getPushSubscriptionToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPushSubscriptionOptedIn", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "optIn", returnType: CAPPluginReturnNone),
-        CAPPluginMethod(name: "optOut", returnType: CAPPluginReturnNone)
+        CAPPluginMethod(name: "optOut", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "canRequestPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPermissionStatus", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "registerForProvisionalAuthorization", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "refreshPermission", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "registerForRemoteNotifications", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "forwardApnsToken", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "clearAll", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeNotification", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "isSallaPushNotification", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise)
     ]
 
     /// The method logic. load() creates it over the live SDK; SallaPushPluginTests set it over FakeNativeSallaPush.
@@ -39,7 +52,7 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
 
     override public func load() {
         SallaPushCapacitor.shared.pluginLoaded(pluginConfigIsEmpty: getConfig().isEmpty())
-        logic = SallaPushBridge(native: LiveNativeSallaPush(), console: Console()) {
+        logic = SallaPushBridge(native: LiveNativeSallaPush(), console: Console(), once: .shared) {
             SallaPushCapacitor.shared.earlyInit
         }
     }
@@ -157,6 +170,73 @@ extension SallaPushPlugin {
 
     @objc func optOut(_ call: CAPPluginCall) {
         onMain { self.logic?.optOut() }
+    }
+}
+
+// MARK: - Notifications
+
+extension SallaPushPlugin {
+    @objc func getPermission(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.permission ?? false) }
+    }
+
+    @objc func canRequestPermission(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.canRequestPermission ?? false) }
+    }
+
+    @objc func getPermissionStatus(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.permissionStatus) }
+    }
+
+    @objc func requestPermission(_ call: CAPPluginCall) {
+        let fallbackToSettings = call.getBool("fallbackToSettings") ?? false
+        onMain {
+            guard let logic = self.logic else {
+                call.resolve(value: false)
+                return
+            }
+            logic.requestPermission(fallbackToSettings: fallbackToSettings) { call.resolve(value: $0) }
+        }
+    }
+
+    @objc func registerForProvisionalAuthorization(_ call: CAPPluginCall) {
+        onMain {
+            guard let logic = self.logic else {
+                call.resolve(value: false)
+                return
+            }
+            logic.registerForProvisionalAuthorization { call.resolve(value: $0) }
+        }
+    }
+
+    @objc func refreshPermission(_ call: CAPPluginCall) {
+        onMain { self.logic?.refreshPermission() }
+    }
+
+    @objc func registerForRemoteNotifications(_ call: CAPPluginCall) {
+        onMain { self.logic?.registerForRemoteNotifications() }
+    }
+
+    @objc func forwardApnsToken(_ call: CAPPluginCall) {
+        guard let apnsToken = call.getString("apnsToken") else { return }
+        onMain { self.logic?.forwardApnsToken(apnsToken) }
+    }
+
+    @objc func clearAll(_ call: CAPPluginCall) {
+        onMain { self.logic?.clearAll() }
+    }
+
+    @objc func removeNotification(_ call: CAPPluginCall) {
+        onMain { self.logic?.removeNotification() }
+    }
+
+    @objc func isSallaPushNotification(_ call: CAPPluginCall) {
+        let payload: [String: Any] = call.getObject("payload") ?? [:]
+        onMain { call.resolve(value: self.logic?.isSallaPushNotification(payload) ?? false) }
+    }
+
+    @objc func trackOpened(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.trackOpened() ?? false) }
     }
 }
 

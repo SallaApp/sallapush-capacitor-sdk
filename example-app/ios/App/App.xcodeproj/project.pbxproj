@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A1ABD90378374F302F9E950 /* SallaPushPluginMethodTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD435C2D29B1EC543454D575 /* SallaPushPluginMethodTests.swift */; };
 		153ADCB855C58DC46BE144DA /* InitOptionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4D9B1199AB119600BD3520 /* InitOptionsTests.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
@@ -27,6 +28,7 @@
 		D2EE45E1A21CF1591E8F1708 /* NotificationCenterDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F073A62247AE0B65BB41FAA3 /* NotificationCenterDelegateTests.swift */; };
 		DE2646C3D2C748CC3D723598 /* Fakes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F4B65E19DA839DE59617D3 /* Fakes.swift */; };
 		DE2DD592B1A1BA51BB44528D /* native.apns in Resources */ = {isa = PBXBuildFile; fileRef = 1CF1A168E01D9032934D6CAB /* native.apns */; };
+		F4E05D8EC7A1DD1CB31B17B4 /* NotificationsBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951CCAC9969BA34679DB13D4 /* NotificationsBridgeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,9 +60,11 @@
 		55B0810BC90ED0EE10FB4F81 /* AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		62AED9587607DF0981665E02 /* SallaPushBridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SallaPushBridgeTests.swift; sourceTree = "<group>"; };
 		6AAE5333D5FBA059B26619C5 /* compat.apns */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = compat.apns; sourceTree = "<group>"; };
+		951CCAC9969BA34679DB13D4 /* NotificationsBridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsBridgeTests.swift; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		99F4B65E19DA839DE59617D3 /* Fakes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Fakes.swift; sourceTree = "<group>"; };
+		BD435C2D29B1EC543454D575 /* SallaPushPluginMethodTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SallaPushPluginMethodTests.swift; sourceTree = "<group>"; };
 		CF4D9B1199AB119600BD3520 /* InitOptionsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InitOptionsTests.swift; sourceTree = "<group>"; };
 		DDA841D3408F6108A3A938E5 /* BridgeIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BridgeIntegrationTests.swift; sourceTree = "<group>"; };
 		F073A62247AE0B65BB41FAA3 /* NotificationCenterDelegateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationCenterDelegateTests.swift; sourceTree = "<group>"; };
@@ -149,8 +153,10 @@
 				99F4B65E19DA839DE59617D3 /* Fakes.swift */,
 				CF4D9B1199AB119600BD3520 /* InitOptionsTests.swift */,
 				F073A62247AE0B65BB41FAA3 /* NotificationCenterDelegateTests.swift */,
+				951CCAC9969BA34679DB13D4 /* NotificationsBridgeTests.swift */,
 				62AED9587607DF0981665E02 /* SallaPushBridgeTests.swift */,
 				558B9124193EA9943C268D61 /* SallaPushCapacitorTests.swift */,
+				BD435C2D29B1EC543454D575 /* SallaPushPluginMethodTests.swift */,
 				181294A3E6B4195584B969CB /* SallaPushPluginTests.swift */,
 				1A22BA0C527713508BE3873C /* StaticConfigTests.swift */,
 				FA51C337554055A81BA2CB58 /* TestNotifications.swift */,
@@ -289,6 +295,8 @@
 				153ADCB855C58DC46BE144DA /* InitOptionsTests.swift in Sources */,
 				A810B3D65F10D16F7825C57A /* SallaPushBridgeTests.swift in Sources */,
 				840DF4D6A3A77F0C8A58D9FA /* SallaPushPluginTests.swift in Sources */,
+				F4E05D8EC7A1DD1CB31B17B4 /* NotificationsBridgeTests.swift in Sources */,
+				0A1ABD90378374F302F9E950 /* SallaPushPluginMethodTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

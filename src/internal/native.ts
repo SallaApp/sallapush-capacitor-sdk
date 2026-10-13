@@ -38,6 +38,25 @@ export interface SallaPushNativePlugin {
   getPushSubscriptionOptedIn(): Promise<Value<boolean>>;
   optIn(): Promise<void>;
   optOut(): Promise<void>;
+
+  getPermission(): Promise<Value<boolean>>;
+  canRequestPermission(): Promise<Value<boolean>>;
+  getPermissionStatus(): Promise<Value<string | null>>;
+  requestPermission(options: {
+    fallbackToSettings: boolean;
+  }): Promise<Value<boolean>>;
+  registerForProvisionalAuthorization(): Promise<Value<boolean>>;
+  refreshPermission(): Promise<void>;
+  registerForRemoteNotifications(): Promise<void>;
+  forwardApnsToken(options: { apnsToken: string }): Promise<void>;
+  clearAll(): Promise<void>;
+  removeNotification(options: { androidNotificationId: number }): Promise<void>;
+  isSallaPushNotification(options: {
+    payload: Record<string, unknown>;
+  }): Promise<Value<boolean>>;
+  trackOpened(options: {
+    additionalData: Record<string, unknown> | null;
+  }): Promise<Value<boolean>>;
 }
 
 /**
