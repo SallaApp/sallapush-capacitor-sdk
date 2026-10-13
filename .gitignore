@@ -49,3 +49,14 @@ GoogleService-Info.plist
 *.p12
 .env
 .env.*
+*.mobileprovision
+*.cer
+service-account*.json
+
+# Example app: build output and local configuration
+example-app/dist/
+example-app/ios/App/Config/SallaPush.local.xcconfig
+example-app/android/sallapush.properties
+# Xcode writes it at the first package resolution; the plugin's Package.swift pins SallaPush exactly, and the local
+# SallaPush override of scripts/verify.sh would rewrite a committed one.
+example-app/ios/**/swiftpm/Package.resolved
