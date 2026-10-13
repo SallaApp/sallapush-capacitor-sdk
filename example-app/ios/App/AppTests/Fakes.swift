@@ -21,15 +21,54 @@ final class RecordingConsole: ConsoleOutput {
     }
 }
 
-/// Records the native calls, and answers the getters with the values a test sets.
+/// Records the native calls in order, and answers the getters with the values a test sets.
 final class FakeNativeSallaPush: NativeSallaPush {
+    private(set) var calls: [String] = []
     private(set) var initializedAppIds: [String] = []
     private(set) var configurations: [SallaPushConfiguration] = []
+    var isInitialized = false
+    var appId: String?
     var sdkVersion = "1.0.2"
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)
         configurations.append(configuration)
+    }
+
+    func setConsentRequired(_ required: Bool) {
+        calls.append("setConsentRequired(\(required))")
+    }
+
+    func setConsentGiven(_ given: Bool) {
+        calls.append("setConsentGiven(\(given))")
+    }
+
+    func login(externalId: String, identityToken: String) {
+        calls.append("login(\(externalId), \(identityToken))")
+    }
+
+    func logout() {
+        calls.append("logout()")
+    }
+}
+
+/// A plugin call as Capacitor's bridge makes it, with its options coerced to JavaScript values; it records how the
+/// plugin settled it.
+final class RecordingPluginCall {
+    private(set) var resolved: [[String: Any]] = []
+    private(set) var rejected: [String] = []
+    private let options: [String: Any]
+
+    private(set) lazy var call: CAPPluginCall = CAPPluginCall(
+        callbackId: "test",
+        methodName: "test",
+        options: JSTypes.coerceDictionaryToJSObject(options) ?? [:],
+        success: { [weak self] result, _ in self?.resolved.append(result?.data ?? [:]) },
+        error: { [weak self] error in self?.rejected.append(error?.message ?? "") }
+    )
+
+    init(_ options: [String: Any] = [:]) {
+        self.options = options
     }
 }
 

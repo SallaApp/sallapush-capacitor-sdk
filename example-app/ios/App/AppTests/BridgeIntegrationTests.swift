@@ -4,8 +4,8 @@ import UIKit
 import UserNotifications
 import XCTest
 
-/// The take-back in the running example: Capacitor's bridge made its notification router the delegate, then the
-/// plugin's load() took the delegate back, chained to that router.
+/// The plugin in the running example: Capacitor's bridge made its notification router the delegate, then the plugin's
+/// load() took the delegate back, chained to that router, and created the plugin's logic.
 final class BridgeIntegrationTests: XCTestCase {
     func testSallaPushsDelegateIsTheCurrentOneAndChainedToTheBridgesRouter() throws {
         let bridge = try XCTUnwrap(bridgeOfTheKeyWindow(), "no CAPBridgeViewController with a bridge in the key window after 10 s")
@@ -14,6 +14,13 @@ final class BridgeIntegrationTests: XCTestCase {
         XCTAssertTrue(UNUserNotificationCenter.current().delegate === delegate)
         XCTAssertTrue(delegate.router === bridge.notificationRouter)
         XCTAssertNil(delegate.previous)
+    }
+
+    func testCapacitorLoadedThePluginWithItsLogicOverTheLiveSDK() throws {
+        let bridge = try XCTUnwrap(bridgeOfTheKeyWindow(), "no CAPBridgeViewController with a bridge in the key window after 10 s")
+        let plugin = try XCTUnwrap(bridge.plugin(withName: "SallaPush") as? SallaPushPlugin)
+
+        XCTAssertEqual(plugin.logic?.sdkVersion, SallaPush.sdkVersion)
     }
 
     /// The bridge of the key window's CAPBridgeViewController, once the scene connected: up to 10 s.

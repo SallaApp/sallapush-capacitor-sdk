@@ -101,15 +101,3 @@ private struct InfoReader {
         return environment
     }
 }
-
-extension SallaPushAPNsEnvironment {
-    /// The environment named as JavaScript and the Info.plist name it.
-    init?(name: String) {
-        switch name {
-        case "automatic": self = .automatic
-        case "sandbox": self = .sandbox
-        case "production": self = .production
-        default: return nil
-        }
-    }
-}
