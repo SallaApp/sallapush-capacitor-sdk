@@ -1,0 +1,1 @@
+# sallapush-capacitor-sdk
