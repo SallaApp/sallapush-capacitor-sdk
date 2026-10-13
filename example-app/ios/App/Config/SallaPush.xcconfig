@@ -1,5 +1,5 @@
-// The example's SallaPush settings, the project's base configuration. Set your own values in SallaPush.local.xcconfig,
-// which git ignores.
+// The example's SallaPush settings, the project's base configuration. Set your own values in
+// SallaPush.local.xcconfig, which git ignores: copy SallaPush.local.xcconfig.example.
 
 // The SallaPush app id for iOS. Empty: SallaPush doesn't start at launch.
 SALLAPUSH_APP_ID =

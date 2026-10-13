@@ -1,2 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+
+    <!--
+      Starts SallaPush from the app's com.salla.push.* meta-data in every main-process start, before Application.onCreate.
+      Higher initOrder values run first: -1 runs after FirebaseInitProvider (100) and androidx.startup's
+      InitializationProvider (0), so the default FirebaseApp and WorkManager exist when SallaPush starts.
+    -->
+    <provider
+      android:name="sa.salla.sallapush.capacitor.SallaPushInitProvider"
+      android:authorities="${applicationId}.sallapush-capacitor-init"
+      android:exported="false"
+      android:initOrder="-1" />
+
+  </application>
+
 </manifest>

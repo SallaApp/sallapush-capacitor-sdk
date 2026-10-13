@@ -1,7 +1,7 @@
 import Capacitor
 import Foundation
 
-/// The SallaPush plugin that Capacitor loads; apps use the TypeScript API.
+/// The SallaPush plugin that Capacitor loads; apps use the TypeScript API and SallaPushCapacitor.start().
 @objc(SallaPushPlugin)
 public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SallaPushPlugin"
@@ -11,6 +11,10 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private let native: NativeSallaPush = LiveNativeSallaPush()
+
+    override public func load() {
+        SallaPushCapacitor.shared.pluginLoaded()
+    }
 
     @objc func getSdkVersion(_ call: CAPPluginCall) {
         onMain { call.resolve(["value": self.native.sdkVersion]) }
