@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  js:
+    name: JavaScript, types and unit tests
+    # GitHub-hosted runners fail the organization's IP allow list; RUNS_ON is the organization's Linux runner label.
+    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install
+        run: |
+          corepack enable
+          yarn install --immutable
+      - name: Lint
+        run: yarn lint
+      - name: Types
+        run: yarn typecheck
+      - name: Unit tests
+        run: yarn test
+      - name: Build
+        run: yarn build
+
+  # The organization's required check: it fails unless every job above succeeded or was skipped.
+  testing-result:
+    name: Testing Ready
+    if: always()
+    needs: [js]
+    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: SallaApp/.CI/testing-ready@master
+        with:
+          needs: ${{ toJSON(needs) }}
