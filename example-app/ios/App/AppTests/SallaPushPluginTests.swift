@@ -48,7 +48,9 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
             "getPermission promise", "canRequestPermission promise", "getPermissionStatus promise",
             "requestPermission promise", "registerForProvisionalAuthorization promise", "refreshPermission none",
             "registerForRemoteNotifications none", "forwardApnsToken none", "clearAll none", "removeNotification none",
-            "isSallaPushNotification promise", "trackOpened promise"
+            "isSallaPushNotification promise", "trackOpened promise",
+            "setDisplayOneSignalCompatPayloads none",
+            "getLogLevel promise", "setLogLevel none"
         ])
     }
 
@@ -163,6 +165,7 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
         XCTAssertEqual(value(of: plugin.registerForProvisionalAuthorization) as? Bool, false)
         XCTAssertEqual(value(of: plugin.isSallaPushNotification) as? Bool, false)
         XCTAssertEqual(value(of: plugin.trackOpened) as? Bool, false)
+        XCTAssertTrue(value(of: plugin.getLogLevel) is NSNull)
     }
 
     func testAPluginThatWasNeverLoadedIsReleasedCleanly() {

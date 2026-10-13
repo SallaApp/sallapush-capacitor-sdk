@@ -238,6 +238,46 @@ final class SallaPushBridgeTests: XCTestCase {
         ])
     }
 
+    // MARK: - Debug and migration
+
+    func testReadsAndSetsEveryLogLevelByName() {
+        let levels: [(SallaPushLogLevel, String)] = [
+            (.off, "off"), (.error, "error"), (.warn, "warn"), (.info, "info"), (.debug, "debug"), (.verbose, "verbose")
+        ]
+        let bridge = makeBridge()
+
+        for (level, name) in levels {
+            native.logLevel = level
+            XCTAssertEqual(bridge.logLevel, name)
+        }
+        for (level, name) in levels.reversed() {
+            bridge.logLevel = name
+            XCTAssertEqual(native.logLevel, level)
+        }
+    }
+
+    func testIgnoresALogLevelNameThatIsNotALevel() {
+        native.logLevel = .error
+        let bridge = makeBridge()
+
+        bridge.logLevel = "Debug"
+        bridge.logLevel = "trace"
+
+        XCTAssertEqual(native.logLevel, .error)
+    }
+
+    func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
+        let bridge = makeBridge()
+
+        bridge.setDisplayOneSignalCompatPayloads()
+        bridge.setDisplayOneSignalCompatPayloads()
+
+        XCTAssertEqual(native.calls, [])
+        XCTAssertEqual(console.infos, [
+            "Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS."
+        ])
+    }
+
     private func makeBridge(earlyInit: StaticConfig? = nil) -> SallaPushBridge {
         SallaPushBridge(native: native, console: console, once: once) { earlyInit }
     }

@@ -593,6 +593,59 @@ class SallaPushPluginTest {
     assertEquals(listOf(emptyMap<String, String>()), native.checkedMessages)
   }
 
+  // Debug and migration
+
+  @Test
+  fun readsAndSetsEveryLogLevelByItsJavaScriptName() {
+    val levels = mapOf(
+      "off" to SallaPushLogLevel.OFF,
+      "error" to SallaPushLogLevel.ERROR,
+      "warn" to SallaPushLogLevel.WARN,
+      "info" to SallaPushLogLevel.INFO,
+      "debug" to SallaPushLogLevel.DEBUG,
+      "verbose" to SallaPushLogLevel.VERBOSE,
+    )
+    val plugin = plugin()
+
+    levels.forEach { (name, level) ->
+      native.logLevel = level
+      assertEquals(name, resolved { plugin.getLogLevel(it) })
+    }
+    levels.entries.reversed().forEach { (name, level) ->
+      val call = call("setLogLevel", "level" to name)
+      plugin.setLogLevel(call)
+      assertEquals(level, native.logLevel)
+      assertTrue(call.resolved.isEmpty() && call.rejected.isEmpty())
+    }
+  }
+
+  @Test
+  fun ignoresALogLevelNameThatIsNotALevel() {
+    native.logLevel = SallaPushLogLevel.ERROR
+    val plugin = plugin()
+
+    plugin.setLogLevel(call("setLogLevel", "level" to "Debug"))
+    plugin.setLogLevel(call("setLogLevel", "level" to "trace"))
+    plugin.setLogLevel(call("setLogLevel", "level" to 3))
+    plugin.setLogLevel(call("setLogLevel"))
+
+    assertEquals(SallaPushLogLevel.ERROR, native.logLevel)
+  }
+
+  @Test
+  fun passesTheCompatibilitySetting() {
+    val plugin = plugin()
+
+    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to false))
+    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to true))
+    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to "true"))
+
+    assertEquals(
+      listOf("setDisplayOneSignalCompatPayloads(false)", "setDisplayOneSignalCompatPayloads(true)"),
+      native.calls
+    )
+  }
+
   // The TypeScript API validates every argument first, so only another caller could send these.
   @Test
   fun doesNothingForAMissingOrMistypedOption() {

@@ -214,6 +214,22 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     seams.native.trackOpened(call.getObject("additionalData"))
   }
 
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun setDisplayOneSignalCompatPayloads(call: PluginCall) {
+    val display = call.getBoolean("display") ?: return
+    seams.native.setDisplayOneSignalCompatPayloads(display)
+  }
+
+  @PluginMethod
+  fun getLogLevel(call: PluginCall) = call.resolveWith { seams.native.logLevel.jsName }
+
+  /** The console log level by its JavaScript name; a name that isn't a level is ignored. */
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun setLogLevel(call: PluginCall) {
+    val level = call.getString("level")?.let(::logLevelNamed) ?: return
+    seams.native.logLevel = level
+  }
+
   /** The application context, which native keeps; the bridge's context is the activity. */
   private fun applicationContext(): Context = seams.context ?: context.applicationContext
 

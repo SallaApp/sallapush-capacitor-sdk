@@ -158,6 +158,21 @@ final class SallaPushBridge {
         return false
     }
 
+    // MARK: - Debug and migration
+
+    /// The console log level by its JavaScript name; a name that isn't a level is ignored.
+    var logLevel: String {
+        get { native.logLevel.name }
+        set {
+            guard let level = SallaPushLogLevel(name: newValue) else { return }
+            native.logLevel = level
+        }
+    }
+
+    func setDisplayOneSignalCompatPayloads() {
+        once.info("Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS.", to: console)
+    }
+
     // MARK: - Console
 
     /// A second initialize with the static app id and API host changes nothing natively, its options included.
@@ -253,6 +268,18 @@ extension SallaPushLogLevel {
         case "debug": self = .debug
         case "verbose": self = .verbose
         default: return nil
+        }
+    }
+
+    /// The level's JavaScript name.
+    var name: String {
+        switch self {
+        case .off: return "off"
+        case .error: return "error"
+        case .warn: return "warn"
+        case .info: return "info"
+        case .debug: return "debug"
+        case .verbose: return "verbose"
         }
     }
 }

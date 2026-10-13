@@ -1,3 +1,5 @@
+import { Debug } from './Debug';
+import { Migration } from './Migration';
 import { Notifications } from './Notifications';
 import { User } from './User';
 import { nullable, send, value } from './internal/calls';
@@ -11,7 +13,10 @@ import {
   string,
   valid,
 } from './internal/validate';
-import type { SallaPushConfig } from './definitions';
+import type {
+  SallaPushConfig,
+  SallaPushMigrationNamespace,
+} from './definitions';
 
 /**
  * SallaPush for Capacitor. Every call is safe at any time, before or after initialization. On the web SallaPush isn't
@@ -38,6 +43,8 @@ export const SallaPush: {
   logout(): void;
   readonly User: typeof User;
   readonly Notifications: typeof Notifications;
+  readonly Debug: typeof Debug;
+  readonly Migration: SallaPushMigrationNamespace;
 } = {
   initialize(appId, config) {
     if (
@@ -89,6 +96,8 @@ export const SallaPush: {
   logout: () => send('SallaPush.logout', () => native.logout()),
   User,
   Notifications,
+  Debug,
+  Migration,
 };
 
 /** The config as the native plugin takes it, with only the options that are set; null when an option is mistyped. */

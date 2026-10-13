@@ -57,6 +57,13 @@ export interface SallaPushNativePlugin {
   trackOpened(options: {
     additionalData: Record<string, unknown> | null;
   }): Promise<Value<boolean>>;
+
+  setDisplayOneSignalCompatPayloads(options: {
+    display: boolean;
+  }): Promise<void>;
+
+  getLogLevel(): Promise<Value<string>>;
+  setLogLevel(options: { level: string }): Promise<void>;
 }
 
 /**

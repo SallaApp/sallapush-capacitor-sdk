@@ -165,3 +165,43 @@ final class SallaPushPluginNotificationsTests: SallaPushPluginTestCase {
         XCTAssertEqual(native.deviceTokens, [])
     }
 }
+
+/// The migration and debug methods of the plugin, with their options as JavaScript sends them.
+final class SallaPushPluginDebugTests: SallaPushPluginTestCase {
+    func testReadsAndSetsTheLogLevelByItsJavaScriptName() {
+        let plugin = makePlugin()
+        XCTAssertEqual(value(of: plugin.getLogLevel) as? String, "warn")
+
+        native.logLevel = .verbose
+        XCTAssertEqual(value(of: plugin.getLogLevel) as? String, "verbose")
+
+        let setting = RecordingPluginCall(["level": "error"])
+        plugin.setLogLevel(setting.call)
+        XCTAssertEqual(native.logLevel, .error)
+        XCTAssertEqual(setting.resolved.count + setting.rejected.count, 0)
+    }
+
+    // The TypeScript API validates every argument first, so only another caller could send these.
+    func testIgnoresAMissingOrUnknownLogLevel() {
+        native.logLevel = .error
+        let plugin = makePlugin()
+
+        plugin.setLogLevel(call())
+        plugin.setLogLevel(call(["level": 3]))
+        plugin.setLogLevel(call(["level": "Debug"]))
+
+        XCTAssertEqual(native.logLevel, .error)
+    }
+
+    func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
+        let plugin = makePlugin()
+
+        plugin.setDisplayOneSignalCompatPayloads(call(["display": true]))
+        plugin.setDisplayOneSignalCompatPayloads(call(["display": false]))
+
+        XCTAssertEqual(native.calls, [])
+        XCTAssertEqual(console.infos, [
+            "Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS."
+        ])
+    }
+}

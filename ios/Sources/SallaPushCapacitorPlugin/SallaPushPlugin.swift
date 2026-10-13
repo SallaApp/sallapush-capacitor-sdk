@@ -43,7 +43,12 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "clearAll", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "removeNotification", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "isSallaPushNotification", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise),
+
+        CAPPluginMethod(name: "setDisplayOneSignalCompatPayloads", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getLogLevel", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone)
     ]
 
     /// The method logic. load() creates it over the live SDK; SallaPushPluginTests set it over FakeNativeSallaPush.
@@ -237,6 +242,23 @@ extension SallaPushPlugin {
 
     @objc func trackOpened(_ call: CAPPluginCall) {
         onMain { call.resolve(value: self.logic?.trackOpened() ?? false) }
+    }
+}
+
+// MARK: - Migration and debug
+
+extension SallaPushPlugin {
+    @objc func setDisplayOneSignalCompatPayloads(_ call: CAPPluginCall) {
+        onMain { self.logic?.setDisplayOneSignalCompatPayloads() }
+    }
+
+    @objc func getLogLevel(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.logLevel) }
+    }
+
+    @objc func setLogLevel(_ call: CAPPluginCall) {
+        guard let level = call.getString("level") else { return }
+        onMain { self.logic?.logLevel = level }
     }
 }
 

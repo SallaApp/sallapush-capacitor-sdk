@@ -44,6 +44,7 @@ final class FakeNativeSallaPush: NativeSallaPush {
     var permissionStatus: UNAuthorizationStatus = .notDetermined
     var permissionAnswer = false
     var recognizesPayloads = false
+    var logLevel: SallaPushLogLevel = .warn
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)

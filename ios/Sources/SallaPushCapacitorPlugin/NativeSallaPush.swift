@@ -40,6 +40,8 @@ protocol NativeSallaPush: AnyObject {
     func didRegisterForRemoteNotifications(deviceToken: Data)
     func clearAll()
     func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool
+
+    var logLevel: SallaPushLogLevel { get set }
 }
 
 final class LiveNativeSallaPush: NativeSallaPush {
@@ -142,5 +144,10 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool {
         SallaPush.Notifications.isSallaPushNotification(userInfo)
+    }
+
+    var logLevel: SallaPushLogLevel {
+        get { SallaPush.Debug.logLevel }
+        set { SallaPush.Debug.logLevel = newValue }
     }
 }
