@@ -424,6 +424,10 @@ EOF
   check "  ... in the README's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/README.md"
   check "  ... in the README's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" "$case_dir/README.md"
   check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/README.md"
+  check "  ... in docs/REFERENCE.md" ok grep -qF "SallaPush iOS $target and SallaPush Android $target" \
+    "$case_dir/docs/REFERENCE.md"
+  check "  ... in docs/TROUBLESHOOTING.md's CocoaPods message" ok grep -qF "SallaPush (= $target)" \
+    "$case_dir/docs/TROUBLESHOOTING.md"
   check "  ... with the API files of the new tags" ok cmp -s "$served/sallapush-ios-sdk/$target/API.txt" \
     "$case_dir/tool/api-parity/native-ios-API.txt"
   check "  ... and the CHANGELOG line under Changed" ok python3 -c '

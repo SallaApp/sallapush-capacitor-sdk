@@ -7,8 +7,9 @@ readonly SP_VERSION_RE='[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?'
 
 # Every pin of the native versions: <file or glob>|<regular expression whose first group is the version>|<platform>.
 # scripts/bump-native.sh rewrites each match; the pins step requires one version per platform. A plain file must hold
-# its pin; a glob checks the files that exist. The docs pin the versions they name and their links to the native docs,
-# which name the tag. The Xcode project's only version line is the requirement of the example extension's Swift package.
+# its pin; a glob checks the files that exist. The docs pin the versions they name, CocoaPods' message about the SallaPush
+# pod that they quote, and their links to the native docs, which name the tag. The Xcode project's only version line is
+# the requirement of the example extension's Swift package.
 readonly SP_PINS=(
   "Salla.saSallapushCapacitor.podspec|s\\.dependency \"SallaPush\", \"($SP_VERSION_RE)\"|ios"
   "Package.swift|url: \"https://github\\.com/SallaApp/sallapush-ios-sdk\\.git\", exact: \"($SP_VERSION_RE)\"|ios"
@@ -21,6 +22,7 @@ readonly SP_PINS=(
   "README.md|github\\.com/SallaApp/sallapush-ios-sdk/blob/($SP_VERSION_RE)/|ios"
   "docs/*.md|SallaPush iOS ($SP_VERSION_RE)|ios"
   "docs/*.md|:git => 'git@github\\.com:SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
+  "docs/*.md|SallaPush \\(= ($SP_VERSION_RE)\\)|ios"
   "docs/*.md|github\\.com/SallaApp/sallapush-ios-sdk/blob/($SP_VERSION_RE)/|ios"
   "android/build.gradle|api \"com\\.salla\\.push:sallapush:($SP_VERSION_RE)\"|android"
   "tool/api-parity/mapping.json|\"android\": \"($SP_VERSION_RE)\"|android"
