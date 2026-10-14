@@ -199,4 +199,6 @@ events: Capacitor itself would only fail a missing method at run time, with "not
   request's conversation. The comment's first line is exactly `native-verified-locally <the head commit's full id>`, and
   the rest is that run's `summary.tsv` as it is. Its first line and every row name the commit: each must be the head
   commit, without `+dirty`, which marks a run of a tree with changes. Every push needs a new comment, and a comment
-  edited after it was posted counts for nothing ([scripts/verified-label.sh](scripts/verified-label.sh)).
+  edited after it was posted counts for nothing ([scripts/verified-label.sh](scripts/verified-label.sh)). Neither the
+  label nor the comment starts a CI run: then re-run the failed jobs of the head commit's run, with **Re-run failed
+  jobs** on its page or `gh run rerun <run id> --failed`, so that `Native verified` and `Testing Ready` pass.
