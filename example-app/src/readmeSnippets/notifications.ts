@@ -18,6 +18,7 @@ let chatListener: SallaPushEventSubscription | null = null;
 
 // While a chat screen shows its messages, SallaPush doesn't show that chat's notifications.
 export function chatScreenOpened(chatId: string): void {
+  chatListener?.remove();
   chatListener = SallaPush.Notifications.addEventListener(
     'foregroundWillDisplay',
     (event) => {
