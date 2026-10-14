@@ -1,9 +1,10 @@
 # SallaPush Capacitor SDK: reference
 
 How the package works, its static configuration, every API member, events, foreground display, errors, data mapping,
-coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md).
+coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md), and
+for the full setup, the [setup guide](SETUP.md).
 
-Other docs: [Troubleshooting](TROUBLESHOOTING.md)
+Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
 
 ## Contents
 
@@ -45,11 +46,11 @@ Other docs: [Troubleshooting](TROUBLESHOOTING.md)
     WorkManager exist by then. Capacitor loads its plugins only when its `BridgeActivity` starts, never in a process
     that FCM or WorkManager starts, so the provider is the start that covers every process.
   - Without a static app id, SallaPush starts when JavaScript calls `SallaPush.initialize`
-    ([what that costs](../README.md#initializing-from-javascript)).
+    ([what that costs](SETUP.md#initializing-from-javascript)).
 - **Processes without JavaScript behave as in a native app.** An Android process that FCM starts for a message runs
   the provider, so SallaPush is initialized there: it honours the opt-out and keeps the message's events. That process
   runs no JavaScript, so no JavaScript listener and no launch identity call run there
-  ([Quick start](../README.md#at-app-start)).
+  ([Quick start](SETUP.md#at-app-start)).
 - **The bridge** is a Capacitor plugin named `SallaPush`, in Swift on iOS and Kotlin on Android. The TypeScript API
   calls its methods; the public namespaces, such as `SallaPush.User`, live in TypeScript. Capacitor runs each
   platform's plugin calls on one queue, in call order. On iOS the plugin moves each call to the main thread, in the
@@ -82,7 +83,7 @@ The app configures SallaPush with Info.plist keys on iOS and `<meta-data>` insid
 "read by this package" are read by the start-up code, and keys "read by native" by the native SDKs themselves. The
 start-up code reads its keys, except the OneSignal-format setting, only together with the app id: without
 `SallaPushAppId` or `com.salla.push.APP_ID` they do nothing, and a JavaScript `initialize` passes those options
-instead, after `setConsentRequired(true)` to require consent ([Consent](../README.md#consent)).
+instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md#consent)).
 
 | Purpose | iOS Info.plist key | Android meta-data | Read by | Default |
 |---|---|---|---|---|
@@ -161,7 +162,7 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `isInitialized(): Promise<boolean>` | `isInitialized` | Whether SallaPush is running |
 | `getAppId(): Promise<string \| null>` | `appId` | The app id SallaPush runs with |
 | `getSdkVersion(): Promise<string>` | `sdkVersion` | The native SDK's version on this platform |
-| `setConsentRequired(required: boolean): void` | `setConsentRequired` | Not saved: call it before `initialize` at every launch. With a static app id, use the static key: a later `true` is applied, with an error line ([Consent](../README.md#consent)). `false` lowers only what an earlier `true` raised. |
+| `setConsentRequired(required: boolean): void` | `setConsentRequired` | Not saved: call it before `initialize` at every launch. With a static app id, use the static key: a later `true` is applied, with an error line ([Consent](SETUP.md#consent)). `false` lowers only what an earlier `true` raised. |
 | `setConsentGiven(given: boolean): void` | `setConsentGiven` | Saved for the app. `false`, while consent is required, withdraws consent that was given: opt-out, tags deleted and unlink on the server, then idle. |
 | `login(externalId: string, identityToken: string): void` | `login(externalId:identityToken:)`; `login(externalId, identityToken)` | Links the device to the customer, after Salla checked their token. Native trims both; the id has 1 to 128 characters and the token at most 4,096, or the call is ignored (`api.invalid_argument`). The token stays in memory only. A refusal is a `'loginFailure'` event. Call it again whenever your app refreshes the token, and call `logout()` before another customer's `login`. |
 | `logout(): void` | `logout()` | Unlinks the device. Saved, and retried until the server confirms it; works offline. |
@@ -356,7 +357,7 @@ What the app gets:
 
 So register a `'foregroundWillDisplay'` listener only where the app decides per notification, such as on a chat
 screen, and remove it when leaving the screen
-([README](../README.md#foreground-notifications)). Without a listener, iOS shows the original. Keeping the original
+([Setup guide](SETUP.md#foreground-notifications)). Without a listener, iOS shows the original. Keeping the original
 while JavaScript decides needs a native API that doesn't exist yet: an asynchronous foreground decision.
 
 More rules:
@@ -401,7 +402,7 @@ More rules:
 | An unexpected exception in the Android plugin | – | The request rejects with `E_SALLAPUSH_INTERNAL`; never expected, since native never throws |
 
 Web code that must not reach these errors checks `Capacitor.isNativePlatform()` or
-`Capacitor.isPluginAvailable('SallaPush')` first ([README](../README.md#on-the-web)).
+`Capacitor.isPluginAvailable('SallaPush')` first ([Setup guide](SETUP.md#on-the-web)).
 
 ### In unit tests
 
@@ -558,9 +559,9 @@ package checks the delegate and logs which one SallaPush hands other notificatio
 - **iOS.** Its handler gets every push that isn't SallaPush's, with its `presentationOptions`; SallaPush's never reach
   its `pushNotificationReceived` or `pushNotificationActionPerformed` events. Its setup posts the APNs token and a
   registration failure from the `AppDelegate`: keep those posts after SallaPush's lines
-  ([README](../README.md#another-push-plugin)).
+  ([Setup guide](SETUP.md#another-push-plugin)).
 - **Android.** Its FCM service, at priority 0, outranks SallaPush's at −450, so the app adds the forwarding service
-  at priority 1 ([README](../README.md#another-fcm-plugin)). SallaPush's line comes first, so SallaPush's messages
+  at priority 1 ([Setup guide](SETUP.md#another-fcm-plugin)). SallaPush's line comes first, so SallaPush's messages
   never reach `pushNotificationReceived`.
 - **`unregister()`** unregisters the app from APNs on iOS, for every SDK, and on Android deletes the app's FCM token,
   which SallaPush uses too, and turns FCM's auto-init off: avoid it.
@@ -575,7 +576,7 @@ Android nothing changes.
 - **iOS.** As `@capacitor/push-notifications`, and Firebase's proxy swizzles SallaPush's delegate class and calls the
   original. It reports every notification the `AppDelegate` posts as `"didReceiveRemoteNotification"` to its
   `notificationReceived` listeners, so the app posts only those that aren't SallaPush's: SallaPush's
-  `didReceiveRemoteNotification(_:)` returns true for its own ([README](../README.md#another-push-plugin)). It never
+  `didReceiveRemoteNotification(_:)` returns true for its own ([Setup guide](SETUP.md#another-push-plugin)). It never
   calls the completion handler, so the method calls it, once. Forwarding its `apnsTokenReceived` token with
   `forwardApnsToken` is optional.
 - **Android.** As `@capacitor/push-notifications`, with the forwarding service extending its
@@ -588,7 +589,7 @@ Android nothing changes.
 
 - **iOS.** OneSignal's setup sets `ios.handleApplicationNotifications` to `false`, so Capacitor's router never becomes
   the delegate. OneSignal-compatible SallaPush notifications carry OneSignal's `custom.i`, so both SDKs see their taps
-  and foreground arrivals. Route each one once ([README](../README.md#migrating-from-onesignal)). Keep
+  and foreground arrivals. Route each one once ([Setup guide](SETUP.md#migrating-from-onesignal)). Keep
   `OneSignal_suppress_launch_urls` set to `YES`. In the Notification Service Extension, SallaPush goes first and
   OneSignal last.
 - **Android.** OneSignal's receiver, at priority 999 for FCM's broadcast, shows OneSignal-format notifications first,
@@ -598,7 +599,8 @@ Android nothing changes.
 ### Other FCM SDKs
 
 Intercom, Klaviyo, MoEngage, WebEngage and any other SDK with an FCM service outrank SallaPush's service at −450. Add
-the forwarding service of the README, with that SDK's calls after SallaPush's line, as the native guide shows
+the forwarding service of the [setup guide](SETUP.md#another-fcm-plugin), with that SDK's calls after SallaPush's
+line, as the native guide shows
 ([Android coexistence](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks)).
 On iOS, keep their own forwarding: their notifications are never SallaPush's.
 
@@ -644,8 +646,8 @@ and was completed without a handler.` Whether iOS ever hands such a tap over tha
 ## Migrating from OneSignal
 
 Keep the OneSignal SDK in every release until the SallaPush team confirms Phase 2 for your app: until then, Salla's
-backend reaches customers through OneSignal too. Add SallaPush next to it, then follow the README's steps
-([Migrating from OneSignal](../README.md#migrating-from-onesignal)) and the native guides
+backend reaches customers through OneSignal too. Add SallaPush next to it, then follow the setup guide's steps
+([Migrating from OneSignal](SETUP.md#migrating-from-onesignal)) and the native guides
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#migrating-from-onesignal),
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#migrating-from-onesignal)).
 
@@ -714,5 +716,6 @@ with `console.error`, and prints one console error per method and page for a cal
 - **JavaScript.** The package's code is ES2017, as Capacitor's own, so it runs on the oldest Android System WebView
   that Capacitor accepts (version 60) without your bundler transpiling it. On the web the package loads, and its calls
   fail as [Errors](#errors) says.
-- **Package managers:** npm 12 and Yarn 4, with the opt-ins of the README; the release checks install with npm 12.2.0
-  and Yarn 4.18.1. npm 11 installs git dependencies with a warning. pnpm, Yarn 1 and Bun aren't verified yet.
+- **Package managers:** npm 12 and Yarn 4, with the opt-ins of the [setup guide](SETUP.md#install); the release
+  checks install with npm 12.2.0 and Yarn 4.18.1. npm 11 installs git dependencies with a warning. pnpm, Yarn 1 and
+  Bun aren't verified yet.
