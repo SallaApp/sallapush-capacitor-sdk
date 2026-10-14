@@ -47,6 +47,7 @@ final class FakeNativeSallaPush: NativeSallaPush {
     var logLevel: SallaPushLogLevel = .warn
     private(set) var observations: [FakeObservation] = []
     private(set) var clickHandlers: [([String: Any]) -> Void] = []
+    private(set) var willDisplayHandlers: [(NativeWillDisplay) -> Void] = []
     private(set) var permissionHandlers: [(Bool) -> Void] = []
     private(set) var userHandlers: [([String: Any]) -> Void] = []
     private(set) var loginFailureHandlers: [([String: Any]) -> Void] = []
@@ -140,6 +141,11 @@ final class FakeNativeSallaPush: NativeSallaPush {
         return observation("addClickListener")
     }
 
+    func addForegroundLifecycleListener(_ handler: @escaping (NativeWillDisplay) -> Void) -> NativeObservation {
+        willDisplayHandlers.append(handler)
+        return observation("addForegroundLifecycleListener")
+    }
+
     func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation {
         permissionHandlers.append(handler)
         return observation("addPermissionObserver")
@@ -168,6 +174,22 @@ final class FakeNativeSallaPush: NativeSallaPush {
     }
 }
 
+/// A foreground notification native offers, faked: it records whether it was prevented and how often it was shown.
+final class FakeWillDisplay {
+    let notification: [String: Any]
+    private(set) var isPrevented = false
+    private(set) var displays = 0
+
+    init(_ notificationId: String = "msg_5a11a90001") {
+        notification = ["notificationId": notificationId, "source": "native"]
+    }
+
+    var event: NativeWillDisplay {
+        NativeWillDisplay(notification: notification, preventDefault: { self.isPrevented = true },
+                          display: { self.displays += 1 })
+    }
+}
+
 /// A native registration that records its cancellation, and the thread it came on.
 final class FakeObservation: NativeObservation {
     private(set) var isCancelled = false
@@ -186,6 +208,10 @@ final class RecordingEmitter: SallaPushEventEmitter {
 
     func emitOnClick(_ value: [String: Any]) {
         record("click", value)
+    }
+
+    func emitOnWillDisplay(_ value: [String: Any]) {
+        record("willDisplay", value)
     }
 
     func emitOnPermissionChange(_ value: [String: Any]) {

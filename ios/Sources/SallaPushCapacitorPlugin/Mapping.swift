@@ -10,6 +10,11 @@ enum Mapping {
         return body
     }
 
+    /// A held foreground notification, already in bridge form, with its handle.
+    static func willDisplay(_ notification: [String: Any], handle: String) -> [String: Any] {
+        ["handle": handle, "notification": notification]
+    }
+
     /// The notification, with the results of native's typed accessors for each top-level additionalData key.
     static func notification(_ notification: SallaPushNotification) -> [String: Any] {
         let keys = Array(notification.additionalData.keys)

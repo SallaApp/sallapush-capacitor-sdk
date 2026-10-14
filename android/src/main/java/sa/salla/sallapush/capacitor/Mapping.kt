@@ -25,6 +25,9 @@ internal object Mapping {
     putIfNotNull("url", event.result.url)
   }
 
+  fun willDisplay(handle: String, notification: SallaPushNotification): Map<String, Any?> =
+    mapOf("handle" to handle, "notification" to notification(notification))
+
   /** The notification, with the results of native's typed accessors for each top-level additionalData key. */
   fun notification(notification: SallaPushNotification): Map<String, Any?> = buildMap {
     val keys = notification.additionalData.keys

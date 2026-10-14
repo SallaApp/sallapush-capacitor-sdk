@@ -342,7 +342,7 @@ describe('addEventListener and removeEventListener validation', () => {
     expect(warn.mock.calls).toEqual([
       [
         "[SallaPush] SallaPush.Notifications.addEventListener ignored: event must be one of 'click', " +
-          "'permissionChange'.",
+          "'foregroundWillDisplay', 'permissionChange'.",
       ],
     ]);
   });
@@ -378,7 +378,7 @@ describe('addEventListener and removeEventListener validation', () => {
     expect(warn.mock.calls).toEqual([
       [
         "[SallaPush] SallaPush.Notifications.removeEventListener ignored: event must be one of 'click', " +
-          "'permissionChange'.",
+          "'foregroundWillDisplay', 'permissionChange'.",
       ],
       [
         '[SallaPush] SallaPush.User.removeEventListener ignored: listener must be a function.',

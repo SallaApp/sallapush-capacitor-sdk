@@ -1,12 +1,14 @@
-import type {
-  ClickEventSpec,
-  LoginFailureSpec,
-  NotificationSpec,
-  PermissionChangeSpec,
-  SubscriptionChangedSpec,
-  SubscriptionStateSpec,
-  UserChangedSpec,
-  UserStateSpec,
+import {
+  native,
+  type ClickEventSpec,
+  type LoginFailureSpec,
+  type NotificationSpec,
+  type PermissionChangeSpec,
+  type SubscriptionChangedSpec,
+  type SubscriptionStateSpec,
+  type UserChangedSpec,
+  type UserStateSpec,
+  type WillDisplayEventSpec,
 } from './native';
 import type {
   SallaPushClickEvent,
@@ -17,12 +19,22 @@ import type {
   SallaPushSubscriptionState,
   SallaPushUserChangedState,
   SallaPushUserState,
+  SallaPushWillDisplayEvent,
 } from '../definitions';
+import { send } from './calls';
 import { warnOnce } from './consoleOnce';
 import { string, valid } from './validate';
 
-/** A notification as native sent it, with typed getters that read the results of native's own accessors. */
-export function notification(spec: NotificationSpec): SallaPushNotification {
+/**
+ * A notification as native sent it, with typed getters that read the results of native's own accessors. `handle` names
+ * the notification native holds for a will-display event, and `isPrevented` that event's decision; display() shows it
+ * once it is prevented.
+ */
+export function notification(
+  spec: NotificationSpec,
+  handle?: string,
+  isPrevented?: () => boolean
+): SallaPushNotification {
   return Object.freeze({
     notificationId: spec.notificationId ?? null,
     title: spec.title ?? null,
@@ -47,7 +59,23 @@ export function notification(spec: NotificationSpec): SallaPushNotification {
       typedValue('getBool', spec.boolValues, key) as boolean | null,
     getNumber: (key: string) =>
       typedValue('getNumber', spec.numberValues, key) as number | null,
-    display,
+    display: () => display(handle, isPrevented),
+  });
+}
+
+/** A will-display event: its notification holds the handle, and preventDefault() is the listeners' decision. */
+export function willDisplayEvent(
+  spec: WillDisplayEventSpec
+): SallaPushWillDisplayEvent {
+  let prevented = false;
+  return Object.freeze({
+    notification: notification(spec.notification, spec.handle, () => prevented),
+    get isPrevented() {
+      return prevented;
+    },
+    preventDefault() {
+      prevented = true;
+    },
   });
 }
 
@@ -102,13 +130,28 @@ function subscriptionState(
   });
 }
 
-// A tapped notification was shown already: display() shows only the notification of a 'foregroundWillDisplay' event.
-function display(): void {
-  warnOnce(
-    'SallaPushNotification.display',
-    "SallaPushNotification.display() does nothing here: it shows only the notification of a 'foregroundWillDisplay' " +
-      'event.'
-  );
+// As native, display() refuses a notification that wasn't prevented: native showed it, or a later listener may still
+// prevent it.
+function display(
+  handle: string | undefined,
+  isPrevented: (() => boolean) | undefined
+): void {
+  if (handle !== undefined && isPrevented?.() === true) {
+    send('SallaPushNotification.display', () =>
+      native.displayNotification({ handle })
+    );
+  } else if (handle !== undefined) {
+    warnOnce(
+      'SallaPushNotification.display.notPrevented',
+      'SallaPushNotification.display() did nothing: it was not prevented. Call event.preventDefault() first.'
+    );
+  } else {
+    warnOnce(
+      'SallaPushNotification.display',
+      "SallaPushNotification.display() does nothing here: it shows only the notification of a 'foregroundWillDisplay' " +
+        'event.'
+    );
+  }
 }
 
 /** Native's accessor result for `key`; null when native had none, and for keys inherited from Object.prototype. */

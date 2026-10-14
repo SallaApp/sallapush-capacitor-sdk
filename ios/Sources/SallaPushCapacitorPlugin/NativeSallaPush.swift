@@ -9,6 +9,16 @@ protocol NativeObservation: AnyObject {
 
 extension SallaPushObservation: NativeObservation {}
 
+/// A foreground SallaPush notification about to be shown, as the registry gets it.
+struct NativeWillDisplay {
+    /// The notification's bridge form.
+    let notification: [String: Any]
+    /// Keeps the notification from being shown now; it counts only before the listener returns.
+    let preventDefault: () -> Void
+    /// Shows the notification later: native shows only the very object it offered.
+    let display: () -> Void
+}
+
 /// The native SallaPush calls the wrapper makes. Tests replace it with a fake. Listeners get their events in bridge
 /// form, as JavaScript gets them, so tests never need native's objects.
 protocol NativeSallaPush: AnyObject {
@@ -53,6 +63,8 @@ protocol NativeSallaPush: AnyObject {
     func clearAll()
     func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool
     func addClickListener(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
+    /// Native calls `handler` synchronously on the main thread, before a SallaPush notification shows in the foreground.
+    func addForegroundLifecycleListener(_ handler: @escaping (NativeWillDisplay) -> Void) -> NativeObservation
     func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation
 
     var logLevel: SallaPushLogLevel { get set }
@@ -174,6 +186,13 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func addClickListener(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
         SallaPush.Notifications.addClickListener { handler(Mapping.click($0)) }
+    }
+
+    func addForegroundLifecycleListener(_ handler: @escaping (NativeWillDisplay) -> Void) -> NativeObservation {
+        SallaPush.Notifications.addForegroundLifecycleListener { event in
+            handler(NativeWillDisplay(notification: Mapping.notification(event.notification),
+                                      preventDefault: event.preventDefault, display: event.notification.display))
+        }
     }
 
     func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation {

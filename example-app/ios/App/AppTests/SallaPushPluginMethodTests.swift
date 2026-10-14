@@ -151,10 +151,38 @@ final class SallaPushPluginNotificationsTests: SallaPushPluginTestCase {
         ])
     }
 
+    func testDisplayNotificationShowsAHeldNotificationOnceOnTheMainThread() throws {
+        let plugin = makePlugin()
+        let notification = FakeWillDisplay()
+        let listener = RecordingPluginCall(["eventName": "willDisplay"])
+        plugin.addListener(listener.call)
+        plugin.startEvents(call(["kind": "willDisplay"]))
+        native.willDisplayHandlers.first?(notification.event)
+        let handle = try XCTUnwrap(listener.resolved.first?["handle"] as? String)
+        let ran = expectation(description: "the main thread ran the calls")
+
+        DispatchQueue(label: "bridge").async {
+            plugin.displayNotification(self.call(["handle": handle]))
+            plugin.displayNotification(self.call(["handle": handle]))
+            DispatchQueue.main.async { ran.fulfill() }
+        }
+        wait(for: [ran], timeout: 5)
+
+        XCTAssertTrue(notification.isPrevented)
+        XCTAssertEqual(notification.displays, 1)
+        XCTAssertEqual(console.warnings, [
+            "SallaPushNotification.display() did nothing: a prevented notification is shown once, within 10 minutes of "
+                + "its foregroundWillDisplay event."
+        ])
+    }
+
     // The TypeScript API validates every argument first, so only another caller could send these.
     func testUsesTheDefaultsForAMissingOrMistypedOption() {
         let plugin = makePlugin()
 
+        plugin.displayNotification(call())
+        plugin.displayNotification(call(["handle": 7]))
+        XCTAssertEqual(console.warnings, [])
         XCTAssertEqual(value(of: plugin.requestPermission, ["fallbackToSettings": "yes"]) as? Bool, false)
         XCTAssertEqual(value(of: plugin.isSallaPushNotification, ["payload": "sp_v"]) as? Bool, false)
         plugin.forwardApnsToken(call())

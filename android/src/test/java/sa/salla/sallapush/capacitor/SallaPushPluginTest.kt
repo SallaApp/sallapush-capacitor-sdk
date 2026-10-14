@@ -742,7 +742,42 @@ class SallaPushPluginTest {
     assertEquals(listOf<Any>(clickListener, observer), native.removed)
   }
 
-  // The TypeScript API sends only known kinds and integer ids, so only another caller could send these.
+  @Test
+  fun holdsAForegroundNotificationForJavaScriptAndShowsItOnceThroughItsHandle() {
+    val plugin = plugin()
+    val willDisplay = listener(plugin, "willDisplay")
+    plugin.startEvents(call("startEvents", "kind" to "willDisplay"))
+    val notification = testNotification()
+    val event = NativeValues.willDisplay(notification)
+
+    native.foregroundListeners.single().onWillDisplay(event)
+    val held = willDisplay.resolved.single()
+    plugin.displayNotification(call("displayNotification", "handle" to held.getString("handle")))
+    plugin.displayNotification(call("displayNotification", "handle" to held.getString("handle")))
+
+    assertTrue(event.isPrevented)
+    assertEquals(
+      Conversions.toJSObject(Mapping.notification(notification)).toString(),
+      held.getJSONObject("notification").toString()
+    )
+    assertSame(notification, native.displayed.single())
+    assertEquals(1, ShadowLog.getLogsForTag("SallaPush").count { it.type == Log.WARN })
+  }
+
+  @Test
+  fun postsDisplayNotificationToTheMainThreadAndItsStore() {
+    val main = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnMain = { main += it })
+
+    plugin.displayNotification(call("displayNotification", "handle" to "8d1e3d0a-1a1b-4c63-9d38-4c2b2b7e5f10"))
+    assertTrue(ShadowLog.getLogsForTag("SallaPush").isEmpty())
+    main.drain()
+
+    assertTrue(native.displayed.isEmpty())
+    assertEquals(1, ShadowLog.getLogsForTag("SallaPush").count { it.type == Log.WARN })
+  }
+
+  // The TypeScript API sends only known kinds, integer ids and string handles, so only another caller could send these.
   @Test
   fun ignoresAnUnknownKindAndAMissingOrMistypedEventOption() {
     val plugin = plugin()
@@ -754,8 +789,11 @@ class SallaPushPluginTest {
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to "3"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1.5))
     plugin.removePushSubscriptionListener(call("removePushSubscriptionListener"))
+    plugin.displayNotification(call("displayNotification"))
+    plugin.displayNotification(call("displayNotification", "handle" to 7))
 
     assertTrue(native.calls.isEmpty())
+    assertTrue(ShadowLog.getLogsForTag("SallaPush").isEmpty())
   }
 
   // Resets and destruction
@@ -766,6 +804,7 @@ class SallaPushPluginTest {
     val pluginThread = mutableListOf<() -> Unit>()
     val plugin = plugin(runOnPluginThread = { pluginThread += it })
     val oldPage = listener(plugin, "click")
+    val handle = holdAForegroundNotification(plugin, pluginThread)
     plugin.startEvents(call("startEvents", "kind" to "click"))
     plugin.startEvents(call("startEvents", "kind" to "user"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
@@ -773,8 +812,11 @@ class SallaPushPluginTest {
     plugin.removeAllListeners()
 
     assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.foregroundListeners.isEmpty())
     assertTrue(native.userObservers.isEmpty())
     assertTrue(native.subscriptionObservers.isEmpty())
+    plugin.displayNotification(call("displayNotification", "handle" to handle))
+    assertTrue(native.displayed.isEmpty())
     pluginThread.drain()
     val newPage = listener(plugin, "click")
     plugin.startEvents(call("startEvents", "kind" to "click"))
@@ -788,6 +830,7 @@ class SallaPushPluginTest {
   fun javaScriptsRemoveAllListenersStopsEveryRegistrationAndResolves() {
     val plugin = plugin()
     val click = listener(plugin, "click")
+    val handle = holdAForegroundNotification(plugin)
     plugin.startEvents(call("startEvents", "kind" to "click"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
     val removeAll = call("removeAllListeners")
@@ -795,7 +838,10 @@ class SallaPushPluginTest {
     plugin.removeAllListeners(removeAll)
 
     assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.foregroundListeners.isEmpty())
     assertTrue(native.subscriptionObservers.isEmpty())
+    plugin.displayNotification(call("displayNotification", "handle" to handle))
+    assertTrue(native.displayed.isEmpty())
     assertEquals(listOf("{}"), removeAll.resolved.map { it.toString() })
     plugin.startEvents(call("startEvents", "kind" to "click"))
     native.clickListeners.single().onClick(NativeValues.click(testNotification(), null, null))
@@ -821,7 +867,9 @@ class SallaPushPluginTest {
     plugin.startEvents(call("startEvents", "kind" to "permission"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
     main.drain()
+    val handle = holdAForegroundNotification(plugin, pluginThread, main)
     val clickListener = native.clickListeners.single()
+    val foregroundListener = native.foregroundListeners.single()
     clickListener.onClick(NativeValues.click(testNotification(), null, null))
     pluginThread.drain()
     assertEquals(1, click.resolved.size)
@@ -832,12 +880,16 @@ class SallaPushPluginTest {
     main.drain()
     pluginThread.drain()
     clickListener.onClick(NativeValues.click(testNotification(), null, null))
+    val lateForeground = NativeValues.willDisplay(testNotification())
+    foregroundListener.onWillDisplay(lateForeground)
     plugin.startEvents(call("startEvents", "kind" to "click"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 3))
+    plugin.displayNotification(call("displayNotification", "handle" to handle))
     main.drain()
     pluginThread.drain()
 
     assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.foregroundListeners.isEmpty())
     assertTrue(native.permissionObservers.isEmpty())
     assertTrue(native.userObservers.isEmpty())
     assertTrue(native.subscriptionObservers.isEmpty())
@@ -846,13 +898,17 @@ class SallaPushPluginTest {
         "addClickListener",
         "addPermissionObserver",
         "addSubscriptionObserver",
+        "addForegroundLifecycleListener",
         "removeClickListener",
         "removePermissionObserver",
+        "removeForegroundLifecycleListener",
         "removeSubscriptionObserver",
       ),
       native.calls
     )
     assertEquals(1, click.resolved.size)
+    assertFalse(lateForeground.isPrevented)
+    assertTrue(native.displayed.isEmpty())
   }
 
   private fun plugin(
@@ -876,6 +932,23 @@ class SallaPushPluginTest {
   /** A listener as JavaScript adds it: Capacitor's own addListener, which keeps the call and resolves it per event. */
   private fun listener(plugin: SallaPushPlugin, eventName: String) =
     RecordingCall("addListener", json("eventName" to eventName)).also(plugin::addListener)
+
+  /**
+   * Holds a foreground notification for a will-display listener, as JavaScript would, and returns its handle; the
+   * threads the plugin posts to are run as it goes.
+   */
+  private fun holdAForegroundNotification(
+    plugin: SallaPushPlugin,
+    pluginThread: MutableList<() -> Unit> = mutableListOf(),
+    main: MutableList<() -> Unit> = mutableListOf(),
+  ): String {
+    val willDisplay = listener(plugin, "willDisplay")
+    plugin.startEvents(call("startEvents", "kind" to "willDisplay"))
+    main.drain()
+    native.foregroundListeners.single().onWillDisplay(NativeValues.willDisplay(testNotification()))
+    pluginThread.drain()
+    return checkNotNull(willDisplay.resolved.single().getString("handle"))
+  }
 
   /** Runs, in order, what the plugin posted to a thread. */
   private fun MutableList<() -> Unit>.drain() {

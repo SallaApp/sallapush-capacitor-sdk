@@ -47,6 +47,7 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "removeNotification", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "isSallaPushNotification", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "displayNotification", returnType: CAPPluginReturnNone),
 
         CAPPluginMethod(name: "setDisplayOneSignalCompatPayloads", returnType: CAPPluginReturnNone),
 
@@ -94,7 +95,8 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     /// Capacitor calls it with a nil call when the WebView loads a page (CapacitorBridge.reset()), on main, and
-    /// JavaScript may call it with a real one. Every native registration stops with the listeners.
+    /// JavaScript may call it with a real one. Every native registration stops with the listeners, and the held
+    /// notifications are forgotten.
     @objc override public func removeAllListeners(_ call: CAPPluginCall?) {
         onMain {
             self.logic?.reset()
@@ -294,6 +296,11 @@ extension SallaPushPlugin {
     @objc func trackOpened(_ call: CAPPluginCall) {
         onMain { call.resolve(value: self.logic?.trackOpened() ?? false) }
     }
+
+    @objc func displayNotification(_ call: CAPPluginCall) {
+        guard let handle = call.getString("handle") else { return }
+        onMain { self.logic?.displayNotification(handle) }
+    }
 }
 
 // MARK: - Migration and debug
@@ -329,6 +336,10 @@ extension SallaPushPlugin: SallaPushEventEmitter {
 
     func emitOnClick(_ value: [String: Any]) {
         notifyListeners("click", data: value)
+    }
+
+    func emitOnWillDisplay(_ value: [String: Any]) {
+        notifyListeners("willDisplay", data: value)
     }
 
     func emitOnPermissionChange(_ value: [String: Any]) {

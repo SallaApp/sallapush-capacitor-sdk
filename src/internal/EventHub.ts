@@ -72,20 +72,27 @@ export class EventHub<Payload, Value> implements Hub {
   private readonly kind: EventKind;
   private readonly name: string;
   private readonly map: (payload: Payload) => Value;
+  private readonly decide?: (value: Value, payload: Payload) => void;
   private readonly connection: Connection<Payload>;
   private readonly steps: Steps;
 
   constructor(options: {
-    /** The native registration: click, permission, user or loginFailure. */
+    /** The native registration: click, willDisplay, permission, user or loginFailure. */
     kind: EventKind;
     /** The listeners as console lines name them. */
     name: string;
     connect: Connect<Payload>;
     map: (payload: Payload) => Value;
+    /**
+     * Runs once the listeners got an event, for an event native waits on. The hub keeps its Capacitor listener after
+     * the last removal, so an event already on its way still gets its decision.
+     */
+    decide?: (value: Value, payload: Payload) => void;
   }) {
     this.kind = options.kind;
     this.name = options.name;
     this.map = options.map;
+    this.decide = options.decide;
     this.connection = new Connection(options.connect, (payload) =>
       this.dispatch(payload)
     );
@@ -105,7 +112,7 @@ export class EventHub<Payload, Value> implements Hub {
     return { remove: () => this.remove(listener) };
   }
 
-  // Events already on their way then reach no listener, and are dropped.
+  // Events already on their way then reach no listener, and are dropped, or decided.
   remove(listener: Listener<Value>): void {
     if (!this.listeners.delete(listener) || this.listeners.size > 0) {
       return;
@@ -119,6 +126,7 @@ export class EventHub<Payload, Value> implements Hub {
     for (const listener of [...this.listeners]) {
       deliver(listener, value, this.name);
     }
+    this.decide?.(value, payload);
   }
 }
 

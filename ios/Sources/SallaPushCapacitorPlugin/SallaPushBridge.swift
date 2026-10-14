@@ -9,6 +9,7 @@ final class SallaPushBridge {
     private let console: ConsoleOutput
     private let once: OncePerProcess
     private let earlyInit: () -> StaticConfig?
+    private let displays: DisplayStore
     private let events: EventRegistry
 
     /// The logic over `native`; it emits events through `emitter`, held weakly.
@@ -18,7 +19,8 @@ final class SallaPushBridge {
         self.console = console
         self.once = once
         self.earlyInit = earlyInit
-        events = EventRegistry(native: native, emitter: emitter)
+        displays = DisplayStore(console: console)
+        events = EventRegistry(native: native, displays: displays, emitter: emitter)
     }
 
     // MARK: - Initialization and consent
@@ -155,6 +157,11 @@ final class SallaPushBridge {
         native.isSallaPushNotification(payload.filter { !($0.value is NSNull) })
     }
 
+    /// Shows a foreground notification held for JavaScript: it wasn't prevented there, or the app calls display().
+    func displayNotification(_ handle: String) {
+        displays.display(handle)
+    }
+
     func trackOpened() -> Bool {
         once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
             + "SallaPush notifications reach SallaPush through its notification-center delegate.", to: console)
@@ -197,9 +204,11 @@ final class SallaPushBridge {
         events.removeSubscriptionListener(listenerId)
     }
 
-    /// Removes every native registration: the plugin calls it when the WebView loads a page, and when it is released.
+    /// Removes every native registration and forgets the held notifications: the plugin calls it when the WebView loads
+    /// a page, and when it is released.
     func reset() {
         events.stopAll()
+        displays.clear()
     }
 
     // MARK: - Console

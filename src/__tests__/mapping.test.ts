@@ -14,13 +14,18 @@ import {
   permissionChange,
   subscriptionChange,
   userChange,
+  willDisplayEvent,
 } from '../internal/mapping';
-import type { NotificationSpec } from '../internal/native';
+import { native, type NotificationSpec } from '../internal/native';
 import { SallaPushLoginFailure, SallaPushPayloadSource } from '../index';
 
+jest.mock('../internal/native');
+
+const plugin = jest.mocked(native);
 let warn: jest.SpiedFunction<typeof console.warn>;
 
 beforeEach(() => {
+  jest.clearAllMocks();
   warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -286,6 +291,40 @@ describe('events', () => {
 });
 
 describe('display', () => {
+  it("shows a prevented will-display event's notification through its handle", () => {
+    const event = willDisplayEvent({
+      handle: '0c9d1c5e-1b7f-4f4e-9a6b-2f0f4c1d3e5a',
+      notification: compatSpec(),
+    });
+
+    event.preventDefault();
+    event.notification.display();
+    event.notification.display();
+
+    expect(plugin.displayNotification.mock.calls).toEqual([
+      [{ handle: '0c9d1c5e-1b7f-4f4e-9a6b-2f0f4c1d3e5a' }],
+      [{ handle: '0c9d1c5e-1b7f-4f4e-9a6b-2f0f4c1d3e5a' }],
+    ]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("refuses a will-display event's notification that wasn't prevented, as native does, and warns once in every build", () => {
+    const event = willDisplayEvent({
+      handle: '0c9d1c5e-1b7f-4f4e-9a6b-2f0f4c1d3e5a',
+      notification: compatSpec(),
+    });
+
+    event.notification.display();
+    event.notification.display();
+
+    expect(plugin.displayNotification).not.toHaveBeenCalled();
+    expect(warn.mock.calls).toEqual([
+      [
+        '[SallaPush] SallaPushNotification.display() did nothing: it was not prevented. Call event.preventDefault() first.',
+      ],
+    ]);
+  });
+
   it('does nothing for a tapped notification, and warns once in every build', () => {
     const tapped = clickEvent({ notification: compatSpec() }).notification;
 
@@ -293,11 +332,27 @@ describe('display', () => {
     tapped.display();
     notification(minimalSpec()).display();
 
+    expect(plugin.displayNotification).not.toHaveBeenCalled();
     expect(warn.mock.calls).toEqual([
       [
         '[SallaPush] SallaPushNotification.display() does nothing here: it shows only the notification of a ' +
           "'foregroundWillDisplay' event.",
       ],
     ]);
+  });
+});
+
+describe('will-display events', () => {
+  it('carry the notification and record preventDefault()', () => {
+    const event = willDisplayEvent({
+      handle: '0c9d1c5e-1b7f-4f4e-9a6b-2f0f4c1d3e5a',
+      notification: compatSpec(),
+    });
+
+    expect(event.notification.notificationId).toBe('msg_5a11a90002');
+    expect(event.isPrevented).toBe(false);
+    event.preventDefault();
+    expect(event.isPrevented).toBe(true);
+    expect(Object.isFrozen(event)).toBe(true);
   });
 });

@@ -111,6 +111,9 @@ export const native = {
   trackOpened: jest.fn<SallaPushNativePlugin['trackOpened']>(() =>
     Promise.resolve({ value: false })
   ),
+  displayNotification: jest.fn<SallaPushNativePlugin['displayNotification']>(
+    () => Promise.resolve()
+  ),
 
   setDisplayOneSignalCompatPayloads: jest.fn<
     SallaPushNativePlugin['setDisplayOneSignalCompatPayloads']

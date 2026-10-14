@@ -3,6 +3,7 @@ import Foundation
 /// Emits events to JavaScript. SallaPushPlugin adopts it with Capacitor's notifyListeners.
 protocol SallaPushEventEmitter: AnyObject {
     func emitOnClick(_ value: [String: Any])
+    func emitOnWillDisplay(_ value: [String: Any])
     func emitOnPermissionChange(_ value: [String: Any])
     func emitOnUserChange(_ value: [String: Any])
     func emitOnLoginFailure(_ value: [String: Any])
@@ -15,16 +16,18 @@ protocol SallaPushEventEmitter: AnyObject {
 final class EventRegistry {
     /// The event kinds with one native registration each, as JavaScript names them.
     enum Kind: String {
-        case click, permission, user, loginFailure
+        case click, willDisplay, permission, user, loginFailure
     }
 
     private let native: NativeSallaPush
+    private let displays: DisplayStore
     private weak var emitter: SallaPushEventEmitter?
     private var observations: [Kind: NativeObservation] = [:]
     private var subscriptionObservations: [Int: NativeObservation] = [:]
 
-    init(native: NativeSallaPush, emitter: SallaPushEventEmitter) {
+    init(native: NativeSallaPush, displays: DisplayStore, emitter: SallaPushEventEmitter) {
         self.native = native
+        self.displays = displays
         self.emitter = emitter
     }
 
@@ -67,6 +70,10 @@ final class EventRegistry {
             return native.addClickListener { [weak self] event in
                 self?.emit(kind) { $0.emitOnClick(event) }
             }
+        case .willDisplay:
+            return native.addForegroundLifecycleListener { [weak self] event in
+                self?.hold(event)
+            }
         case .permission:
             return native.addPermissionObserver { [weak self] permission in
                 self?.emit(kind) { $0.emitOnPermissionChange(Mapping.permissionChange(permission)) }
@@ -79,6 +86,16 @@ final class EventRegistry {
             return native.addLoginFailureHandler { [weak self] failure in
                 self?.emit(kind) { $0.emitOnLoginFailure(failure) }
             }
+        }
+    }
+
+    /// Native decides when its listeners return, so the notification is prevented now and held for JavaScript, which
+    /// shows it or keeps it hidden through its handle.
+    private func hold(_ event: NativeWillDisplay) {
+        emit(.willDisplay) { emitter in
+            event.preventDefault()
+            let handle = displays.put(event.display)
+            emitter.emitOnWillDisplay(Mapping.willDisplay(event.notification, handle: handle))
         }
     }
 

@@ -6,7 +6,9 @@ import XCTest
 final class EventRegistryTests: XCTestCase {
     private let native = FakeNativeSallaPush()
     private let emitter = RecordingEmitter()
-    private lazy var registry = EventRegistry(native: native, emitter: emitter)
+    private let console = RecordingConsole()
+    private lazy var displays = DisplayStore(console: console)
+    private lazy var registry = EventRegistry(native: native, displays: displays, emitter: emitter)
 
     // MARK: - Registrations
 
@@ -143,7 +145,7 @@ final class EventRegistryTests: XCTestCase {
         let registry: EventRegistry = {
             let emitter = RecordingEmitter()
             released = emitter
-            return EventRegistry(native: native, emitter: emitter)
+            return EventRegistry(native: native, displays: displays, emitter: emitter)
         }()
         registry.start(.permission)
 

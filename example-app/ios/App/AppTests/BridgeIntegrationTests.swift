@@ -40,6 +40,29 @@ final class BridgeIntegrationTests: XCTestCase {
         XCTAssertEqual(plugin.eventListeners?["integrationTest"] as? [CAPPluginCall], [])
     }
 
+    // The live plugin over the live SDK: SallaPush's foreground listener prevents a SallaPush notification and the plugin
+    // emits it, with its handle, to a listener as the bridge keeps it.
+    func testThePluginHoldsAForegroundNotificationForJavaScript() throws {
+        let bridge = try XCTUnwrap(bridgeOfTheKeyWindow(), "no CAPBridgeViewController with a bridge in the key window after 10 s")
+        let plugin = try XCTUnwrap(bridge.plugin(withName: "SallaPush") as? SallaPushPlugin)
+        let listener = RecordingPluginCall(["eventName": "willDisplay"])
+        plugin.addListener(listener.call)
+        plugin.startEvents(RecordingPluginCall(["kind": "willDisplay"]).call)
+        defer {
+            plugin.stopEvents(RecordingPluginCall(["kind": "willDisplay"]).call)
+            plugin.removeEventListener("willDisplay", listener: listener.call)
+        }
+
+        let payload = try TestNotifications.payload("native")
+        let options = SallaPush.Notifications.willPresent(try TestNotifications.notification(userInfo: payload))
+
+        XCTAssertEqual(options, [])
+        XCTAssertEqual(listener.resolved.count, 1)
+        let event = try XCTUnwrap(listener.resolved.first)
+        XCTAssertNotNil(UUID(uuidString: try XCTUnwrap(event["handle"] as? String)))
+        XCTAssertEqual((event["notification"] as? [String: Any])?["notificationId"] as? String, "msg_5a11a90001")
+    }
+
     /// The bridge of the key window's CAPBridgeViewController, once the scene connected: up to 10 s.
     private func bridgeOfTheKeyWindow() -> CAPBridgeProtocol? {
         let deadline = Date().addingTimeInterval(10)

@@ -2,16 +2,19 @@ package sa.salla.sallapush.capacitor
 
 import com.salla.push.SallaPushClickEvent
 import com.salla.push.SallaPushClickListener
+import com.salla.push.SallaPushForegroundLifecycleListener
 import com.salla.push.SallaPushLoginFailure
 import com.salla.push.SallaPushPermissionObserver
 import com.salla.push.SallaPushSubscriptionChangedState
 import com.salla.push.SallaPushSubscriptionObserver
 import com.salla.push.SallaPushUserChangedState
 import com.salla.push.SallaPushUserObserver
+import com.salla.push.SallaPushWillDisplayEvent
 
 /** The JavaScript events, by their Capacitor event names. */
 internal enum class Event(val jsName: String) {
   CLICK("click"),
+  WILL_DISPLAY("willDisplay"),
   PERMISSION_CHANGE("permissionChange"),
   USER_CHANGE("userChange"),
   LOGIN_FAILURE("loginFailure"),
@@ -26,12 +29,14 @@ internal enum class Event(val jsName: String) {
  */
 internal class EventRegistry(
   private val native: NativeSallaPush,
+  private val displays: DisplayStore,
   private val isActive: () -> Boolean = { true },
   private val emit: (Event, Map<String, Any?>) -> Unit,
 ) {
   /** The event kinds with one native registration each, as JavaScript names them. */
   private enum class Kind(val jsName: String) {
     CLICK("click"),
+    WILL_DISPLAY("willDisplay"),
     PERMISSION("permission"),
     USER("user"),
     LOGIN_FAILURE("loginFailure"),
@@ -49,6 +54,12 @@ internal class EventRegistry(
     if (known in registrations) return
     when (known) {
       Kind.CLICK -> register(known, clickListener(), native::addClickListener, native::removeClickListener)
+      Kind.WILL_DISPLAY -> register(
+        known,
+        foregroundListener(),
+        native::addForegroundLifecycleListener,
+        native::removeForegroundLifecycleListener,
+      )
       Kind.PERMISSION ->
         register(known, permissionObserver(), native::addPermissionObserver, native::removePermissionObserver)
       Kind.USER -> register(known, userObserver(), native::addUserObserver, native::removeUserObserver)
@@ -103,6 +114,17 @@ internal class EventRegistry(
   private fun clickListener() = object : SallaPushClickListener {
     override fun onClick(event: SallaPushClickEvent) {
       if (isRegistered(Kind.CLICK, this)) emit(Event.CLICK, Mapping.click(event))
+    }
+  }
+
+  // Native decides when its listeners return, so the notification is prevented now and held for JavaScript, which
+  // shows it or keeps it hidden through its handle.
+  private fun foregroundListener() = object : SallaPushForegroundLifecycleListener {
+    override fun onWillDisplay(event: SallaPushWillDisplayEvent) {
+      if (!isRegistered(Kind.WILL_DISPLAY, this)) return
+      event.preventDefault()
+      val handle = displays.put(event.notification)
+      emit(Event.WILL_DISPLAY, Mapping.willDisplay(handle, event.notification))
     }
   }
 

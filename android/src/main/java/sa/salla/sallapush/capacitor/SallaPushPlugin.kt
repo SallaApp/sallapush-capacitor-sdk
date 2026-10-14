@@ -36,7 +36,8 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
 
   // Set by handleOnDestroy(), on main; read by the registry's listeners there, by onRegistry and by emit.
   @Volatile private var destroyed = false
-  private val events = EventRegistry(seams.native, { !destroyed }, ::emit)
+  private val displays = DisplayStore(seams.native)
+  private val events = EventRegistry(seams.native, displays, { !destroyed }, ::emit)
   private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
   /**
@@ -237,6 +238,13 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     seams.native.trackOpened(call.getObject("additionalData"))
   }
 
+  /** Shows a foreground notification held for JavaScript: it wasn't prevented there, or the app calls display(). */
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun displayNotification(call: PluginCall) {
+    val handle = call.getString("handle") ?: return
+    onRegistry { displays.display(handle) }
+  }
+
   @PluginMethod(returnType = PluginMethod.RETURN_NONE)
   fun setDisplayOneSignalCompatPayloads(call: PluginCall) {
     val display = call.getBoolean("display") ?: return
@@ -267,18 +275,22 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   }
 
   /**
-   * Capacitor's reset when the WebView loads a page, on main: every native registration stops now, and Capacitor's
-   * listeners are cleared on the plugin thread, where Capacitor changes them.
+   * Capacitor's reset when the WebView loads a page, on main: every native registration stops and the held notifications
+   * are forgotten now, and Capacitor's listeners are cleared on the plugin thread, where Capacitor changes them.
    */
   override fun removeAllListeners() {
     events.stopAll()
+    displays.clear()
     onPluginThread { super.removeAllListeners() }
   }
 
   /** JavaScript's removeAllListeners(), on the plugin thread. Capacitor runs only annotated methods, hence the repeat. */
   @PluginMethod(returnType = PluginMethod.RETURN_PROMISE)
   override fun removeAllListeners(call: PluginCall) {
-    onMain { events.stopAll() }
+    onMain {
+      events.stopAll()
+      displays.clear()
+    }
     super.removeAllListeners(call)
   }
 
@@ -291,6 +303,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   public override fun handleOnDestroy() {
     destroyed = true
     events.stopAll()
+    displays.clear()
     super.handleOnDestroy()
   }
 

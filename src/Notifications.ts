@@ -1,6 +1,10 @@
 import { EventHub, addListener, removeListener } from './internal/EventHub';
 import { nullable as valueOrNull, send, value } from './internal/calls';
-import { clickEvent, permissionChange } from './internal/mapping';
+import {
+  clickEvent,
+  permissionChange,
+  willDisplayEvent,
+} from './internal/mapping';
 import { native } from './internal/native';
 import {
   boolean,
@@ -16,12 +20,28 @@ import type {
   SallaPushNotificationsNamespace,
 } from './definitions';
 
+const willDisplay = "SallaPush.Notifications 'foregroundWillDisplay' listener";
+
 const hubs = {
   click: new EventHub({
     kind: 'click',
     name: "SallaPush.Notifications 'click' listener",
     connect: (dispatch) => native.addListener('click', dispatch),
     map: clickEvent,
+  }),
+  // Native holds each notification until JavaScript decides: shown, unless a listener prevented it.
+  foregroundWillDisplay: new EventHub({
+    kind: 'willDisplay',
+    name: willDisplay,
+    connect: (dispatch) => native.addListener('willDisplay', dispatch),
+    map: willDisplayEvent,
+    decide: (event, payload) => {
+      if (!event.isPrevented) {
+        send(willDisplay, () =>
+          native.displayNotification({ handle: payload.handle })
+        );
+      }
+    },
   }),
   permissionChange: new EventHub({
     kind: 'permission',

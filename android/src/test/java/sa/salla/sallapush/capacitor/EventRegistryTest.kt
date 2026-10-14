@@ -2,6 +2,8 @@ package sa.salla.sallapush.capacitor
 
 import com.salla.push.SallaPushLoginFailure
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,8 +14,9 @@ import org.robolectric.RobolectricTestRunner
 class EventRegistryTest {
   private val native = FakeNativeSallaPush()
   private val emitted = mutableListOf<Pair<Event, Map<String, Any?>>>()
+  private val displays = DisplayStore(native)
   private var active = true
-  private val registry = EventRegistry(native, { active }) { event, body -> emitted += event to body }
+  private val registry = EventRegistry(native, displays, { active }) { event, body -> emitted += event to body }
 
   @Test
   fun startsOneNativeRegistrationPerKindOnce() {
@@ -110,6 +113,40 @@ class EventRegistryTest {
   }
 
   @Test
+  fun preventsHoldsAndEmitsEachForegroundNotification() {
+    registry.start("willDisplay")
+    registry.start("willDisplay")
+    val notification = testNotification()
+    val event = NativeValues.willDisplay(notification)
+
+    native.foregroundListeners.single().onWillDisplay(event)
+
+    assertTrue(event.isPrevented)
+    val (name, body) = emitted.single()
+    assertEquals(Event.WILL_DISPLAY, name)
+    assertEquals(Mapping.notification(notification), body["notification"])
+    val handle = body["handle"] as String
+    assertNotNull(java.util.UUID.fromString(handle))
+    assertTrue(native.displayed.isEmpty())
+    assertTrue(displays.display(handle))
+    assertSame(notification, native.displayed.single())
+  }
+
+  @Test
+  fun leavesAForegroundNotificationToNativeOnceStopped() {
+    registry.start("willDisplay")
+    val listener = native.foregroundListeners.single()
+    registry.stop("willDisplay")
+    val event = NativeValues.willDisplay(testNotification())
+
+    listener.onWillDisplay(event)
+
+    assertFalse(event.isPrevented)
+    assertTrue(emitted.isEmpty())
+    assertSame(listener, native.removed.single())
+  }
+
+  @Test
   fun emitsPermissionChanges() {
     registry.start("permission")
 
@@ -180,25 +217,28 @@ class EventRegistryTest {
   // The plugin's activity is destroyed while native's callbacks are already queued on the main thread.
   @Test
   fun emitsNothingOnceInactiveEvenWhileRegistered() {
-    listOf("click", "permission", "user", "loginFailure").forEach(registry::start)
+    listOf("click", "willDisplay", "permission", "user", "loginFailure").forEach(registry::start)
     registry.addSubscriptionListener(1)
     val (user, loginFailure) = native.userObservers
     val state = NativeValues.subscription(null, null, false)
+    val willDisplay = NativeValues.willDisplay(testNotification())
 
     active = false
     native.clickListeners.single().onClick(NativeValues.click(testNotification(), null, null))
+    native.foregroundListeners.single().onWillDisplay(willDisplay)
     native.permissionObservers.single().onNotificationPermissionChange(true)
     user.onUserStateChange(NativeValues.userChange(NativeValues.user(null, false), NativeValues.user("customer-7", true)))
     loginFailure.onLoginFailure(SallaPushLoginFailure.INVALID_REQUEST)
     native.subscriptionObservers.single().onPushSubscriptionChange(NativeValues.subscriptionChange(state, state))
 
     assertTrue(emitted.isEmpty())
+    assertFalse(willDisplay.isPrevented)
   }
 
   @Test
   fun namesTheEventsAsCapacitorsEventNames() {
     assertEquals(
-      listOf("click", "permissionChange", "userChange", "loginFailure", "pushSubscriptionChange"),
+      listOf("click", "willDisplay", "permissionChange", "userChange", "loginFailure", "pushSubscriptionChange"),
       Event.entries.map { it.jsName }
     )
   }

@@ -39,6 +39,10 @@ export type ClickEventSpec = {
   actionId?: string | null;
   url?: string | null;
 };
+export type WillDisplayEventSpec = {
+  handle: string;
+  notification: NotificationSpec;
+};
 export type PermissionChangeSpec = { permission: boolean };
 export type SubscriptionStateSpec = {
   id?: string | null;
@@ -59,7 +63,8 @@ export type LoginFailureSpec = { failure: string };
 export type Value<T> = { value: T };
 
 /** The native registrations startEvents and stopEvents take; push-subscription listeners register by id instead. */
-export type EventKind = 'click' | 'permission' | 'user' | 'loginFailure';
+export type EventKind =
+  'click' | 'willDisplay' | 'permission' | 'user' | 'loginFailure';
 
 export interface SallaPushNativePlugin {
   initialize(options: { appId: string; config: ConfigSpec }): Promise<void>;
@@ -108,6 +113,7 @@ export interface SallaPushNativePlugin {
   trackOpened(options: {
     additionalData: Record<string, unknown> | null;
   }): Promise<Value<boolean>>;
+  displayNotification(options: { handle: string }): Promise<void>;
 
   setDisplayOneSignalCompatPayloads(options: {
     display: boolean;
@@ -122,6 +128,10 @@ export interface SallaPushNativePlugin {
   addListener(
     eventName: 'click',
     listenerFunc: (event: ClickEventSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'willDisplay',
+    listenerFunc: (event: WillDisplayEventSpec) => void
   ): Promise<PluginListenerHandle>;
   addListener(
     eventName: 'permissionChange',

@@ -58,7 +58,7 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
             "getPermission promise", "canRequestPermission promise", "getPermissionStatus promise",
             "requestPermission promise", "registerForProvisionalAuthorization promise", "refreshPermission none",
             "registerForRemoteNotifications none", "forwardApnsToken none", "clearAll none", "removeNotification none",
-            "isSallaPushNotification promise", "trackOpened promise",
+            "isSallaPushNotification promise", "trackOpened promise", "displayNotification none",
             "setDisplayOneSignalCompatPayloads none",
             "getLogLevel promise", "setLogLevel none",
             "startEvents none", "stopEvents none"
@@ -293,6 +293,23 @@ final class SallaPushPluginListenerTests: SallaPushPluginTestCase {
         XCTAssertEqual(plugin.eventListeners?.count, 0)
         XCTAssertEqual(removeAll.resolved.count, 1)
         XCTAssertEqual(removeAll.rejected, [])
+    }
+
+    func testAPageLoadsResetForgetsTheHeldNotifications() throws {
+        let plugin = makePlugin()
+        let notification = FakeWillDisplay()
+        let listener = RecordingPluginCall(["eventName": "willDisplay"])
+        plugin.addListener(listener.call)
+        plugin.startEvents(call(["kind": "willDisplay"]))
+        native.willDisplayHandlers.first?(notification.event)
+        let handle = try XCTUnwrap(listener.resolved.first?["handle"] as? String)
+
+        plugin.perform(#selector(CAPPlugin.removeAllListeners(_:)), with: nil)
+        plugin.displayNotification(call(["handle": handle]))
+
+        XCTAssertTrue(notification.isPrevented)
+        XCTAssertEqual(notification.displays, 0)
+        XCTAssertEqual(console.warnings.count, 1)
     }
 
     func testThePluginKeepsWorkingAfterAReset() {
