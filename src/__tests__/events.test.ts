@@ -255,29 +255,43 @@ describe('event listeners', () => {
   });
 });
 
-describe('native steps', () => {
-  it('run one after another: a slow native call holds back the calls made after it', async () => {
-    let started: () => void = () => {};
+describe('native calls', () => {
+  it('go out at once, in call order: a native call that never settles holds back nothing', () => {
     native.startEvents.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          started = resolve;
-        })
+      () => new Promise<void>(() => {})
     );
     const listener = jest.fn<(event: SallaPushClickEvent) => void>();
 
     onClick(listener).remove();
     onClick(listener);
-    await flush();
-    expect(nativeCalls()).toEqual(['addListener', 'startEvents']);
 
-    started();
-    await flush();
     expect(nativeCalls()).toEqual([
       'addListener',
       'startEvents',
       'stopEvents',
       'startEvents',
+    ]);
+  });
+
+  it('of different hubs and setters go out in the order the app made them', () => {
+    SallaPush.User.addEventListener('change', () => {});
+    SallaPush.login('customer-7', 'token');
+    SallaPush.Debug.setLogHandler(SallaPushLogLevel.Info, () => {});
+    SallaPush.initialize('app_id');
+    SallaPush.User.pushSubscription.addEventListener('change', () => {});
+    SallaPush.User.pushSubscription.optOut();
+
+    expect(nativeCalls()).toEqual([
+      'addListener',
+      'startEvents',
+      'login',
+      'setLogHandlerLevel',
+      'addListener',
+      'startEvents',
+      'initialize',
+      'addListener',
+      'addPushSubscriptionListener',
+      'optOut',
     ]);
   });
 
@@ -306,8 +320,10 @@ describe('native steps', () => {
     ]);
     expect(nativeCalls()).toEqual([
       'addListener',
+      'startEvents',
       'stopEvents',
       'addListener',
+      'startEvents',
       'stopEvents',
       'addListener',
       'startEvents',

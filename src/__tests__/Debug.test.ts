@@ -266,11 +266,16 @@ describe('SallaPush.Debug.setLogHandler', () => {
     );
     mock.setLogHandlerLevel.mockRejectedValueOnce(missing);
     mock.addListener.mockRejectedValueOnce(missing);
+    mock.startEvents.mockRejectedValueOnce(missing);
 
     api.Debug.setLogHandler(SallaPushLogLevel.Warn, () => {});
     await flush();
 
-    expect(nativeCalls()).toEqual(['setLogHandlerLevel', 'addListener']);
+    expect(nativeCalls()).toEqual([
+      'setLogHandlerLevel',
+      'addListener',
+      'startEvents',
+    ]);
     expect(error.mock.calls).toEqual([
       [
         '[SallaPush] SallaPush.Debug log handler failed: "SallaPush" plugin is not implemented on web',

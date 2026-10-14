@@ -6,7 +6,7 @@ import type {
   SallaPushLogLevel,
   SallaPushSubscriptionChangedState,
 } from '../definitions';
-import { reportFailure } from './calls';
+import { send } from './calls';
 import { logEntry, subscriptionChange } from './mapping';
 import {
   native,
@@ -32,23 +32,14 @@ export interface Hub {
 /** What a dropped addEventListener call returns. */
 const inert: SallaPushEventSubscription = Object.freeze({ remove() {} });
 
-/** A hub's native steps, run one after another in the order the app made its calls; a failing step is reported once. */
-class Steps {
-  private tail: Promise<void> = Promise.resolve();
-
-  constructor(private readonly name: string) {}
-
-  run(step: () => Promise<unknown>): void {
-    this.tail = this.tail.then(step).then(
-      () => undefined,
-      (error: unknown) => reportFailure(this.name, error)
-    );
-  }
-}
+/** The push-subscription listeners and the log handler, as console lines name them. */
+const SUBSCRIPTION_LISTENER =
+  "SallaPush.User.pushSubscription 'change' listener";
+const LOG_HANDLER = 'SallaPush.Debug log handler';
 
 /**
- * A hub's one Capacitor listener, added by the first step that needs it and kept for the page's lifetime: Capacitor
- * drops every listener when the WebView loads a page, together with the JavaScript that added it.
+ * A hub's one Capacitor listener, added by the first registration that needs it and kept for the page's lifetime:
+ * Capacitor drops every listener when the WebView loads a page, together with the JavaScript that added it.
  */
 class Connection<Payload> {
   private connected: Promise<PluginListenerHandle> | null = null;
@@ -58,7 +49,7 @@ class Connection<Payload> {
     private readonly dispatch: (payload: Payload) => void
   ) {}
 
-  // Added once; a failed add (no native plugin) is tried again by the next step that needs it.
+  // Added once; a failed add (no native plugin) is tried again by the next registration that needs it.
   open(): Promise<PluginListenerHandle> {
     this.connected ??= this.connect(this.dispatch).catch((error: unknown) => {
       this.connected = null;
@@ -69,10 +60,11 @@ class Connection<Payload> {
 }
 
 /**
- * The listeners of one event kind, behind one native registration. The first listener adds the Capacitor listener and
- * only then starts the native registration, so the events native delivers at once (the taps kept from a cold start)
- * reach it. The last removal stops the native registration; the Capacitor listener stays, so the listener bookkeeping
- * of Capacitor changes only once per event and page.
+ * The listeners of one event kind, behind one native registration. Every native call goes out at once, so it reaches
+ * native in the order of the app's calls: Capacitor posts plugin calls in call order, and native runs them in that
+ * order. The first listener adds the Capacitor listener, then starts the native registration, so the events native
+ * delivers at once (the taps kept from a cold start) reach it. The last removal stops the native registration; the
+ * Capacitor listener stays, so the listener bookkeeping of Capacitor changes only once per event and page.
  */
 export class EventHub<Payload, Value> implements Hub {
   private readonly listeners = new Set<Listener<Value>>();
@@ -81,7 +73,6 @@ export class EventHub<Payload, Value> implements Hub {
   private readonly map: (payload: Payload) => Value;
   private readonly decide?: (value: Value, payload: Payload) => void;
   private readonly connection: Connection<Payload>;
-  private readonly steps: Steps;
 
   constructor(options: {
     /** The native registration: click, willDisplay, permission, user or loginFailure. */
@@ -103,17 +94,14 @@ export class EventHub<Payload, Value> implements Hub {
     this.connection = new Connection(options.connect, (payload) =>
       this.dispatch(payload)
     );
-    this.steps = new Steps(options.name);
   }
 
   add(listener: Listener<Value>): SallaPushEventSubscription {
     if (!this.listeners.has(listener)) {
       this.listeners.add(listener);
       if (this.listeners.size === 1) {
-        this.steps.run(async () => {
-          await this.connection.open();
-          await native.startEvents({ kind: this.kind });
-        });
+        send(this.name, () => this.connection.open());
+        send(this.name, () => native.startEvents({ kind: this.kind }));
       }
     }
     return { remove: () => this.remove(listener) };
@@ -124,7 +112,7 @@ export class EventHub<Payload, Value> implements Hub {
     if (!this.listeners.delete(listener) || this.listeners.size > 0) {
       return;
     }
-    this.steps.run(() => native.stopEvents({ kind: this.kind }));
+    send(this.name, () => native.stopEvents({ kind: this.kind }));
   }
 
   // A snapshot: a listener removed by another one during the dispatch still gets this event.
@@ -139,7 +127,7 @@ export class EventHub<Payload, Value> implements Hub {
 
 /**
  * The push-subscription listeners. Each one has its own native observer, so each gets native's own replay: the first
- * step adds the Capacitor listener, every listener then registers its id natively, and an event reaches only the
+ * listener adds the Capacitor listener, every listener then registers its id natively, and an event reaches only the
  * listener whose id it carries.
  */
 export class SubscriptionHub implements Hub {
@@ -155,9 +143,6 @@ export class SubscriptionHub implements Hub {
     (dispatch) => native.addListener('pushSubscriptionChange', dispatch),
     (payload) => this.dispatch(payload)
   );
-  private readonly steps = new Steps(
-    "SallaPush.User.pushSubscription 'change' listener"
-  );
   private nextId = 1;
 
   add(
@@ -167,10 +152,10 @@ export class SubscriptionHub implements Hub {
       const id = this.nextId++;
       this.ids.set(listener, id);
       this.listeners.set(id, listener);
-      this.steps.run(async () => {
-        await this.connection.open();
-        await native.addPushSubscriptionListener({ listenerId: id });
-      });
+      send(SUBSCRIPTION_LISTENER, () => this.connection.open());
+      send(SUBSCRIPTION_LISTENER, () =>
+        native.addPushSubscriptionListener({ listenerId: id })
+      );
     }
     return { remove: () => this.remove(listener) };
   }
@@ -182,7 +167,7 @@ export class SubscriptionHub implements Hub {
     }
     this.ids.delete(listener);
     this.listeners.delete(id);
-    this.steps.run(() =>
+    send(SUBSCRIPTION_LISTENER, () =>
       native.removePushSubscriptionListener({ listenerId: id })
     );
   }
@@ -190,11 +175,7 @@ export class SubscriptionHub implements Hub {
   private dispatch(payload: SubscriptionChangedSpec): void {
     const listener = this.listeners.get(payload.listenerId);
     if (listener) {
-      deliver(
-        listener,
-        subscriptionChange(payload),
-        "SallaPush.User.pushSubscription 'change' listener"
-      );
+      deliver(listener, subscriptionChange(payload), SUBSCRIPTION_LISTENER);
     }
   }
 }
@@ -210,7 +191,6 @@ export class LogHandlerHub {
     (dispatch) => native.addListener('log', dispatch),
     (payload) => this.dispatch(payload)
   );
-  private readonly steps = new Steps('SallaPush.Debug log handler');
 
   set(
     level: SallaPushLogLevel,
@@ -219,23 +199,21 @@ export class LogHandlerHub {
     if (handler === null) {
       if (this.handler !== null) {
         this.handler = null;
-        this.steps.run(() => native.stopEvents({ kind: 'log' }));
+        send(LOG_HANDLER, () => native.stopEvents({ kind: 'log' }));
       }
       return;
     }
-    this.steps.run(() => native.setLogHandlerLevel({ level }));
+    send(LOG_HANDLER, () => native.setLogHandlerLevel({ level }));
     if (this.handler === null) {
-      this.steps.run(async () => {
-        await this.connection.open();
-        await native.startEvents({ kind: 'log' });
-      });
+      send(LOG_HANDLER, () => this.connection.open());
+      send(LOG_HANDLER, () => native.startEvents({ kind: 'log' }));
     }
     this.handler = handler;
   }
 
   private dispatch(payload: LogEntrySpec): void {
     if (this.handler !== null) {
-      deliver(this.handler, logEntry(payload), 'SallaPush.Debug log handler');
+      deliver(this.handler, logEntry(payload), LOG_HANDLER);
     }
   }
 }
