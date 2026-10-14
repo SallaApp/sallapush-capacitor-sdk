@@ -50,7 +50,8 @@
     "build": "yarn clean && tsc -p tsconfig.build.json && rollup -c rollup.config.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && yarn workspace @salla.sa/sallapush-capacitor-example typecheck",
-    "test": "jest"
+    "test": "jest",
+    "test:scripts": "node --test --test-reporter=tap \"scripts/__tests__/*.test.mjs\""
   },
   "peerDependencies": {
     "@capacitor/core": "^8.0.0"
