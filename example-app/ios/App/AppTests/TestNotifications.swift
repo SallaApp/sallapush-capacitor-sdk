@@ -16,11 +16,19 @@ enum TestNotifications {
         return try XCTUnwrap(json as? [AnyHashable: Any])
     }
 
-    static func notification(userInfo: [AnyHashable: Any]) throws -> UNNotification {
+    /// The trigger of a notification that APNs delivered. It has no public initializer either, and decodes from an
+    /// empty keyed archive.
+    static func pushTrigger() throws -> UNPushNotificationTrigger {
+        let archiver = NSKeyedArchiver(requiringSecureCoding: false)
+        archiver.finishEncoding()
+        return try XCTUnwrap(UNPushNotificationTrigger(coder: unarchiver(of: archiver)))
+    }
+
+    static func notification(userInfo: [AnyHashable: Any], trigger: UNNotificationTrigger? = nil) throws -> UNNotification {
         let content = UNMutableNotificationContent()
         content.title = "Title"
         content.userInfo = userInfo
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         let archiver = NSKeyedArchiver(requiringSecureCoding: false)
         archiver.encode(request, forKey: "request")
         archiver.encode(Date(), forKey: "date")
@@ -28,9 +36,9 @@ enum TestNotifications {
         return try XCTUnwrap(UNNotification(coder: unarchiver(of: archiver)))
     }
 
-    static func response(userInfo: [AnyHashable: Any]) throws -> UNNotificationResponse {
+    static func response(userInfo: [AnyHashable: Any], trigger: UNNotificationTrigger? = nil) throws -> UNNotificationResponse {
         let archiver = NSKeyedArchiver(requiringSecureCoding: false)
-        archiver.encode(try notification(userInfo: userInfo), forKey: "notification")
+        archiver.encode(try notification(userInfo: userInfo, trigger: trigger), forKey: "notification")
         archiver.encode(UNNotificationDefaultActionIdentifier, forKey: "actionIdentifier")
         archiver.finishEncoding()
         return try XCTUnwrap(UNNotificationResponse(coder: unarchiver(of: archiver)))

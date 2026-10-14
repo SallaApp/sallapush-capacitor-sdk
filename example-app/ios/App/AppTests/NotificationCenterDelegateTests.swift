@@ -160,13 +160,35 @@ final class NotificationCenterDelegateTests: XCTestCase {
         router.pushNotificationHandler = push
         router.localNotificationHandler = local
         delegate.chain(to: router)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 60, repeats: false)
 
-        // Without a push trigger, as a local notification has none, the router's rule picks the local handler.
-        let options = present(try TestNotifications.notification(userInfo: TestNotifications.foreign))
+        // A local notification's trigger isn't a push trigger, so the router's rule picks the local handler.
+        let options = present(try TestNotifications.notification(userInfo: TestNotifications.foreign, trigger: trigger))
 
         XCTAssertEqual(options, [[.sound]])
         XCTAssertEqual(local.presented.count, 1)
         XCTAssertTrue(push.presented.isEmpty)
+    }
+
+    // The rule the app runs, on the trigger APNs deliveries carry: the push cases above fix the rule's answer.
+    func testTheRoutersRuleHandsAForeignPushAndItsTapToThePushHandlerOnly() throws {
+        let router = NotificationRouter()
+        let push = RecordingNotificationHandler(presentationOptions: [.banner])
+        let local = RecordingNotificationHandler(presentationOptions: [.sound])
+        router.pushNotificationHandler = push
+        router.localNotificationHandler = local
+        delegate.chain(to: router)
+        let trigger = try TestNotifications.pushTrigger()
+
+        let options = present(try TestNotifications.notification(userInfo: TestNotifications.foreign, trigger: trigger))
+        let completions = receive(try TestNotifications.response(userInfo: TestNotifications.foreign, trigger: trigger))
+
+        XCTAssertEqual(options, [[.banner]])
+        XCTAssertEqual(completions, 1)
+        XCTAssertEqual(push.presented.count, 1)
+        XCTAssertEqual(push.received.count, 1)
+        XCTAssertTrue(local.presented.isEmpty)
+        XCTAssertTrue(local.received.isEmpty)
     }
 
     func testWithoutAHandlerTheRouterPresentsAForeignNotificationWithNoOptions() throws {
@@ -285,20 +307,24 @@ final class NotificationCenterDelegateTests: XCTestCase {
 
         XCTAssertEqual(console.infos, [])
     }
+}
 
-    // MARK: - Helpers
+// MARK: - Helpers
 
-    private func makeDelegate(isPush: Bool = false, chainedTo router: NotificationRouter? = nil)
+private extension NotificationCenterDelegateTests {
+    /// A delegate with the router's rule for pushes that the app runs, or with a fixed answer.
+    func makeDelegate(isPush: Bool? = nil, chainedTo router: NotificationRouter? = nil)
         -> SallaPushCapacitorNotificationCenterDelegate {
-        let delegate = SallaPushCapacitorNotificationCenterDelegate(console: console, once: OncePerProcess(),
-                                                                    isPush: { _ in isPush })
+        let delegate = isPush.map { isPush in
+            SallaPushCapacitorNotificationCenterDelegate(console: console, once: OncePerProcess(), isPush: { _ in isPush })
+        } ?? SallaPushCapacitorNotificationCenterDelegate(console: console, once: OncePerProcess())
         if let router {
             delegate.chain(to: router)
         }
         return delegate
     }
 
-    private func assertSallaPushPresents(_ userInfo: [AnyHashable: Any], line: UInt = #line) throws {
+    func assertSallaPushPresents(_ userInfo: [AnyHashable: Any], line: UInt = #line) throws {
         let previous = RecordingNotificationCenterDelegate(presentationOptions: [.sound])
         delegate.chain(to: previous)
         let notification = try TestNotifications.notification(userInfo: userInfo)
@@ -314,11 +340,11 @@ final class NotificationCenterDelegateTests: XCTestCase {
         XCTAssertTrue(previous.presented.isEmpty, line: line)
     }
 
-    private func present(_ notification: UNNotification) -> [UNNotificationPresentationOptions] {
+    func present(_ notification: UNNotification) -> [UNNotificationPresentationOptions] {
         delegate.presentedOptions(of: notification, in: center)
     }
 
-    private func receive(_ response: UNNotificationResponse) -> Int {
+    func receive(_ response: UNNotificationResponse) -> Int {
         var completions = 0
         delegate.userNotificationCenter(center, didReceive: response) { completions += 1 }
         return completions
