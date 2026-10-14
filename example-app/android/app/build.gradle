@@ -1,0 +1,74 @@
+apply plugin: 'com.android.application'
+
+// The example's SallaPush settings: Gradle properties (~/.gradle/gradle.properties, ORG_GRADLE_PROJECT_<name> or -P)
+// win over android/sallapush.properties, which git ignores.
+def sallaPushProperties = new Properties()
+def sallaPushPropertiesFile = rootProject.file("sallapush.properties")
+if (sallaPushPropertiesFile.exists()) {
+    sallaPushPropertiesFile.withInputStream { sallaPushProperties.load(it) }
+}
+def sallaPushSetting = { String name, String fallback ->
+    findProperty(name) ?: sallaPushProperties.getProperty(name, fallback)
+}
+
+android {
+    namespace = "sa.salla.sallapush.example"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId sallaPushSetting("sallapushApplicationId", "sa.salla.sallapush.example")
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        manifestPlaceholders += [
+            sallaPushAppId: sallaPushSetting("sallapushAppId", ""),
+            sallaPushApiBaseUrl: sallaPushSetting("sallapushApiBaseUrl", "https://api.salla.dev/notifications/v1/sallapush")
+        ]
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // No keystore is committed: release uses the Android SDK's default debug keystore. Release builds, the smoke
+    // tests' among them, shrink the app with R8 as production apps do.
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+// Firebase only with your own google-services.json, which git ignores. Without it the example still builds, and
+// SallaPush logs token.firebase_missing. scripts/verify.sh smoke leaves it out: its builds use a fixed application id.
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text && findProperty("sallapushSkipGoogleServices") != "true") {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

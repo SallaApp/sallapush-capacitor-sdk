@@ -1,0 +1,387 @@
+import Capacitor
+import Foundation
+
+/// The SallaPush plugin that Capacitor loads; apps use the TypeScript API and SallaPushCapacitor.start(). Each method
+/// reads its options on Capacitor's queue, then runs on the main thread, in call order, where SallaPush calls back.
+/// Events go to JavaScript from the main thread, so Capacitor's listener bookkeeping changes there too.
+@objc(SallaPushPlugin)
+public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "SallaPushPlugin"
+    public let jsName = "SallaPush"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "isInitialized", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getSallaPushAppId", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getSdkVersion", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setConsentRequired", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "setConsentGiven", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "login", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "logout", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getExternalId", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isLoggedIn", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "addTag", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "addTags", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeTag", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeTags", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "getTags", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setLanguage", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getPushSubscriptionId", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPushSubscriptionToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPushSubscriptionOptedIn", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "optIn", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "optOut", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "addPushSubscriptionListener", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removePushSubscriptionListener", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "canRequestPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPermissionStatus", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "registerForProvisionalAuthorization", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "refreshPermission", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "registerForRemoteNotifications", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "forwardApnsToken", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "clearAll", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removeNotification", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "isSallaPushNotification", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "displayNotification", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "setDisplayOneSignalCompatPayloads", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "getLogLevel", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "setLogHandlerLevel", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "startEvents", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "stopEvents", returnType: CAPPluginReturnNone)
+    ]
+
+    /// The method logic. load() creates it over the live SDK; SallaPushPluginTests set it over FakeNativeSallaPush.
+    /// Nil before, so a plugin that was never loaded answers every request with its neutral value, does nothing else,
+    /// and has nothing to reset.
+    var logic: SallaPushBridge?
+
+    override public func load() {
+        SallaPushCapacitor.shared.pluginLoaded(pluginConfigIsEmpty: getConfig().isEmpty())
+        logic = SallaPushBridge(native: LiveNativeSallaPush(), console: Console(), once: .shared, emitter: self) {
+            SallaPushCapacitor.shared.earlyInit
+        }
+    }
+
+    deinit {
+        // Captures the logic, never self: a weak reference to an object in deallocation is a fatal error.
+        guard let logic else { return }
+        onMain { logic.reset() }
+    }
+
+    // MARK: - Capacitor's listener bookkeeping, on the main thread
+
+    @objc override public func addListener(_ call: CAPPluginCall) {
+        // Now: the bridge saves the call only when keepAlive is set as this method returns.
+        call.keepAlive = true
+        let eventName = call.getString("eventName") ?? ""
+        onMain { self.addEventListener(eventName, listener: call) }
+    }
+
+    @objc override public func removeListener(_ call: CAPPluginCall) {
+        let eventName = call.getString("eventName") ?? ""
+        guard let callbackId = call.getString("callbackId"), let stored = bridge?.savedCall(withID: callbackId) else {
+            return
+        }
+        bridge?.releaseCall(withID: callbackId)
+        onMain { self.removeEventListener(eventName, listener: stored) }
+    }
+
+    /// Capacitor calls it with a nil call when the WebView loads a page (CapacitorBridge.reset()), on main, and
+    /// JavaScript may call it with a real one. Every native registration stops with the listeners, and the held
+    /// notifications are forgotten.
+    @objc override public func removeAllListeners(_ call: CAPPluginCall?) {
+        onMain {
+            self.logic?.reset()
+            self.eventListeners?.removeAllObjects()
+            call?.resolve()
+        }
+    }
+
+    // MARK: - Initialization and consent
+
+    @objc func initialize(_ call: CAPPluginCall) {
+        guard let appId = call.getString("appId") else { return }
+        let options: [String: Any] = call.getObject("config") ?? [:]
+        onMain { self.logic?.initialize(appId: appId, options: options) }
+    }
+
+    @objc func isInitialized(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.isInitialized ?? false) }
+    }
+
+    @objc func getSallaPushAppId(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.appId) }
+    }
+
+    @objc func getSdkVersion(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.sdkVersion) }
+    }
+
+    @objc func setConsentRequired(_ call: CAPPluginCall) {
+        guard let required = call.getBool("required") else { return }
+        onMain { self.logic?.setConsentRequired(required) }
+    }
+
+    @objc func setConsentGiven(_ call: CAPPluginCall) {
+        guard let given = call.getBool("given") else { return }
+        onMain { self.logic?.setConsentGiven(given) }
+    }
+
+    // MARK: - Identity
+
+    @objc func login(_ call: CAPPluginCall) {
+        guard let externalId = call.getString("externalId"), let identityToken = call.getString("identityToken") else {
+            return
+        }
+        onMain { self.logic?.login(externalId: externalId, identityToken: identityToken) }
+    }
+
+    @objc func logout(_ call: CAPPluginCall) {
+        onMain { self.logic?.logout() }
+    }
+}
+
+// MARK: - User
+
+extension SallaPushPlugin {
+    @objc func getExternalId(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.externalId) }
+    }
+
+    @objc func isLoggedIn(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.isLoggedIn ?? false) }
+    }
+
+    @objc func addTag(_ call: CAPPluginCall) {
+        guard let key = call.getString("key"), let value = call.getString("value") else { return }
+        onMain { self.logic?.addTag(key: key, value: value) }
+    }
+
+    /// The tags from JavaScript, entries unchecked: native skips and logs the ones that aren't strings.
+    @objc func addTags(_ call: CAPPluginCall) {
+        guard let tags = call.getObject("tags") else { return }
+        let entries: [AnyHashable: Any] = tags
+        onMain { self.logic?.addTags(entries) }
+    }
+
+    @objc func removeTag(_ call: CAPPluginCall) {
+        guard let key = call.getString("key") else { return }
+        onMain { self.logic?.removeTag(key) }
+    }
+
+    /// The keys from JavaScript, unchecked: native skips and logs the ones that aren't strings.
+    @objc func removeTags(_ call: CAPPluginCall) {
+        guard let keys = call.getArray("keys") else { return }
+        let items: [Any] = keys
+        onMain { self.logic?.removeTags(items) }
+    }
+
+    @objc func getTags(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.tags ?? [:]) }
+    }
+
+    /// Null, not a missing option, means the device language.
+    @objc func setLanguage(_ call: CAPPluginCall) {
+        let language = call.getValue("language")
+        guard language is String || language is NSNull else { return }
+        let name = language as? String
+        onMain { self.logic?.setLanguage(name) }
+    }
+}
+
+// MARK: - Push subscription
+
+extension SallaPushPlugin {
+    @objc func getPushSubscriptionId(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionId) }
+    }
+
+    @objc func getPushSubscriptionToken(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionToken) }
+    }
+
+    @objc func getPushSubscriptionOptedIn(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.pushSubscriptionOptedIn ?? false) }
+    }
+
+    @objc func optIn(_ call: CAPPluginCall) {
+        onMain { self.logic?.optIn() }
+    }
+
+    @objc func optOut(_ call: CAPPluginCall) {
+        onMain { self.logic?.optOut() }
+    }
+
+    @objc func addPushSubscriptionListener(_ call: CAPPluginCall) {
+        guard let listenerId = call.getInt("listenerId") else { return }
+        onMain { self.logic?.addPushSubscriptionListener(listenerId) }
+    }
+
+    @objc func removePushSubscriptionListener(_ call: CAPPluginCall) {
+        guard let listenerId = call.getInt("listenerId") else { return }
+        onMain { self.logic?.removePushSubscriptionListener(listenerId) }
+    }
+}
+
+// MARK: - Notifications
+
+extension SallaPushPlugin {
+    @objc func getPermission(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.permission ?? false) }
+    }
+
+    @objc func canRequestPermission(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.canRequestPermission ?? false) }
+    }
+
+    @objc func getPermissionStatus(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.permissionStatus) }
+    }
+
+    @objc func requestPermission(_ call: CAPPluginCall) {
+        let fallbackToSettings = call.getBool("fallbackToSettings") ?? false
+        onMain {
+            guard let logic = self.logic else {
+                call.resolve(value: false)
+                return
+            }
+            logic.requestPermission(fallbackToSettings: fallbackToSettings) { call.resolve(value: $0) }
+        }
+    }
+
+    @objc func registerForProvisionalAuthorization(_ call: CAPPluginCall) {
+        onMain {
+            guard let logic = self.logic else {
+                call.resolve(value: false)
+                return
+            }
+            logic.registerForProvisionalAuthorization { call.resolve(value: $0) }
+        }
+    }
+
+    @objc func refreshPermission(_ call: CAPPluginCall) {
+        onMain { self.logic?.refreshPermission() }
+    }
+
+    @objc func registerForRemoteNotifications(_ call: CAPPluginCall) {
+        onMain { self.logic?.registerForRemoteNotifications() }
+    }
+
+    @objc func forwardApnsToken(_ call: CAPPluginCall) {
+        guard let apnsToken = call.getString("apnsToken") else { return }
+        onMain { self.logic?.forwardApnsToken(apnsToken) }
+    }
+
+    @objc func clearAll(_ call: CAPPluginCall) {
+        onMain { self.logic?.clearAll() }
+    }
+
+    @objc func removeNotification(_ call: CAPPluginCall) {
+        onMain { self.logic?.removeNotification() }
+    }
+
+    @objc func isSallaPushNotification(_ call: CAPPluginCall) {
+        let payload: [String: Any] = call.getObject("payload") ?? [:]
+        onMain { call.resolve(value: self.logic?.isSallaPushNotification(payload) ?? false) }
+    }
+
+    @objc func trackOpened(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.trackOpened() ?? false) }
+    }
+
+    @objc func displayNotification(_ call: CAPPluginCall) {
+        guard let handle = call.getString("handle") else { return }
+        onMain { self.logic?.displayNotification(handle) }
+    }
+}
+
+// MARK: - Migration and debug
+
+extension SallaPushPlugin {
+    @objc func setDisplayOneSignalCompatPayloads(_ call: CAPPluginCall) {
+        onMain { self.logic?.setDisplayOneSignalCompatPayloads() }
+    }
+
+    @objc func getLogLevel(_ call: CAPPluginCall) {
+        onMain { call.resolve(value: self.logic?.logLevel) }
+    }
+
+    @objc func setLogLevel(_ call: CAPPluginCall) {
+        guard let level = call.getString("level") else { return }
+        onMain { self.logic?.logLevel = level }
+    }
+
+    @objc func setLogHandlerLevel(_ call: CAPPluginCall) {
+        guard let level = call.getString("level") else { return }
+        onMain { self.logic?.setLogHandlerLevel(level) }
+    }
+}
+
+// MARK: - Events
+
+extension SallaPushPlugin: SallaPushEventEmitter {
+    /// Registers the native listener of an event kind once JavaScript listens to it; an unknown kind is ignored.
+    @objc func startEvents(_ call: CAPPluginCall) {
+        guard let kind = call.getString("kind") else { return }
+        onMain { self.logic?.startEvents(kind) }
+    }
+
+    @objc func stopEvents(_ call: CAPPluginCall) {
+        guard let kind = call.getString("kind") else { return }
+        onMain { self.logic?.stopEvents(kind) }
+    }
+
+    func emitOnClick(_ value: [String: Any]) {
+        notifyListeners("click", data: value)
+    }
+
+    func emitOnWillDisplay(_ value: [String: Any]) {
+        notifyListeners("willDisplay", data: value)
+    }
+
+    func emitOnPermissionChange(_ value: [String: Any]) {
+        notifyListeners("permissionChange", data: value)
+    }
+
+    func emitOnUserChange(_ value: [String: Any]) {
+        notifyListeners("userChange", data: value)
+    }
+
+    func emitOnLoginFailure(_ value: [String: Any]) {
+        notifyListeners("loginFailure", data: value)
+    }
+
+    func emitOnPushSubscriptionChange(_ value: [String: Any]) {
+        notifyListeners("pushSubscriptionChange", data: value)
+    }
+
+    func emitOnLog(_ value: [String: Any]) {
+        notifyListeners("log", data: value)
+    }
+}
+
+private extension CAPPluginCall {
+    /// Resolves a request as JavaScript reads it: `{ value }`, with null for nil.
+    func resolve(value: Any?) {
+        resolve(["value": value ?? NSNull()])
+    }
+}
+
+/// Runs work on the main thread: inline when already there, else on the main queue, which keeps the order of the calls
+/// Capacitor's serial queue made.
+func onMain(_ work: @escaping () -> Void) {
+    guard Thread.isMainThread else {
+        DispatchQueue.main.async(execute: work)
+        return
+    }
+    work()
+}

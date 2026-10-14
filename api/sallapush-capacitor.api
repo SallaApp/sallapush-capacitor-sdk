@@ -1,0 +1,195 @@
+const SallaPush
+SallaPush.Debug: SallaPushDebugNamespace [readonly]
+SallaPush.Debug.getLogLevel(): Promise<SallaPushLogLevel>
+SallaPush.Debug.setLogHandler(level: SallaPushLogLevel, handler: ((entry: SallaPushLogEntry) => void) | null): void
+SallaPush.Debug.setLogLevel(level: SallaPushLogLevel): void
+SallaPush.Migration: SallaPushMigrationNamespace [readonly]
+SallaPush.Migration.setDisplayOneSignalCompatPayloads(display: boolean): void
+SallaPush.Notifications: SallaPushNotificationsNamespace [readonly]
+SallaPush.Notifications.addEventListener(event: 'click', listener: (event: SallaPushClickEvent) => void): SallaPushEventSubscription
+SallaPush.Notifications.addEventListener(event: 'foregroundWillDisplay', listener: (event: SallaPushWillDisplayEvent) => void): SallaPushEventSubscription
+SallaPush.Notifications.addEventListener(event: 'permissionChange', listener: (permission: boolean) => void): SallaPushEventSubscription
+SallaPush.Notifications.canRequestPermission(): Promise<boolean>
+SallaPush.Notifications.clearAll(): void
+SallaPush.Notifications.forwardApnsToken(apnsToken: string): void
+SallaPush.Notifications.getPermission(): Promise<boolean>
+SallaPush.Notifications.getPermissionStatus(): Promise<SallaPushIOSPermissionStatus | null>
+SallaPush.Notifications.isSallaPushNotification(payload: Record<string, unknown>): Promise<boolean>
+SallaPush.Notifications.refreshPermission(): void
+SallaPush.Notifications.registerForProvisionalAuthorization(): Promise<boolean>
+SallaPush.Notifications.registerForRemoteNotifications(): void
+SallaPush.Notifications.removeEventListener(event: 'click', listener: (event: SallaPushClickEvent) => void): void
+SallaPush.Notifications.removeEventListener(event: 'foregroundWillDisplay', listener: (event: SallaPushWillDisplayEvent) => void): void
+SallaPush.Notifications.removeEventListener(event: 'permissionChange', listener: (permission: boolean) => void): void
+SallaPush.Notifications.removeNotification(androidNotificationId: number): void
+SallaPush.Notifications.requestPermission(fallbackToSettings?: boolean): Promise<boolean>
+SallaPush.Notifications.trackOpened(additionalData: Record<string, unknown> | null): Promise<boolean>
+SallaPush.User: SallaPushUserNamespace [readonly]
+SallaPush.User.addEventListener(event: 'change', listener: (state: SallaPushUserChangedState) => void): SallaPushEventSubscription
+SallaPush.User.addEventListener(event: 'loginFailure', listener: (failure: SallaPushLoginFailure) => void): SallaPushEventSubscription
+SallaPush.User.addTag(key: string, value: string): void
+SallaPush.User.addTags(tags: Record<string, string>): void
+SallaPush.User.getExternalId(): Promise<string | null>
+SallaPush.User.getTags(): Promise<Record<string, string>>
+SallaPush.User.isLoggedIn(): Promise<boolean>
+SallaPush.User.pushSubscription: SallaPushSubscriptionNamespace [readonly]
+SallaPush.User.pushSubscription.addEventListener(event: 'change', listener: (state: SallaPushSubscriptionChangedState) => void): SallaPushEventSubscription
+SallaPush.User.pushSubscription.getId(): Promise<string | null>
+SallaPush.User.pushSubscription.getOptedIn(): Promise<boolean>
+SallaPush.User.pushSubscription.getToken(): Promise<string | null>
+SallaPush.User.pushSubscription.optIn(): void
+SallaPush.User.pushSubscription.optOut(): void
+SallaPush.User.pushSubscription.removeEventListener(event: 'change', listener: (state: SallaPushSubscriptionChangedState) => void): void
+SallaPush.User.removeEventListener(event: 'change', listener: (state: SallaPushUserChangedState) => void): void
+SallaPush.User.removeEventListener(event: 'loginFailure', listener: (failure: SallaPushLoginFailure) => void): void
+SallaPush.User.removeTag(key: string): void
+SallaPush.User.removeTags(keys: string[]): void
+SallaPush.User.setLanguage(language: string | null): void
+SallaPush.getAppId(): Promise<string | null>
+SallaPush.getSdkVersion(): Promise<string>
+SallaPush.initialize(appId: string, config?: SallaPushConfig): void
+SallaPush.isInitialized(): Promise<boolean>
+SallaPush.login(externalId: string, identityToken: string): void
+SallaPush.logout(): void
+SallaPush.setConsentGiven(given: boolean): void
+SallaPush.setConsentRequired(required: boolean): void
+const SallaPushAPNsEnvironment
+type SallaPushAPNsEnvironment = (typeof SallaPushAPNsEnvironment)[keyof typeof SallaPushAPNsEnvironment]
+SallaPushAPNsEnvironment.Automatic: 'automatic' [readonly]
+SallaPushAPNsEnvironment.Production: 'production' [readonly]
+SallaPushAPNsEnvironment.Sandbox: 'sandbox' [readonly]
+interface SallaPushClickEvent
+SallaPushClickEvent.notification: SallaPushNotification [readonly]
+SallaPushClickEvent.result: SallaPushClickResult [readonly]
+interface SallaPushClickResult
+SallaPushClickResult.actionId: string | null [readonly]
+SallaPushClickResult.url: string | null [readonly]
+interface SallaPushConfig
+SallaPushConfig.apiBaseUrl?: string
+SallaPushConfig.appVersion?: string
+SallaPushConfig.clearTagsOnLogout?: boolean
+SallaPushConfig.ios?: { ... }
+SallaPushConfig.ios.apnsEnvironment?: SallaPushAPNsEnvironment
+SallaPushConfig.ios.appGroupIdentifier?: string
+SallaPushConfig.ios.autoClearBadge?: boolean
+SallaPushConfig.ios.registerForRemoteNotificationsOnInit?: boolean
+SallaPushConfig.logLevel?: SallaPushLogLevel
+SallaPushConfig.openLaunchUrls?: boolean
+SallaPushConfig.requiresUserConsent?: boolean
+interface SallaPushDebugNamespace
+SallaPushDebugNamespace.getLogLevel(): Promise<SallaPushLogLevel>
+SallaPushDebugNamespace.setLogHandler(level: SallaPushLogLevel, handler: ((entry: SallaPushLogEntry) => void) | null): void
+SallaPushDebugNamespace.setLogLevel(level: SallaPushLogLevel): void
+interface SallaPushEventSubscription
+SallaPushEventSubscription.remove(): void
+const SallaPushIOSPermissionStatus
+type SallaPushIOSPermissionStatus = (typeof SallaPushIOSPermissionStatus)[keyof typeof SallaPushIOSPermissionStatus]
+SallaPushIOSPermissionStatus.Authorized: 'authorized' [readonly]
+SallaPushIOSPermissionStatus.Denied: 'denied' [readonly]
+SallaPushIOSPermissionStatus.Ephemeral: 'ephemeral' [readonly]
+SallaPushIOSPermissionStatus.NotDetermined: 'notDetermined' [readonly]
+SallaPushIOSPermissionStatus.Provisional: 'provisional' [readonly]
+interface SallaPushLogEntry
+SallaPushLogEntry.category: string [readonly]
+SallaPushLogEntry.code: string [readonly]
+SallaPushLogEntry.level: SallaPushLogLevel [readonly]
+SallaPushLogEntry.message: string [readonly]
+SallaPushLogEntry.metadata: Readonly<Record<string, string>> [readonly]
+SallaPushLogEntry.timestamp: number [readonly]
+const SallaPushLogLevel
+type SallaPushLogLevel = (typeof SallaPushLogLevel)[keyof typeof SallaPushLogLevel]
+SallaPushLogLevel.Debug: 'debug' [readonly]
+SallaPushLogLevel.Error: 'error' [readonly]
+SallaPushLogLevel.Info: 'info' [readonly]
+SallaPushLogLevel.Off: 'off' [readonly]
+SallaPushLogLevel.Verbose: 'verbose' [readonly]
+SallaPushLogLevel.Warn: 'warn' [readonly]
+const SallaPushLoginFailure
+type SallaPushLoginFailure = (typeof SallaPushLoginFailure)[keyof typeof SallaPushLoginFailure]
+SallaPushLoginFailure.InvalidRequest: 'invalidRequest' [readonly]
+SallaPushLoginFailure.TokenRejected: 'tokenRejected' [readonly]
+interface SallaPushMigrationNamespace
+SallaPushMigrationNamespace.setDisplayOneSignalCompatPayloads(display: boolean): void
+interface SallaPushNotification
+SallaPushNotification.additionalData: Readonly<Record<string, unknown>> [readonly]
+SallaPushNotification.androidNotificationId: number | null [readonly]
+SallaPushNotification.badge: number | null [readonly]
+SallaPushNotification.body: string | null [readonly]
+SallaPushNotification.channelId: string | null [readonly]
+SallaPushNotification.collapseId: string | null [readonly]
+SallaPushNotification.display(): void
+SallaPushNotification.getBool(key: string): boolean | null
+SallaPushNotification.getInt(key: string): number | null
+SallaPushNotification.getNumber(key: string): number | null
+SallaPushNotification.getString(key: string): string | null
+SallaPushNotification.imageUrl: string | null [readonly]
+SallaPushNotification.launchUrl: string | null [readonly]
+SallaPushNotification.notificationId: string | null [readonly]
+SallaPushNotification.rawPayload: Readonly<Record<string, unknown>> [readonly]
+SallaPushNotification.sound: string | null [readonly]
+SallaPushNotification.source: SallaPushPayloadSource [readonly]
+SallaPushNotification.subtitle: string | null [readonly]
+SallaPushNotification.threadId: string | null [readonly]
+SallaPushNotification.title: string | null [readonly]
+interface SallaPushNotificationsNamespace
+SallaPushNotificationsNamespace.addEventListener(event: 'click', listener: (event: SallaPushClickEvent) => void): SallaPushEventSubscription
+SallaPushNotificationsNamespace.addEventListener(event: 'foregroundWillDisplay', listener: (event: SallaPushWillDisplayEvent) => void): SallaPushEventSubscription
+SallaPushNotificationsNamespace.addEventListener(event: 'permissionChange', listener: (permission: boolean) => void): SallaPushEventSubscription
+SallaPushNotificationsNamespace.canRequestPermission(): Promise<boolean>
+SallaPushNotificationsNamespace.clearAll(): void
+SallaPushNotificationsNamespace.forwardApnsToken(apnsToken: string): void
+SallaPushNotificationsNamespace.getPermission(): Promise<boolean>
+SallaPushNotificationsNamespace.getPermissionStatus(): Promise<SallaPushIOSPermissionStatus | null>
+SallaPushNotificationsNamespace.isSallaPushNotification(payload: Record<string, unknown>): Promise<boolean>
+SallaPushNotificationsNamespace.refreshPermission(): void
+SallaPushNotificationsNamespace.registerForProvisionalAuthorization(): Promise<boolean>
+SallaPushNotificationsNamespace.registerForRemoteNotifications(): void
+SallaPushNotificationsNamespace.removeEventListener(event: 'click', listener: (event: SallaPushClickEvent) => void): void
+SallaPushNotificationsNamespace.removeEventListener(event: 'foregroundWillDisplay', listener: (event: SallaPushWillDisplayEvent) => void): void
+SallaPushNotificationsNamespace.removeEventListener(event: 'permissionChange', listener: (permission: boolean) => void): void
+SallaPushNotificationsNamespace.removeNotification(androidNotificationId: number): void
+SallaPushNotificationsNamespace.requestPermission(fallbackToSettings?: boolean): Promise<boolean>
+SallaPushNotificationsNamespace.trackOpened(additionalData: Record<string, unknown> | null): Promise<boolean>
+const SallaPushPayloadSource
+type SallaPushPayloadSource = (typeof SallaPushPayloadSource)[keyof typeof SallaPushPayloadSource]
+SallaPushPayloadSource.Compat: 'compat' [readonly]
+SallaPushPayloadSource.Native: 'native' [readonly]
+interface SallaPushSubscriptionChangedState
+SallaPushSubscriptionChangedState.current: SallaPushSubscriptionState [readonly]
+SallaPushSubscriptionChangedState.previous: SallaPushSubscriptionState [readonly]
+interface SallaPushSubscriptionNamespace
+SallaPushSubscriptionNamespace.addEventListener(event: 'change', listener: (state: SallaPushSubscriptionChangedState) => void): SallaPushEventSubscription
+SallaPushSubscriptionNamespace.getId(): Promise<string | null>
+SallaPushSubscriptionNamespace.getOptedIn(): Promise<boolean>
+SallaPushSubscriptionNamespace.getToken(): Promise<string | null>
+SallaPushSubscriptionNamespace.optIn(): void
+SallaPushSubscriptionNamespace.optOut(): void
+SallaPushSubscriptionNamespace.removeEventListener(event: 'change', listener: (state: SallaPushSubscriptionChangedState) => void): void
+interface SallaPushSubscriptionState
+SallaPushSubscriptionState.id: string | null [readonly]
+SallaPushSubscriptionState.optedIn: boolean [readonly]
+SallaPushSubscriptionState.token: string | null [readonly]
+interface SallaPushUserChangedState
+SallaPushUserChangedState.current: SallaPushUserState [readonly]
+SallaPushUserChangedState.previous: SallaPushUserState [readonly]
+interface SallaPushUserNamespace
+SallaPushUserNamespace.addEventListener(event: 'change', listener: (state: SallaPushUserChangedState) => void): SallaPushEventSubscription
+SallaPushUserNamespace.addEventListener(event: 'loginFailure', listener: (failure: SallaPushLoginFailure) => void): SallaPushEventSubscription
+SallaPushUserNamespace.addTag(key: string, value: string): void
+SallaPushUserNamespace.addTags(tags: Record<string, string>): void
+SallaPushUserNamespace.getExternalId(): Promise<string | null>
+SallaPushUserNamespace.getTags(): Promise<Record<string, string>>
+SallaPushUserNamespace.isLoggedIn(): Promise<boolean>
+SallaPushUserNamespace.pushSubscription: SallaPushSubscriptionNamespace [readonly]
+SallaPushUserNamespace.removeEventListener(event: 'change', listener: (state: SallaPushUserChangedState) => void): void
+SallaPushUserNamespace.removeEventListener(event: 'loginFailure', listener: (failure: SallaPushLoginFailure) => void): void
+SallaPushUserNamespace.removeTag(key: string): void
+SallaPushUserNamespace.removeTags(keys: string[]): void
+SallaPushUserNamespace.setLanguage(language: string | null): void
+interface SallaPushUserState
+SallaPushUserState.externalId: string | null [readonly]
+SallaPushUserState.isLoggedIn: boolean [readonly]
+interface SallaPushWillDisplayEvent
+SallaPushWillDisplayEvent.isPrevented: boolean [readonly]
+SallaPushWillDisplayEvent.notification: SallaPushNotification [readonly]
+SallaPushWillDisplayEvent.preventDefault(): void

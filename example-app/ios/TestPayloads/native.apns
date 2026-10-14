@@ -1,0 +1,16 @@
+{
+  "Simulator Target Bundle": "sa.salla.sallapush.example",
+  "aps": {
+    "alert": {
+      "title": "SallaPush test",
+      "body": "A native SallaPush notification"
+    },
+    "sound": "default",
+    "mutable-content": 1
+  },
+  "sp_v": "1",
+  "sp_id": "msg_5a11a90001",
+  "sp_url": "https://example.com/products/42",
+  "type": "product",
+  "id": "42"
+}

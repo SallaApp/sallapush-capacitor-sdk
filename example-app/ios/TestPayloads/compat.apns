@@ -1,0 +1,20 @@
+{
+  "Simulator Target Bundle": "sa.salla.sallapush.example",
+  "aps": {
+    "alert": {
+      "title": "SallaPush test",
+      "body": "A OneSignal-compatible SallaPush notification"
+    },
+    "sound": "default",
+    "mutable-content": 1
+  },
+  "custom": {
+    "i": "5f0d2c4e-8a61-4b7d-9c3e-2a1b0f9e8d7c",
+    "a": {
+      "push_ref": "msg_5a11a90002",
+      "type": "product",
+      "id": 42
+    },
+    "u": "https://example.com/products/42"
+  }
+}

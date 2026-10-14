@@ -1,0 +1,24 @@
+{
+  "name": "@salla.sa/sallapush-capacitor-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "sync": "cap sync",
+    "ios": "cap run ios",
+    "android": "cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@salla.sa/sallapush-capacitor": "workspace:*"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3",
+    "typescript": "^6.0.3",
+    "vite": "7.3.7"
+  }
+}
