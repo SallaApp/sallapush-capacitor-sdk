@@ -1042,6 +1042,9 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
   list every code
   ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference),
   [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference)).
+- **Ship with the console level at `warn`,** the default. At `info` or more, set by the static key, `initialize`'s
+  `logLevel` or `SallaPush.Debug.setLogLevel`, iOS also writes `status.launch` and `status.changed` to the device log,
+  in release builds too.
 - **Capacitor's own logging.** In debug builds Capacitor logs every plugin call with its options, and on iOS the start
   of every result and event it sends to JavaScript, so `login`'s identity token, push tokens and handler entries reach
   the device log there. Never set Capacitor's `loggingBehavior` to `'production'`, which logs the same in release
@@ -1058,7 +1061,6 @@ An app that knows its app id only at run time starts SallaPush from JavaScript:
 <!-- snippet:example-app/src/readmeSnippets/configuration.ts#initialize -->
 ```ts
 SallaPush.initialize(appId, {
-  logLevel: SallaPushLogLevel.Info,
   ios: { appGroupIdentifier: 'group.com.example.shop' },
 });
 ```

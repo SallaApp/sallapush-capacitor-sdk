@@ -6,7 +6,6 @@ import { telemetry } from './standIns';
 export function startWithAppIdFromServer(appId: string): void {
   // snippet:initialize
   SallaPush.initialize(appId, {
-    logLevel: SallaPushLogLevel.Info,
     ios: { appGroupIdentifier: 'group.com.example.shop' },
   });
   // end-snippet
