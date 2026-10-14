@@ -1217,8 +1217,8 @@ Before you ship, check on a device, with a real app id:
 2. **Launch the app.** On iOS, 2 seconds after the app first becomes active, the package logs at info level:
    `[SallaPush] SallaPush's notification-center delegate is the current one; it hands other notifications to
    Capacitor's notification router.` (subsystem `com.salla.push`, category `wrapper`; in Console.app, with info
-   messages shown). So `SallaPushCapacitor.start()` ran before Capacitor's bridge, and the plugin took the delegate
-   back. In its place, an error names the problem
+   messages shown). This line, with no `[SallaPush]` error before it, shows that `SallaPushCapacitor.start()` ran
+   before Capacitor's bridge and that the plugin took the delegate back. Otherwise an error names the problem
    ([Capacitor setup](docs/TROUBLESHOOTING.md#capacitor-setup)).
 3. **Watch the registration.** `init.started` names the app id and the API URL, and `register.ok` follows once the
    device is registered. `SallaPush.User.pushSubscription.getId()` then resolves the device id, which the SallaPush
