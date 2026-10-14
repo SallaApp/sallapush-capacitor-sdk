@@ -611,7 +611,11 @@ Studio's Gradle JDK setting. An older JDK fails with "invalid source release: 21
 
 ## Quick start
 
-The same code serves Angular, React, Vue and plain TypeScript apps.
+The same code serves Angular, React, Vue and plain TypeScript apps. **In an Angular app that uses zone.js,** as apps
+created before Angular 21 do, SallaPush's listeners run outside Angular's zone, as every Capacitor plugin's events do.
+Run a listener's work that navigates or changes what a screen shows in `NgZone.run`, such as
+`this.zone.run(() => this.router.navigateByUrl(url))`; without it, the screen doesn't update. Zoneless apps need
+nothing.
 
 ### Consent first
 
@@ -846,8 +850,8 @@ console error each ([On the web](#on-the-web)).
 
 Listeners are added with `addEventListener`, which returns a subscription at once. `subscription.remove()` and
 `removeEventListener(event, listener)` both remove it, and the same function added twice is added once. Listeners run
-in the page's JavaScript, in the order they were added. A listener that throws is reported with `console.error` and
-doesn't stop the others.
+in the page's JavaScript, in the order they were added, and outside Angular's zone ([Quick start](#quick-start)). A
+listener that throws is reported with `console.error` and doesn't stop the others.
 
 A page load, such as a reload, a navigation or a live update, removes the old page's listeners, as Capacitor removes
 every plugin's listeners then: SallaPush stops every native registration of that page. The new page adds its own, as
