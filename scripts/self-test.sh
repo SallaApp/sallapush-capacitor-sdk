@@ -424,6 +424,10 @@ EOF
   check "  ... in the README's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/README.md"
   check "  ... in the README's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" "$case_dir/README.md"
   check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/README.md"
+  check "  ... in docs/SETUP.md's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/docs/SETUP.md"
+  check "  ... in docs/SETUP.md's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" \
+    "$case_dir/docs/SETUP.md"
+  check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/docs/SETUP.md"
   check "  ... in docs/REFERENCE.md" ok grep -qF "SallaPush iOS $target and SallaPush Android $target" \
     "$case_dir/docs/REFERENCE.md"
   check "  ... in docs/TROUBLESHOOTING.md's CocoaPods message" ok grep -qF "SallaPush (= $target)" \

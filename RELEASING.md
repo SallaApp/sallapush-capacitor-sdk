@@ -21,8 +21,8 @@ The package follows [Semantic Versioning](https://semver.org). Its pins of the n
 - **A major** changes the package's API in a way that apps must follow.
 
 A release is a git tag on this repository: the version itself, without a `v`, such as `1.0.0` or `1.1.0-beta.1`.
-Apps install that tag ([README](README.md#install)). A pushed tag never moves and is never deleted: an app's lockfile
-records its commit. A defect in a release is fixed by the next version.
+Apps install that tag ([README](README.md#installation)). A pushed tag never moves and is never deleted: an app's
+lockfile records its commit. A defect in a release is fixed by the next version.
 
 ## Before a release
 
@@ -66,8 +66,8 @@ In a fresh Capacitor 8 app, install the pushed tag with the README's exact depen
 - each time, run `npx cap sync`, and build both platforms.
 
 From the second release on, also update an app that has the previous release, once with CocoaPods and once with Swift
-Package Manager and the Notification Service Extension, as the README's
-[Updating the package](README.md#updating-the-package) says: move the tag and the app's SallaPush pins, run
+Package Manager and the Notification Service Extension, as the setup guide's
+[Updating the package](docs/SETUP.md#updating-the-package) says: move the tag and the app's SallaPush pins, run
 `npx cap sync`, and build both platforms.
 
 Record the result in the release's pull request.

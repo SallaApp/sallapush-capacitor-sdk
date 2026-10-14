@@ -64,7 +64,7 @@ takes.
 | `android/` | The Android plugin, in Kotlin: `SallaPushPlugin.kt`, `SallaPushInitProvider`, the same components as on iOS, and their JUnit tests (`src/test/`) |
 | `Package.swift`, `Salla.saSallapushCapacitor.podspec` | The plugin's Swift package and its pod. Capacitor's CLI names both after the npm package, and apps import the module `SallaPushCapacitorPlugin` with either |
 | `example-app/` | The example app: its web app (`src/`), the README's snippets (`src/readmeSnippets/`), and its native projects, with the iOS tests in the `AppTests` target (`ios/App/AppTests/`) and the Notification Service Extension |
-| `docs/` | The reference and the troubleshooting guide; `docs/snippets/` holds README code for app shapes the example doesn't have, which `scripts/verify.sh consumer` builds |
+| `docs/` | The setup guide, the reference and the troubleshooting guide; `docs/snippets/` holds the docs' code for app shapes the example doesn't have, which `scripts/verify.sh consumer` builds |
 | `scripts/` | `verify.sh`, `bump-native.sh`, `release-dist.sh`, `verified-label.sh`, `add-nse-target.rb`, the checkers and `self-test.sh` |
 | `api/sallapush-capacitor.api` | The public TypeScript API, as `scripts/dump-api.mjs` prints it |
 | `tool/api-parity/` | The native API files at the pinned versions, and `mapping.json`, which maps every native symbol |
