@@ -1,17 +1,15 @@
-import { SallaPush } from '@salla.sa/sallapush-capacitor';
+import './style.css';
+import { renderApp } from './app';
+import { startEventLog } from './eventLog';
+import { startSelfTest } from './selfTest';
+import { startSallaPush } from './start';
 
-const sdkVersion = document.querySelector<HTMLElement>('#sdk-version');
+// At app start, before the first screen: the tap that launched the app reaches the click listeners added here.
+startEventLog();
+startSallaPush();
+void startSelfTest();
 
-function show(text: string): void {
-  if (sdkVersion) {
-    sdkVersion.textContent = text;
-  }
+const root = document.querySelector<HTMLElement>('#app');
+if (root) {
+  renderApp(root);
 }
-
-SallaPush.getSdkVersion().then(
-  (version) => show(`SallaPush ${version}`),
-  (error: unknown) =>
-    show(
-      `SallaPush isn't available: ${error instanceof Error ? error.message : String(error)}`
-    )
-);

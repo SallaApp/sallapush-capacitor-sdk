@@ -31,10 +31,13 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // No keystore is committed: release uses the Android SDK's default debug keystore. Release builds, the smoke
+    // tests' among them, shrink the app with R8 as production apps do.
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -59,9 +62,11 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Firebase only with your own google-services.json, which git ignores. Without it the example still builds, and
+// SallaPush logs token.firebase_missing. scripts/verify.sh smoke leaves it out: its builds use a fixed application id.
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    if (servicesJSON.text && findProperty("sallapushSkipGoogleServices") != "true") {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {

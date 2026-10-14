@@ -1,0 +1,5 @@
+{
+  "custom": "{\"i\":\"5f0d2c4e-8a61-4b7d-9c3e-2a1b0f9e8d7c\",\"a\":{\"push_ref\":\"msg_5a11a90002\",\"type\":\"product\",\"id\":42},\"u\":\"https://example.com/products/42\"}",
+  "title": "SallaPush test",
+  "alert": "A OneSignal-compatible SallaPush notification"
+}
