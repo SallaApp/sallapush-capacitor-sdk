@@ -1,0 +1,21 @@
+# The SallaPush lines of a Capacitor app's ios/App/Podfile, for an app that uses CocoaPods (npx cap add ios
+# --packagemanager cocoapods). Add them before the first npx cap sync with the plugin; npx cap sync rewrites only
+# def capacitor_pods, so they stay. An app that uses Swift Package Manager (one with ios/App/CapApp-SPM) gets SallaPush
+# through the plugin and must never add these pods, even to a Podfile it keeps for other SDKs: SallaPush would be linked
+# twice. scripts/verify.sh consumer adds them to a fresh app and builds it.
+target 'App' do
+  capacitor_pods
+  # snippet:podfile-app
+  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+  pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+  # end-snippet
+end
+
+# The Notification Service Extension links SallaPushExtension, never SallaPush. At the top level its target gets the
+# template's use_frameworks!.
+# snippet:podfile-extension
+target 'SallaPushNotificationService' do
+  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+  pod 'SallaPushExtension', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+end
+# end-snippet

@@ -11,6 +11,7 @@ export default defineConfig([
       'dist/',
       'coverage/',
       '.yarn/',
+      '**/build/',
       'example-app/dist/',
       'example-app/ios/',
       'example-app/android/',
