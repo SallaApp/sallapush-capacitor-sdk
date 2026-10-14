@@ -474,7 +474,7 @@ vi.mock('@salla.sa/sallapush-capacitor', () => {
 |---|---|---|---|
 | `notificationId`, `title`, `subtitle`, `body`, `launchUrl`, `sound` | The same-named `String?` (`launchURL`) | The same-named `String?` | `string` or `null` |
 | `imageUrl` | `imageURL?.absoluteString` | `imageUrl` | `string` or `null` |
-| `additionalData` | JSON values | JSON values: strings in native payloads, JSON types in compatible ones | An object, `null` values kept. On Android, decimal and big integer values become their decimal text. |
+| `additionalData` | JSON values | JSON values: strings in native payloads, JSON types in compatible ones | An object, `null` values kept. Numbers arrive as JavaScript numbers on both platforms. |
 | `rawPayload` | The whole `userInfo`, kept to JSON values (strings, numbers, booleans, null, arrays and objects; keys as text) | The FCM data map, unchanged: `custom` stays JSON text, so nothing is lost | An object |
 | `source` | `.native`, `.compat` | `NATIVE`, `COMPAT` | `'native'`, `'compat'` |
 | Typed values | Native's `string(forKey:)`, `int(forKey:)`, `bool(forKey:)` and `number(forKey:)` for each top-level `additionalData` key | `getString`, `getLong` and `getBoolean`; no `getNumber` | Read by `getString`, `getInt`, `getBool` and `getNumber` |
