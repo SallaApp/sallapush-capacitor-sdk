@@ -1222,7 +1222,8 @@ Before you ship, check on a device, with a real app id:
    ([Capacitor setup](docs/TROUBLESHOOTING.md#capacitor-setup)).
 3. **Watch the registration.** `init.started` names the app id and the API URL, and `register.ok` follows once the
    device is registered. `SallaPush.User.pushSubscription.getId()` then resolves the device id, which the SallaPush
-   team can look up.
+   team can look up. Check this in a build of every configuration you ship, Release included: SallaPush doesn't start
+   in a build without the app id, and nothing logs it ([Identity](docs/TROUBLESHOOTING.md#identity)).
 4. **Have the SallaPush team send a notification** to that device, with the app in the foreground, then in the
    background, and tap it: the click listener gets the tap.
 5. **Sign in:** no `'loginFailure'` event follows.
