@@ -1249,7 +1249,7 @@ every pin (the podspec, `Package.swift`, the example's extension package, the Po
 the docs), adds the CHANGELOG line and runs the API parity check, which names each new native API that needs a
 decision. CI checks on every pull request that the pins agree, that every native API is wrapped or listed as not
 wrapped, that TypeScript, Swift and Kotlin declare the same plugin methods and events, and that the README's code
-equals the example's.
+equals the example's. [RELEASING.md](RELEASING.md#updating-the-native-sdks) has the whole flow.
 
 ## More documentation
 
@@ -1257,6 +1257,8 @@ equals the example's.
   foreground display, errors, data mapping, coexistence, logging and compatibility.
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): every known problem and its fix.
 - [example-app/README.md](example-app/README.md): the example app, test pushes without a server, and its self-test.
+- [CONTRIBUTING.md](CONTRIBUTING.md): working on this package, its checks and its pull requests.
+- [RELEASING.md](RELEASING.md): versions, releases, native updates and the checks on devices.
 - The native SDKs' docs: [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/README.md) and
   [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/README.md).
 

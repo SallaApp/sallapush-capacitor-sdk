@@ -129,7 +129,8 @@ you, tell the SallaPush team.
 - **Resolving the private Swift package on CI** with `xcodebuild -scmProvider system` and native's rewrite of the
   package's HTTPS URL ([CI machines](../README.md#ci-machines)). A CI Mac whose Xcode is signed in, and CocoaPods, are
   the proven ways.
-- **Checks on devices,** which run before releases that change native code (the device checklist):
+- **Checks on devices,** which run before releases that change native code
+  ([the device checklist](../RELEASING.md#the-device-checklist)):
   - the tap that launches the app reaches the click listener once, in an app with the UIScene template and in a
     storyboard app;
   - `@capacitor/push-notifications`, `@capacitor/local-notifications`, `@capacitor-firebase/messaging` and OneSignal
