@@ -1,6 +1,7 @@
 import {
   native,
   type ClickEventSpec,
+  type LogEntrySpec,
   type LoginFailureSpec,
   type NotificationSpec,
   type PermissionChangeSpec,
@@ -12,6 +13,8 @@ import {
 } from './native';
 import type {
   SallaPushClickEvent,
+  SallaPushLogEntry,
+  SallaPushLogLevel,
   SallaPushLoginFailure,
   SallaPushNotification,
   SallaPushPayloadSource,
@@ -110,6 +113,17 @@ export function subscriptionChange(
   return Object.freeze({
     previous: subscriptionState(spec.previous),
     current: subscriptionState(spec.current),
+  });
+}
+
+export function logEntry(spec: LogEntrySpec): SallaPushLogEntry {
+  return Object.freeze({
+    level: spec.level as SallaPushLogLevel,
+    category: spec.category,
+    code: spec.code,
+    message: spec.message,
+    metadata: spec.metadata as Readonly<Record<string, string>>,
+    timestamp: spec.timestamp,
   });
 }
 

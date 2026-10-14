@@ -221,6 +221,18 @@ final class SallaPushPluginDebugTests: SallaPushPluginTestCase {
         XCTAssertEqual(native.logLevel, .error)
     }
 
+    func testSetsTheLogHandlerLevelByItsJavaScriptNameAndIgnoresAnUnknownOne() {
+        let plugin = makePlugin()
+        plugin.startEvents(call(["kind": "log"]))
+
+        plugin.setLogHandlerLevel(call(["level": "verbose"]))
+        plugin.setLogHandlerLevel(call(["level": "trace"]))
+        plugin.setLogHandlerLevel(call(["level": 3]))
+        plugin.setLogHandlerLevel(call())
+
+        XCTAssertEqual(native.logHandlers.map(\.level), [.warn, .verbose])
+    }
+
     func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
         let plugin = makePlugin()
 

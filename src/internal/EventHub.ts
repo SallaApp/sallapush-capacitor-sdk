@@ -2,11 +2,18 @@ import type { PluginListenerHandle } from '@capacitor/core';
 
 import type {
   SallaPushEventSubscription,
+  SallaPushLogEntry,
+  SallaPushLogLevel,
   SallaPushSubscriptionChangedState,
 } from '../definitions';
 import { reportFailure } from './calls';
-import { subscriptionChange } from './mapping';
-import { native, type EventKind, type SubscriptionChangedSpec } from './native';
+import { logEntry, subscriptionChange } from './mapping';
+import {
+  native,
+  type EventKind,
+  type LogEntrySpec,
+  type SubscriptionChangedSpec,
+} from './native';
 import { func, oneOf, valid } from './validate';
 
 type Listener<Value> = (value: Value) => void;
@@ -188,6 +195,47 @@ export class SubscriptionHub implements Hub {
         subscriptionChange(payload),
         "SallaPush.User.pushSubscription 'change' listener"
       );
+    }
+  }
+}
+
+/**
+ * The app's one log handler. Its level reaches native before the native registration starts, so native registers at
+ * it, and a later level only changes that registration. Removing the handler stops the registration; the Capacitor
+ * listener stays for the page.
+ */
+export class LogHandlerHub {
+  private handler: Listener<SallaPushLogEntry> | null = null;
+  private readonly connection = new Connection<LogEntrySpec>(
+    (dispatch) => native.addListener('log', dispatch),
+    (payload) => this.dispatch(payload)
+  );
+  private readonly steps = new Steps('SallaPush.Debug log handler');
+
+  set(
+    level: SallaPushLogLevel,
+    handler: Listener<SallaPushLogEntry> | null
+  ): void {
+    if (handler === null) {
+      if (this.handler !== null) {
+        this.handler = null;
+        this.steps.run(() => native.stopEvents({ kind: 'log' }));
+      }
+      return;
+    }
+    this.steps.run(() => native.setLogHandlerLevel({ level }));
+    if (this.handler === null) {
+      this.steps.run(async () => {
+        await this.connection.open();
+        await native.startEvents({ kind: 'log' });
+      });
+    }
+    this.handler = handler;
+  }
+
+  private dispatch(payload: LogEntrySpec): void {
+    if (this.handler !== null) {
+      deliver(this.handler, logEntry(payload), 'SallaPush.Debug log handler');
     }
   }
 }

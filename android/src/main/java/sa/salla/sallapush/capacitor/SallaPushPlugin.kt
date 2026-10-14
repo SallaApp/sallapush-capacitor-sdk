@@ -37,7 +37,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   // Set by handleOnDestroy(), on main; read by the registry's listeners there, by onRegistry and by emit.
   @Volatile private var destroyed = false
   private val displays = DisplayStore(seams.native)
-  private val events = EventRegistry(seams.native, displays, { !destroyed }, ::emit)
+  private val events = EventRegistry(seams.native, displays, ::onMain, { !destroyed }, ::emit)
   private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
   /**
@@ -259,6 +259,13 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   fun setLogLevel(call: PluginCall) {
     val level = call.getString("level")?.let(::logLevelNamed) ?: return
     seams.native.logLevel = level
+  }
+
+  /** The level of JavaScript's log handler; a name that isn't a level is ignored. */
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun setLogHandlerLevel(call: PluginCall) {
+    val level = call.getString("level")?.let(::logLevelNamed) ?: return
+    onRegistry { events.setLogLevel(level) }
   }
 
   /** Registers the native listener of an event kind once JavaScript listens to it; an unknown kind is ignored. */

@@ -125,6 +125,9 @@ export const native = {
   setLogLevel: jest.fn<SallaPushNativePlugin['setLogLevel']>(() =>
     Promise.resolve()
   ),
+  setLogHandlerLevel: jest.fn<SallaPushNativePlugin['setLogHandlerLevel']>(() =>
+    Promise.resolve()
+  ),
 
   startEvents: jest.fn<SallaPushNativePlugin['startEvents']>(() =>
     Promise.resolve()

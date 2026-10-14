@@ -777,6 +777,53 @@ class SallaPushPluginTest {
     assertEquals(1, ShadowLog.getLogsForTag("SallaPush").count { it.type == Log.WARN })
   }
 
+  @Test
+  fun postsTheLogHandlerLevelToTheMainThreadAndIgnoresAnUnknownName() {
+    val main = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnMain = { main += it })
+
+    plugin.startEvents(call("startEvents", "kind" to "log"))
+    plugin.setLogHandlerLevel(call("setLogHandlerLevel", "level" to "verbose"))
+    plugin.setLogHandlerLevel(call("setLogHandlerLevel", "level" to "trace"))
+    plugin.setLogHandlerLevel(call("setLogHandlerLevel", "level" to 3))
+    plugin.setLogHandlerLevel(call("setLogHandlerLevel"))
+    assertTrue(native.calls.isEmpty())
+    main.drain()
+
+    assertEquals(listOf("addLogListener(WARN)", "addLogListener(VERBOSE)"), native.calls)
+  }
+
+  // Native logs on its own thread; the registry hops to main, and the plugin emits on its own thread.
+  @Test
+  fun emitsLogEntriesThroughTheMainThreadOnThePluginThread() {
+    val main = mutableListOf<() -> Unit>()
+    val pluginThread = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnMain = { main += it }, runOnPluginThread = { pluginThread += it })
+    val log = listener(plugin, "log")
+    plugin.startEvents(call("startEvents", "kind" to "log"))
+    main.drain()
+    val event = NativeValues.logEvent(
+      SallaPushLogLevel.WARN,
+      "registration",
+      "register.retry",
+      "Registration failed (HTTP 503); retrying in 30 s.",
+      mapOf("http_status" to "503"),
+      1_800_000_000_123L,
+    )
+
+    native.logListeners.keys.single().onLogEvent(event)
+    assertTrue(pluginThread.isEmpty())
+    main.drain()
+    assertTrue(log.resolved.isEmpty())
+    pluginThread.drain()
+
+    val entry = log.resolved.single()
+    assertEquals(Conversions.toJSObject(Mapping.logEntry(event)).toString(), entry.toString())
+    assertEquals("warn", entry.getString("level"))
+    assertEquals("503", entry.getJSONObject("metadata").getString("http_status"))
+    assertEquals(1_800_000_000_123L, entry.getLong("timestamp"))
+  }
+
   // The TypeScript API sends only known kinds, integer ids and string handles, so only another caller could send these.
   @Test
   fun ignoresAnUnknownKindAndAMissingOrMistypedEventOption() {
@@ -865,9 +912,11 @@ class SallaPushPluginTest {
     val click = listener(plugin, "click")
     plugin.startEvents(call("startEvents", "kind" to "click"))
     plugin.startEvents(call("startEvents", "kind" to "permission"))
+    plugin.startEvents(call("startEvents", "kind" to "log"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
     main.drain()
     val handle = holdAForegroundNotification(plugin, pluginThread, main)
+    val logListener = native.logListeners.keys.single()
     val clickListener = native.clickListeners.single()
     val foregroundListener = native.foregroundListeners.single()
     clickListener.onClick(NativeValues.click(testNotification(), null, null))
@@ -882,6 +931,10 @@ class SallaPushPluginTest {
     clickListener.onClick(NativeValues.click(testNotification(), null, null))
     val lateForeground = NativeValues.willDisplay(testNotification())
     foregroundListener.onWillDisplay(lateForeground)
+    logListener.onLogEvent(
+      NativeValues.logEvent(SallaPushLogLevel.ERROR, "registration", "register.failed", "Failed.", emptyMap(), 0L)
+    )
+    plugin.setLogHandlerLevel(call("setLogHandlerLevel", "level" to "verbose"))
     plugin.startEvents(call("startEvents", "kind" to "click"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 3))
     plugin.displayNotification(call("displayNotification", "handle" to handle))
@@ -893,14 +946,17 @@ class SallaPushPluginTest {
     assertTrue(native.permissionObservers.isEmpty())
     assertTrue(native.userObservers.isEmpty())
     assertTrue(native.subscriptionObservers.isEmpty())
+    assertTrue(native.logListeners.isEmpty())
     assertEquals(
       listOf(
         "addClickListener",
         "addPermissionObserver",
+        "addLogListener(WARN)",
         "addSubscriptionObserver",
         "addForegroundLifecycleListener",
         "removeClickListener",
         "removePermissionObserver",
+        "removeLogListener",
         "removeForegroundLifecycleListener",
         "removeSubscriptionObserver",
       ),

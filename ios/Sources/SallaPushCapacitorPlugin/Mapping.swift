@@ -56,6 +56,17 @@ enum Mapping {
         ["previous": subscription(change.previous), "current": subscription(change.current)]
     }
 
+    static func logEntry(_ entry: SallaPushLogEntry) -> [String: Any] {
+        [
+            "level": entry.level.name,
+            "category": entry.category,
+            "code": entry.code,
+            "message": entry.message,
+            "metadata": entry.metadata,
+            "timestamp": (entry.date.timeIntervalSince1970 * 1000).rounded(.down)
+        ]
+    }
+
     private static func user(_ state: SallaPushUserState) -> [String: Any] {
         var body: [String: Any] = ["isLoggedIn": state.isLoggedIn]
         body["externalId"] = state.externalId

@@ -179,6 +179,12 @@ final class SallaPushBridge {
         }
     }
 
+    /// The level of JavaScript's log handler; a name that isn't a level is ignored.
+    func setLogHandlerLevel(_ level: String) {
+        guard let level = SallaPushLogLevel(name: level) else { return }
+        events.setLogLevel(level)
+    }
+
     func setDisplayOneSignalCompatPayloads() {
         once.info("Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS.", to: console)
     }

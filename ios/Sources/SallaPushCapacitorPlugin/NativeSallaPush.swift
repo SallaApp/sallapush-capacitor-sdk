@@ -68,6 +68,9 @@ protocol NativeSallaPush: AnyObject {
     func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation
 
     var logLevel: SallaPushLogLevel { get set }
+    /// Native's one log handler for the process, called on native's own queue with each entry in bridge form;
+    /// cancelling the registration removes it.
+    func setLogHandler(level: SallaPushLogLevel, _ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
 }
 
 final class LiveNativeSallaPush: NativeSallaPush {
@@ -202,5 +205,17 @@ final class LiveNativeSallaPush: NativeSallaPush {
     var logLevel: SallaPushLogLevel {
         get { SallaPush.Debug.logLevel }
         set { SallaPush.Debug.logLevel = newValue }
+    }
+
+    func setLogHandler(level: SallaPushLogLevel, _ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        SallaPush.Debug.setLogHandler(level: level) { handler(Mapping.logEntry($0)) }
+        return LogHandlerRegistration()
+    }
+}
+
+/// The process-wide log handler as a registration.
+private final class LogHandlerRegistration: NativeObservation {
+    func cancel() {
+        SallaPush.Debug.setLogHandler(level: .warn, nil)
     }
 }

@@ -52,6 +52,7 @@ final class FakeNativeSallaPush: NativeSallaPush {
     private(set) var userHandlers: [([String: Any]) -> Void] = []
     private(set) var loginFailureHandlers: [([String: Any]) -> Void] = []
     private(set) var subscriptionHandlers: [([String: Any]) -> Void] = []
+    private(set) var logHandlers: [(level: SallaPushLogLevel, handler: ([String: Any]) -> Void)] = []
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)
@@ -166,6 +167,11 @@ final class FakeNativeSallaPush: NativeSallaPush {
         return observation("addSubscriptionObserver")
     }
 
+    func setLogHandler(level: SallaPushLogLevel, _ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        logHandlers.append((level, handler))
+        return observation("setLogHandler")
+    }
+
     private func observation(_ call: String) -> FakeObservation {
         calls.append(call)
         let observation = FakeObservation()
@@ -228,6 +234,10 @@ final class RecordingEmitter: SallaPushEventEmitter {
 
     func emitOnPushSubscriptionChange(_ value: [String: Any]) {
         record("pushSubscriptionChange", value)
+    }
+
+    func emitOnLog(_ value: [String: Any]) {
+        record("log", value)
     }
 
     private func record(_ name: String, _ value: [String: Any]) {

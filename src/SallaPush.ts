@@ -15,6 +15,7 @@ import {
 } from './internal/validate';
 import type {
   SallaPushConfig,
+  SallaPushDebugNamespace,
   SallaPushMigrationNamespace,
   SallaPushNotificationsNamespace,
   SallaPushUserNamespace,
@@ -45,7 +46,7 @@ export const SallaPush: {
   logout(): void;
   readonly User: SallaPushUserNamespace;
   readonly Notifications: SallaPushNotificationsNamespace;
-  readonly Debug: typeof Debug;
+  readonly Debug: SallaPushDebugNamespace;
   readonly Migration: SallaPushMigrationNamespace;
 } = {
   initialize(appId, config) {

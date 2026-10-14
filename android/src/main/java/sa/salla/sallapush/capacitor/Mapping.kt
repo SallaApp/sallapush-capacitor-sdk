@@ -1,6 +1,7 @@
 package sa.salla.sallapush.capacitor
 
 import com.salla.push.SallaPushClickEvent
+import com.salla.push.SallaPushLogEvent
 import com.salla.push.SallaPushLogLevel
 import com.salla.push.SallaPushLoginFailure
 import com.salla.push.SallaPushNotification
@@ -62,6 +63,16 @@ internal object Mapping {
       "listenerId" to listenerId,
       "previous" to subscription(state.previous),
       "current" to subscription(state.current),
+    )
+
+  fun logEntry(event: SallaPushLogEvent): Map<String, Any?> =
+    mapOf(
+      "level" to event.level.jsName,
+      "category" to event.category,
+      "code" to event.code,
+      "message" to event.message,
+      "metadata" to event.metadata,
+      "timestamp" to event.timestampMillis,
     )
 
   private fun user(state: SallaPushUserState): Map<String, Any?> = buildMap {

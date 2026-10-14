@@ -1,5 +1,6 @@
 package sa.salla.sallapush.capacitor
 
+import com.salla.push.SallaPushLogLevel
 import com.salla.push.SallaPushLoginFailure
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,8 +16,10 @@ class EventRegistryTest {
   private val native = FakeNativeSallaPush()
   private val emitted = mutableListOf<Pair<Event, Map<String, Any?>>>()
   private val displays = DisplayStore(native)
+  private val main = mutableListOf<() -> Unit>()
   private var active = true
-  private val registry = EventRegistry(native, displays, { active }) { event, body -> emitted += event to body }
+  private val registry =
+    EventRegistry(native, displays, { main += it }, { active }) { event, body -> emitted += event to body }
 
   @Test
   fun startsOneNativeRegistrationPerKindOnce() {
@@ -186,6 +189,69 @@ class EventRegistryTest {
   }
 
   @Test
+  fun addsTheLogListenerOnceAtWarnByDefault() {
+    registry.start("log")
+    registry.start("log")
+
+    assertEquals(listOf("addLogListener(WARN)"), native.calls)
+  }
+
+  @Test
+  fun addsTheLogListenerAtTheLevelJavaScriptSetFirst() {
+    registry.setLogLevel(SallaPushLogLevel.INFO)
+    registry.start("log")
+
+    assertEquals(listOf("addLogListener(INFO)"), native.calls)
+  }
+
+  @Test
+  fun aLevelChangeAddsTheSameListenerAgainOnlyWhileRegistered() {
+    registry.setLogLevel(SallaPushLogLevel.DEBUG)
+    registry.start("log")
+    val listener = native.logListeners.keys.single()
+    registry.setLogLevel(SallaPushLogLevel.DEBUG)
+    registry.setLogLevel(SallaPushLogLevel.VERBOSE)
+
+    assertEquals(mapOf(listener to SallaPushLogLevel.VERBOSE), native.logListeners)
+    registry.stop("log")
+    registry.setLogLevel(SallaPushLogLevel.ERROR)
+
+    assertEquals(
+      listOf("addLogListener(DEBUG)", "addLogListener(VERBOSE)", "removeLogListener"),
+      native.calls
+    )
+    assertSame(listener, native.removed.single())
+  }
+
+  @Test
+  fun emitsLogEntriesOnTheMainThreadInOrder() {
+    registry.start("log")
+    val first = logEvent("register.retry")
+    val second = logEvent("register.ok")
+
+    native.logListeners.keys.single().onLogEvent(first)
+    native.logListeners.keys.single().onLogEvent(second)
+    assertTrue(emitted.isEmpty())
+    main.forEach { it() }
+
+    assertEquals(
+      listOf(Event.LOG to Mapping.logEntry(first), Event.LOG to Mapping.logEntry(second)),
+      emitted
+    )
+  }
+
+  @Test
+  fun emitsNothingForALogEntryPostedBeforeTheStop() {
+    registry.start("log")
+    native.logListeners.keys.single().onLogEvent(logEvent("register.retry"))
+
+    registry.stop("log")
+    main.forEach { it() }
+
+    assertTrue(emitted.isEmpty())
+  }
+
+  @Test
   fun emitsEachSubscriptionChangeWithTheIdOfItsListener() {
     registry.addSubscriptionListener(1)
     registry.addSubscriptionListener(2)
@@ -217,7 +283,7 @@ class EventRegistryTest {
   // The plugin's activity is destroyed while native's callbacks are already queued on the main thread.
   @Test
   fun emitsNothingOnceInactiveEvenWhileRegistered() {
-    listOf("click", "willDisplay", "permission", "user", "loginFailure").forEach(registry::start)
+    listOf("click", "willDisplay", "permission", "user", "loginFailure", "log").forEach(registry::start)
     registry.addSubscriptionListener(1)
     val (user, loginFailure) = native.userObservers
     val state = NativeValues.subscription(null, null, false)
@@ -230,6 +296,8 @@ class EventRegistryTest {
     user.onUserStateChange(NativeValues.userChange(NativeValues.user(null, false), NativeValues.user("customer-7", true)))
     loginFailure.onLoginFailure(SallaPushLoginFailure.INVALID_REQUEST)
     native.subscriptionObservers.single().onPushSubscriptionChange(NativeValues.subscriptionChange(state, state))
+    native.logListeners.keys.single().onLogEvent(logEvent("register.retry"))
+    main.forEach { it() }
 
     assertTrue(emitted.isEmpty())
     assertFalse(willDisplay.isPrevented)
@@ -238,8 +306,17 @@ class EventRegistryTest {
   @Test
   fun namesTheEventsAsCapacitorsEventNames() {
     assertEquals(
-      listOf("click", "willDisplay", "permissionChange", "userChange", "loginFailure", "pushSubscriptionChange"),
+      listOf("click", "willDisplay", "permissionChange", "userChange", "loginFailure", "pushSubscriptionChange", "log"),
       Event.entries.map { it.jsName }
     )
   }
+
+  private fun logEvent(code: String) = NativeValues.logEvent(
+    SallaPushLogLevel.WARN,
+    "registration",
+    code,
+    "Registration failed (HTTP 503); retrying in 30 s.",
+    mapOf("http_status" to "503"),
+    1_800_000_000_123L,
+  )
 }

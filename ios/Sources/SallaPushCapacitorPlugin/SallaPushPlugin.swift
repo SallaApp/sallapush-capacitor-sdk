@@ -53,6 +53,7 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
 
         CAPPluginMethod(name: "getLogLevel", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "setLogHandlerLevel", returnType: CAPPluginReturnNone),
 
         CAPPluginMethod(name: "startEvents", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "stopEvents", returnType: CAPPluginReturnNone)
@@ -318,6 +319,11 @@ extension SallaPushPlugin {
         guard let level = call.getString("level") else { return }
         onMain { self.logic?.logLevel = level }
     }
+
+    @objc func setLogHandlerLevel(_ call: CAPPluginCall) {
+        guard let level = call.getString("level") else { return }
+        onMain { self.logic?.setLogHandlerLevel(level) }
+    }
 }
 
 // MARK: - Events
@@ -356,6 +362,10 @@ extension SallaPushPlugin: SallaPushEventEmitter {
 
     func emitOnPushSubscriptionChange(_ value: [String: Any]) {
         notifyListeners("pushSubscriptionChange", data: value)
+    }
+
+    func emitOnLog(_ value: [String: Any]) {
+        notifyListeners("log", data: value)
     }
 }
 

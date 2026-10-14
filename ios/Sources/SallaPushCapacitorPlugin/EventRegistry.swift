@@ -1,4 +1,5 @@
 import Foundation
+import SallaPush
 
 /// Emits events to JavaScript. SallaPushPlugin adopts it with Capacitor's notifyListeners.
 protocol SallaPushEventEmitter: AnyObject {
@@ -8,6 +9,7 @@ protocol SallaPushEventEmitter: AnyObject {
     func emitOnUserChange(_ value: [String: Any])
     func emitOnLoginFailure(_ value: [String: Any])
     func emitOnPushSubscriptionChange(_ value: [String: Any])
+    func emitOnLog(_ value: [String: Any])
 }
 
 /// The native listeners behind the JavaScript ones: one per event kind while JavaScript listens to it, and one push
@@ -16,7 +18,7 @@ protocol SallaPushEventEmitter: AnyObject {
 final class EventRegistry {
     /// The event kinds with one native registration each, as JavaScript names them.
     enum Kind: String {
-        case click, willDisplay, permission, user, loginFailure
+        case click, willDisplay, permission, user, loginFailure, log
     }
 
     private let native: NativeSallaPush
@@ -24,6 +26,7 @@ final class EventRegistry {
     private weak var emitter: SallaPushEventEmitter?
     private var observations: [Kind: NativeObservation] = [:]
     private var subscriptionObservations: [Int: NativeObservation] = [:]
+    private var logLevel: SallaPushLogLevel = .warn
 
     init(native: NativeSallaPush, displays: DisplayStore, emitter: SallaPushEventEmitter) {
         self.native = native
@@ -56,6 +59,15 @@ final class EventRegistry {
         subscriptionObservations.removeValue(forKey: listenerId)?.cancel()
     }
 
+    /// The level of JavaScript's log handler. While it is registered, native's handler is set again at the new level,
+    /// which replaces it.
+    func setLogLevel(_ level: SallaPushLogLevel) {
+        guard level != logLevel else { return }
+        logLevel = level
+        guard observations[.log] != nil else { return }
+        observations[.log] = register(.log)
+    }
+
     /// Removes every native registration, as when the WebView loads a page.
     func stopAll() {
         let cancelled = Array(observations.values) + Array(subscriptionObservations.values)
@@ -85,6 +97,13 @@ final class EventRegistry {
         case .loginFailure:
             return native.addLoginFailureHandler { [weak self] failure in
                 self?.emit(kind) { $0.emitOnLoginFailure(failure) }
+            }
+        case .log:
+            // Native calls its log handler on its own queue.
+            return native.setLogHandler(level: logLevel) { [weak self] entry in
+                DispatchQueue.main.async {
+                    self?.emit(kind) { $0.emitOnLog(entry) }
+                }
             }
         }
     }

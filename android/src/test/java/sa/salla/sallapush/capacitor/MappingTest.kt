@@ -176,6 +176,33 @@ class MappingTest {
   }
 
   @Test
+  fun mapsLogEntries() {
+    val event = NativeValues.logEvent(
+      SallaPushLogLevel.ERROR,
+      "identity",
+      "identity.client_error",
+      "The login was refused (HTTP 400, invalid_request).",
+      mapOf("http_status" to "400", "error_code" to "invalid_request"),
+      1_800_000_000_123L,
+    )
+
+    val body = Mapping.logEntry(event)
+
+    assertEquals(
+      mapOf(
+        "level" to "error",
+        "category" to "identity",
+        "code" to "identity.client_error",
+        "message" to "The login was refused (HTTP 400, invalid_request).",
+        "metadata" to mapOf("http_status" to "400", "error_code" to "invalid_request"),
+        "timestamp" to 1_800_000_000_123L,
+      ),
+      body
+    )
+    assertBridgeable(body)
+  }
+
+  @Test
   fun namesLogLevelsByCaseBothWays() {
     for (level in SallaPushLogLevel.entries) {
       assertEquals(level, logLevelNamed(level.jsName))

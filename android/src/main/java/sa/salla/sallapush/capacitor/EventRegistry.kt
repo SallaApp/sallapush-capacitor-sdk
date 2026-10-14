@@ -3,6 +3,9 @@ package sa.salla.sallapush.capacitor
 import com.salla.push.SallaPushClickEvent
 import com.salla.push.SallaPushClickListener
 import com.salla.push.SallaPushForegroundLifecycleListener
+import com.salla.push.SallaPushLogEvent
+import com.salla.push.SallaPushLogLevel
+import com.salla.push.SallaPushLogListener
 import com.salla.push.SallaPushLoginFailure
 import com.salla.push.SallaPushPermissionObserver
 import com.salla.push.SallaPushSubscriptionChangedState
@@ -19,17 +22,19 @@ internal enum class Event(val jsName: String) {
   USER_CHANGE("userChange"),
   LOGIN_FAILURE("loginFailure"),
   PUSH_SUBSCRIPTION_CHANGE("pushSubscriptionChange"),
+  LOG("log"),
 }
 
 /**
  * The native listeners behind the JavaScript ones: one per event kind while JavaScript listens to it, and one push
  * subscription observer per JavaScript listener, so each gets native's own replay. Main thread only: native calls back
- * there, and the plugin posts its calls there. Once [isActive] is false, as when the activity was destroyed, the
- * listeners leave everything to native.
+ * there, except for logs, which [toMain] moves there, and the plugin posts its calls there. Once [isActive] is false,
+ * as when the activity was destroyed, the listeners leave everything to native.
  */
 internal class EventRegistry(
   private val native: NativeSallaPush,
   private val displays: DisplayStore,
+  private val toMain: (() -> Unit) -> Unit,
   private val isActive: () -> Boolean = { true },
   private val emit: (Event, Map<String, Any?>) -> Unit,
 ) {
@@ -40,6 +45,7 @@ internal class EventRegistry(
     PERMISSION("permission"),
     USER("user"),
     LOGIN_FAILURE("loginFailure"),
+    LOG("log"),
   }
 
   /** The listener native holds, which its removal matches, and how to add and remove it. */
@@ -47,6 +53,7 @@ internal class EventRegistry(
 
   private val registrations = mutableMapOf<Kind, Registration>()
   private val subscriptionObservers = mutableMapOf<Int, SallaPushSubscriptionObserver>()
+  private var logLevel = SallaPushLogLevel.WARN
 
   /** Registers the native listener of [kind], once; an unknown kind is ignored. */
   fun start(kind: String) {
@@ -65,6 +72,7 @@ internal class EventRegistry(
       Kind.USER -> register(known, userObserver(), native::addUserObserver, native::removeUserObserver)
       Kind.LOGIN_FAILURE ->
         register(known, loginFailureObserver(), native::addUserObserver, native::removeUserObserver)
+      Kind.LOG -> register(known, logListener(), { native.addLogListener(it, logLevel) }, native::removeLogListener)
     }
   }
 
@@ -89,6 +97,13 @@ internal class EventRegistry(
 
   fun removeSubscriptionListener(listenerId: Int) {
     subscriptionObservers.remove(listenerId)?.let(native::removeSubscriptionObserver)
+  }
+
+  /** The level of JavaScript's log handler. While it is registered, native's listener is added again at it. */
+  fun setLogLevel(level: SallaPushLogLevel) {
+    if (level == logLevel) return
+    logLevel = level
+    registrations[Kind.LOG]?.add?.invoke()
   }
 
   /** Removes every native registration, as when the WebView loads a page. */
@@ -146,6 +161,15 @@ internal class EventRegistry(
 
     override fun onLoginFailure(failure: SallaPushLoginFailure) {
       if (isRegistered(Kind.LOGIN_FAILURE, this)) emit(Event.LOGIN_FAILURE, Mapping.loginFailure(failure))
+    }
+  }
+
+  // Native calls log listeners on its own thread.
+  private fun logListener() = object : SallaPushLogListener {
+    override fun onLogEvent(event: SallaPushLogEvent) {
+      toMain {
+        if (isRegistered(Kind.LOG, this)) emit(Event.LOG, Mapping.logEntry(event))
+      }
     }
   }
 

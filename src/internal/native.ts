@@ -60,11 +60,19 @@ export type UserChangedSpec = {
   current: UserStateSpec;
 };
 export type LoginFailureSpec = { failure: string };
+export type LogEntrySpec = {
+  level: string;
+  category: string;
+  code: string;
+  message: string;
+  metadata: Record<string, unknown>;
+  timestamp: number;
+};
 export type Value<T> = { value: T };
 
 /** The native registrations startEvents and stopEvents take; push-subscription listeners register by id instead. */
 export type EventKind =
-  'click' | 'willDisplay' | 'permission' | 'user' | 'loginFailure';
+  'click' | 'willDisplay' | 'permission' | 'user' | 'loginFailure' | 'log';
 
 export interface SallaPushNativePlugin {
   initialize(options: { appId: string; config: ConfigSpec }): Promise<void>;
@@ -121,6 +129,7 @@ export interface SallaPushNativePlugin {
 
   getLogLevel(): Promise<Value<string>>;
   setLogLevel(options: { level: string }): Promise<void>;
+  setLogHandlerLevel(options: { level: string }): Promise<void>;
 
   startEvents(options: { kind: EventKind }): Promise<void>;
   stopEvents(options: { kind: EventKind }): Promise<void>;
@@ -148,6 +157,10 @@ export interface SallaPushNativePlugin {
   addListener(
     eventName: 'pushSubscriptionChange',
     listenerFunc: (event: SubscriptionChangedSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'log',
+    listenerFunc: (event: LogEntrySpec) => void
   ): Promise<PluginListenerHandle>;
 }
 

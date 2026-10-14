@@ -11,7 +11,11 @@ import {
 import type * as NativeMock from '../internal/__mocks__/native';
 import type { ClickEventSpec, NotificationSpec } from '../internal/native';
 import type * as Index from '../index';
-import type { SallaPushClickEvent, SallaPushEventSubscription } from '../index';
+import {
+  SallaPushLogLevel,
+  type SallaPushClickEvent,
+  type SallaPushEventSubscription,
+} from '../index';
 
 jest.mock('../internal/native');
 
@@ -325,6 +329,26 @@ describe('native steps', () => {
       'addPushSubscriptionListener',
     ]);
     expect(native.startEvents).not.toHaveBeenCalled();
+  });
+
+  it('send the log level before the first log registration, and only the level on later changes', async () => {
+    SallaPush.Debug.setLogHandler(SallaPushLogLevel.Info, () => {});
+    SallaPush.Debug.setLogHandler(SallaPushLogLevel.Debug, () => {});
+    await flush();
+
+    expect(nativeCalls()).toEqual([
+      'setLogHandlerLevel',
+      'addListener',
+      'startEvents',
+      'setLogHandlerLevel',
+    ]);
+    expect(native.setLogHandlerLevel.mock.calls).toEqual([
+      [{ level: 'info' }],
+      [{ level: 'debug' }],
+    ]);
+    expect(native.addListener.mock.calls.map(([name]) => name)).toEqual([
+      'log',
+    ]);
   });
 });
 
