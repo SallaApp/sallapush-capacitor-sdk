@@ -65,6 +65,11 @@ In a fresh Capacitor 8 app, install the pushed tag with the README's exact depen
 - once with Yarn 4.18.1, with the repository in `approvedGitRepositories`;
 - each time, run `npx cap sync`, and build both platforms.
 
+From the second release on, also update an app that has the previous release, once with CocoaPods and once with Swift
+Package Manager and the Notification Service Extension, as the README's
+[Updating the package](README.md#updating-the-package) says: move the tag and the app's SallaPush pins, run
+`npx cap sync`, and build both platforms.
+
 Record the result in the release's pull request.
 
 ## Updating the native SDKs

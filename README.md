@@ -49,7 +49,8 @@ so most calls will look familiar.
 |---|---|---|---|---|---|
 | Capacitor 1.0.0 | 1.0.3 | 1.0.3 | Capacitor 8 (8.0 or later; Capacitor 9 isn't supported yet) | 15.0 | minSdk 24 (SallaPush itself needs 23), compileSdk 36 |
 
-The package pins the native SDKs exactly. A new native release comes with a new version of this package.
+The package pins the native SDKs exactly. A new native release comes with a new version of this package, and your app
+moves its own SallaPush pins with it ([Updating the package](#updating-the-package)).
 
 Not every tool stops a Capacitor 9 app: npm refuses the install, and CocoaPods refuses the pod, but Yarn and pnpm only
 warn about the peer range, and with Swift Package Manager Capacitor's CLI only warns that the plugin "is built for
@@ -156,6 +157,20 @@ export GIT_CONFIG_KEY_2="url.https://x-access-token:${SALLAPUSH_SDK_TOKEN}@githu
 
 This isn't verified on CI yet ([Not verified yet](docs/TROUBLESHOOTING.md#not-verified-yet)). Until it is, use a CI Mac
 whose Xcode is signed in to an account with access, or CocoaPods, whose pods come through the machine's git.
+
+### Updating the package
+
+Change the tag in your app's dependency line, and install. When the new release's [Versions](#versions) row names
+another SallaPush iOS version, set the SallaPush pins your app holds itself to that version too, since `npx cap sync`
+never changes them:
+
+- **CocoaPods:** every SallaPush `:tag =>` of the Podfile, in `target 'App'` and in the extension's target.
+- **Swift Package Manager:** the rule of the extension's SallaPush package, **Exact Version**, in the project's
+  **Package Dependencies**, when the app has the [Notification Service Extension](#notification-service-extension).
+
+Then run `npx cap sync`, which runs `pod install` in a CocoaPods app, and build. With a pin left behind, `pod install`
+fails in a CocoaPods app, and Xcode can't resolve the packages of a Swift Package Manager app
+([Troubleshooting](docs/TROUBLESHOOTING.md#installing-and-building)).
 
 ## iOS setup
 
@@ -1264,12 +1279,17 @@ Set the default level back before release.
 
 ## Updating the native SDKs
 
-`scripts/bump-native.sh <version>` moves the package to new native SallaPush releases. It fetches their API files, sets
-every pin (the podspec, `Package.swift`, the example's extension package, the Podfile lines, the Android dependency,
-the docs), adds the CHANGELOG line and runs the API parity check, which names each new native API that needs a
-decision. CI checks on every pull request that the pins agree, that every native API is wrapped or listed as not
-wrapped, that TypeScript, Swift and Kotlin declare the same plugin methods and events, and that the README's code
-equals the example's. [RELEASING.md](RELEASING.md#updating-the-native-sdks) has the whole flow.
+Each release of this package pins exact native versions: the [versions table](#versions) names them.
+
+- **In your app,** move your Podfile's SallaPush tags and the extension's package rule with the package
+  ([Updating the package](#updating-the-package)).
+- **In this repository,** `scripts/bump-native.sh <version>` moves the package to new native SallaPush releases. It
+  fetches their API files, sets every pin (the podspec, `Package.swift`, the example's extension package, the Podfile
+  lines, the Android dependency, the docs), adds the CHANGELOG line and runs the API parity check, which names each
+  new native API that needs a decision. CI checks on every pull request that the pins agree, that every native API is
+  wrapped or listed as not wrapped, that TypeScript, Swift and Kotlin declare the same plugin methods and events, and
+  that the README's code equals the example's. [RELEASING.md](RELEASING.md#updating-the-native-sdks) has the whole
+  flow.
 
 ## More documentation
 
