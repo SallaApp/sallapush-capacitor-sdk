@@ -91,7 +91,7 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](../READM
 | Open https launch URLs on tap | `SallaPushOpenLaunchURLs` (Boolean) | `com.salla.push.OPEN_LAUNCH_URLS` | this package, with the app id | `false` |
 | Delete the device's tags on logout and account switch | `SallaPushClearTagsOnLogout` (Boolean) | `com.salla.push.CLEAR_TAGS_ON_LOGOUT` | this package, with the app id | `true` |
 | The app version on the server | `SallaPushAppVersion` (String) | `com.salla.push.APP_VERSION` | this package, with the app id | `CFBundleShortVersionString`; `versionName` |
-| Clear the badge when the app becomes active | `SallaPushAutoClearBadge` (Boolean) | – | this package, with the app id | `true` |
+| Clear the badge when the app becomes active; on iOS 15 that can also remove delivered notifications ([Removing delivered notifications](#removing-delivered-notifications)) | `SallaPushAutoClearBadge` (Boolean) | – | this package, with the app id | `true` |
 | Register for remote notifications at start | `SallaPushRegisterForRemoteNotificationsOnInit` (Boolean) | – | this package, with the app id | `true` |
 | The APNs environment | `SallaPushAPNsEnvironment` (String: `automatic`, `sandbox` or `production`) | – | this package, with the app id | `automatic` |
 | Show OneSignal-format notifications | – | `com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS` | this package, with or without an app id | `true` |
@@ -179,7 +179,7 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `openLaunchUrls?: boolean` | `openLaunchURLs`; `setOpenLaunchUrls` | `false`. With it on, the click listener still gets the tap, with `result.url`: it must not open that URL again. |
 | `ios?.appGroupIdentifier?: string` | `appGroupIdentifier` | `SallaPushAppGroup` |
 | `ios?.apnsEnvironment?: SallaPushAPNsEnvironment` | `apnsEnvironment` | `automatic`: from the provisioning profile |
-| `ios?.autoClearBadge?: boolean` | `autoClearBadge` | `true` |
+| `ios?.autoClearBadge?: boolean` | `autoClearBadge` | `true`. On iOS 15, clearing the badge can also remove the app's delivered notifications, other SDKs' included ([Removing delivered notifications](#removing-delivered-notifications)). |
 | `ios?.registerForRemoteNotificationsOnInit?: boolean` | `registerForRemoteNotificationsOnInit` | `true`. Set it to `false` only if the app registers at every launch itself. |
 
 The `ios` options are ignored on Android. The native configurations are described in full in the native docs
@@ -508,8 +508,9 @@ What JavaScript passes to native:
 
 ## Coexistence with other SDKs
 
-SallaPush never swizzles, never takes over another SDK's notifications, and removes only its own. The rules of the
-native SDKs hold
+SallaPush never swizzles, never takes over another SDK's notifications, and removes only its own, except on iOS 15,
+where clearing the badge can remove every delivered notification of the app
+([Removing delivered notifications](#removing-delivered-notifications)). The rules of the native SDKs hold
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks),
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks)).
 
@@ -607,6 +608,11 @@ On iOS, keep their own forwarding: their notifications are never SallaPush's.
 `@capacitor-firebase/messaging` removes every delivered notification of the app, SallaPush's included, on iOS and on
 Android. Use `SallaPush.Notifications.clearAll()`, which removes SallaPush's only, for SallaPush's notifications, and
 the other plugins' `removeDeliveredNotifications(…)` for theirs.
+
+On iOS 15, `autoClearBadge`, on by default, sets the app's badge to 0 whenever the app becomes active with a badge,
+and iOS 15 can remove the app's delivered notifications with it, other SDKs' and plugins' included. To keep them, set
+`SallaPushAutoClearBadge` to `NO` in the Info.plist, or `ios.autoClearBadge` to `false` in `initialize`'s config
+([native badge and clearing](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#badge-and-clearing)).
 
 ### Other notification-center delegates
 

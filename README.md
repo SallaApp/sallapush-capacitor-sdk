@@ -1096,6 +1096,9 @@ working:
   `@capacitor-firebase/messaging` removes SallaPush's notifications too, on both platforms: use
   `SallaPush.Notifications.clearAll()` for SallaPush's, and the other plugins' `removeDeliveredNotifications(…)` for
   theirs.
+- **On iOS 15, SallaPush's `autoClearBadge`,** on by default, clears the badge when the app becomes active, which can
+  also remove the app's delivered notifications, the other plugins' included. To keep them, set
+  `SallaPushAutoClearBadge` to `NO`, or `ios.autoClearBadge` to `false` in `initialize`'s config.
 - **Their `unregister()` and `deleteToken()` reach SallaPush too:** on Android they delete the app's FCM token, and on
   iOS `unregister()` unregisters the app from APNs ([Another FCM plugin](#another-fcm-plugin)). Avoid them.
 - **Another notification-center delegate on iOS:** set it before `SallaPushCapacitor.start()`, or forward from it to
