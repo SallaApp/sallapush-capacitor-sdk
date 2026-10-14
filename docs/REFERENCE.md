@@ -265,7 +265,7 @@ background, after a pending login or logout, and are retried until the server co
 | `notificationId: string \| null` | The SallaPush message id |
 | `title`, `subtitle`, `body: string \| null` | The text |
 | `imageUrl: string \| null` | The image, https only |
-| `launchUrl: string \| null` | The launch URL, as sent. SallaPush opens https URLs itself only with the open-launch-URLs option; the click listener then must not open it again. |
+| `launchUrl: string \| null` | The launch URL, as sent. SallaPush opens https URLs itself only with the open-launch-URLs option; the click listener then must not open it again. It is the sender's text, of any scheme: check its scheme and host before opening it, since a `javascript:` URL assigned to `window.location` runs in the app's page, with access to every plugin. |
 | `additionalData: Readonly<Record<string, unknown>>` | Your data, with JSON types in the OneSignal-compatible format and strings in the native one |
 | `rawPayload: Readonly<Record<string, unknown>>` | The payload as received: the APNs `userInfo`, or the FCM data map |
 | `source: SallaPushPayloadSource` | `native` or `compat`, the OneSignal-compatible format |

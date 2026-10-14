@@ -868,7 +868,9 @@ its start-up code runs again.
 - **Launch URLs.** SallaPush opens a notification's https launch URL itself only with the open-launch-URLs option
   (`SallaPushOpenLaunchURLs`, `com.salla.push.OPEN_LAUNCH_URLS`, or `openLaunchUrls` in `SallaPush.initialize`'s
   config); otherwise route it yourself. With the option on, your click listener still gets the tap, with
-  `result.url`: don't open that URL again.
+  `result.url`: don't open that URL again. A launch URL is whatever the sender set, of any scheme: check its scheme and
+  host before you open it. A `javascript:` URL assigned to `window.location` runs in your app's page, with access to
+  every plugin.
 
 ### Routing with the typed getters
 
@@ -904,7 +906,8 @@ function route(notification: SallaPushNotification): void {
 SallaPush sends two payload formats: the native one carries every data value as a string (`"id": "42"`), and the
 OneSignal-compatible one, which store apps receive today, keeps JSON types (`"id": 42`). `getString`, `getInt` and
 `getBool`, and `getNumber` on iOS, read both: they return native's own conversion of a top-level `additionalData`
-value, or `null`. The keys are your own data, chosen by whoever sends the notification.
+value, or `null`. The keys are your own data, chosen by whoever sends the notification, and so is the launch URL
+that `router.open` gets here: check it first ([Taps](#taps)).
 
 ### Foreground notifications
 

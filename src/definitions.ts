@@ -65,7 +65,8 @@ export interface SallaPushNotification {
   readonly imageUrl: string | null;
   /**
    * The launch URL as sent. SallaPush opens https URLs itself only with the open-launch-URLs option, and the click
-   * listener then must not open the URL again.
+   * listener then must not open the URL again. It is the sender's text, of any scheme: check its scheme and host before
+   * opening it, since a `javascript:` URL assigned to `window.location` runs in the app's page.
    */
   readonly launchUrl: string | null;
   /** The custom data. JavaScript numbers lose precision beyond 2^53. */
