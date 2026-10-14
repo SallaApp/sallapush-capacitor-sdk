@@ -122,11 +122,15 @@ The native SDKs come from their private repositories, as in native apps:
 ### CI machines
 
 A machine that has only a token, not an SSH key, rewrites the SSH URLs of SallaApp's repositories to HTTPS with that
-token. It covers this package and the iOS pods:
+token. It covers this package and the iOS pods. Set the rewrites in the environment of the job that installs and
+builds the app, where every git that npm, Yarn and CocoaPods start reads them (git 2.31 or later), never with
+`git config --global`: on a machine that stays, such as a self-hosted runner, the token would stay in `~/.gitconfig`
+for every later job, and after a rotation git would keep sending the first token written there.
 
 ```bash
-git config --global --add url."https://x-access-token:${TOKEN}@github.com/SallaApp/".insteadOf "git@github.com:SallaApp/"
-git config --global --add url."https://x-access-token:${TOKEN}@github.com/SallaApp/".insteadOf "ssh://git@github.com/SallaApp/"
+export GIT_CONFIG_COUNT=2
+export GIT_CONFIG_KEY_0="url.https://x-access-token:${TOKEN}@github.com/SallaApp/.insteadOf" GIT_CONFIG_VALUE_0="git@github.com:SallaApp/"
+export GIT_CONFIG_KEY_1="url.https://x-access-token:${TOKEN}@github.com/SallaApp/.insteadOf" GIT_CONFIG_VALUE_1="ssh://git@github.com/SallaApp/"
 ```
 
 `TOKEN` comes from the machine's secrets: a token that can read the contents of this repository and of
@@ -142,10 +146,12 @@ On a machine with an SSH key, to SSH:
 git config --global url."git@github.com:SallaApp/sallapush-ios-sdk.git".insteadOf "https://github.com/SallaApp/sallapush-ios-sdk.git"
 ```
 
-On a machine with a token that can read the repository's contents, with that token:
+On a machine with a token that can read the repository's contents, with that token, as a third rewrite in the same
+environment:
 
 ```bash
-git config --global url."https://x-access-token:${SALLAPUSH_SDK_TOKEN}@github.com/SallaApp/sallapush-ios-sdk.git".insteadOf "https://github.com/SallaApp/sallapush-ios-sdk.git"
+export GIT_CONFIG_COUNT=3
+export GIT_CONFIG_KEY_2="url.https://x-access-token:${SALLAPUSH_SDK_TOKEN}@github.com/SallaApp/sallapush-ios-sdk.git.insteadOf" GIT_CONFIG_VALUE_2="https://github.com/SallaApp/sallapush-ios-sdk.git"
 ```
 
 This isn't verified on CI yet ([Not verified yet](docs/TROUBLESHOOTING.md#not-verified-yet)). Until it is, use a CI Mac
