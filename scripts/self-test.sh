@@ -381,9 +381,10 @@ EOF
   ios_pins="$(sed -nE "s/^ios $version: ([0-9]+) pins agree$/\1/p" "$out")"
   android_pins="$(sed -nE "s/^android $version: ([0-9]+) pins agree$/\1/p" "$out")"
   # The code's 8 iOS pins (the podspec, Package.swift, the example's Xcode project, docs/snippets/Podfile's four, and
-  # mapping.json) and 2 Android pins, and at least one of each platform the README must hold.
-  check "  ... every iOS pin of the code and the README" ok test "${ios_pins:-0}" -ge 9
-  check "  ... every Android pin of the code and the README" ok test "${android_pins:-0}" -ge 3
+  # mapping.json) and 2 Android pins, and at least one of each kind the README must hold: the versions it names, its
+  # versions table, its Podfile lines (iOS) and its links to the native docs.
+  check "  ... every iOS pin of the code and the README" ok test "${ios_pins:-0}" -ge 12
+  check "  ... every Android pin of the code and the README" ok test "${android_pins:-0}" -ge 5
   fresh; edit "$case_dir/Package.swift" "exact: \"$version\"" "exact: \"9.9.9\""
   line="$(grep -n 'exact: "9.9.9"' "$case_dir/Package.swift" | cut -d : -f 1)"
   check "a pin that disagrees fails" fails bump --check
@@ -419,6 +420,10 @@ EOF
   check "  ... in android/build.gradle" ok grep -qF "com.salla.push:sallapush:$target" "$case_dir/android/build.gradle"
   check "  ... in mapping.json" ok grep -qF "\"android\": \"$target\"" "$case_dir/tool/api-parity/mapping.json"
   check "  ... in the README" ok grep -qF "SallaPush iOS $target and SallaPush Android $target" "$case_dir/README.md"
+  check "  ... in the README's versions table" ok grep -qF "| $target | $target |" "$case_dir/README.md"
+  check "  ... in the README's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/README.md"
+  check "  ... in the README's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" "$case_dir/README.md"
+  check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/README.md"
   check "  ... with the API files of the new tags" ok cmp -s "$served/sallapush-ios-sdk/$target/API.txt" \
     "$case_dir/tool/api-parity/native-ios-API.txt"
   check "  ... and the CHANGELOG line under Changed" ok python3 -c '
