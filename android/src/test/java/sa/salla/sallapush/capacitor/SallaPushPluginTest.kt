@@ -6,9 +6,11 @@ import androidx.test.core.app.ApplicationProvider
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.PluginCall
+import com.getcapacitor.PluginMethod
 import com.getcapacitor.PluginResult
 import com.salla.push.SallaPushConfig
 import com.salla.push.SallaPushLogLevel
+import com.salla.push.SallaPushLoginFailure
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -659,19 +661,228 @@ class SallaPushPluginTest {
     assertTrue(native.calls.isEmpty())
   }
 
+  // Events, and the threads they and the registrations run on
+
+  @Test
+  fun eventsReachTheListenersJavaScriptAddedAsResolutionsOfTheirCalls() {
+    val plugin = plugin()
+    val click = listener(plugin, "click")
+    val permission = listener(plugin, "permissionChange")
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.startEvents(call("startEvents", "kind" to "permission"))
+    val event = NativeValues.click(testNotification(), null, "https://example.com/products/42")
+
+    native.clickListeners.single().onClick(event)
+    native.permissionObservers.single().onNotificationPermissionChange(true)
+
+    assertEquals(listOf(Conversions.toJSObject(Mapping.click(event)).toString()), click.resolved.map { it.toString() })
+    assertEquals("https://example.com/products/42", click.resolved.single().getString("url"))
+    assertEquals(listOf("""{"permission":true}"""), permission.resolved.map { it.toString() })
+    assertTrue(click.rejected.isEmpty())
+  }
+
+  @Test
+  fun emitsUserLoginFailureAndSubscriptionEventsUnderTheirCapacitorNames() {
+    val plugin = plugin()
+    val user = listener(plugin, "userChange")
+    val loginFailure = listener(plugin, "loginFailure")
+    val subscription = listener(plugin, "pushSubscriptionChange")
+    plugin.startEvents(call("startEvents", "kind" to "user"))
+    plugin.startEvents(call("startEvents", "kind" to "loginFailure"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 2))
+    val (userObserver, loginFailureObserver) = native.userObservers
+    val state = NativeValues.subscription("3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40", null, true)
+
+    userObserver.onUserStateChange(
+      NativeValues.userChange(NativeValues.user(null, false), NativeValues.user("customer-7", true))
+    )
+    loginFailureObserver.onLoginFailure(SallaPushLoginFailure.TOKEN_REJECTED)
+    native.subscriptionObservers[1].onPushSubscriptionChange(NativeValues.subscriptionChange(state, state))
+
+    assertEquals(
+      listOf("""{"previous":{"isLoggedIn":false},"current":{"externalId":"customer-7","isLoggedIn":true}}"""),
+      user.resolved.map { it.toString() }
+    )
+    assertEquals(listOf("""{"failure":"tokenRejected"}"""), loginFailure.resolved.map { it.toString() })
+    assertEquals(
+      listOf(
+        """{"listenerId":2,"previous":{"id":"3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40","optedIn":true},""" +
+          """"current":{"id":"3f1c5a52-6a7e-4d1e-9a53-0c7b9e1d2f40","optedIn":true}}"""
+      ),
+      subscription.resolved.map { it.toString() }
+    )
+  }
+
+  @Test
+  fun registersOnTheMainThreadAndEmitsOnThePluginThreadInCallOrder() {
+    val main = mutableListOf<() -> Unit>()
+    val pluginThread = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnMain = { main += it }, runOnPluginThread = { pluginThread += it })
+    val click = listener(plugin, "click")
+
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 3))
+    assertTrue(native.calls.isEmpty())
+    main.drain()
+    val clickListener = native.clickListeners.single()
+    val observer = native.subscriptionObservers.single()
+    clickListener.onClick(NativeValues.click(testNotification(), null, null))
+    assertTrue(click.resolved.isEmpty())
+    pluginThread.drain()
+    assertEquals(1, click.resolved.size)
+    plugin.stopEvents(call("stopEvents", "kind" to "click"))
+    plugin.removePushSubscriptionListener(call("removePushSubscriptionListener", "listenerId" to 3))
+    main.drain()
+
+    assertEquals(
+      listOf("addClickListener", "addSubscriptionObserver", "removeClickListener", "removeSubscriptionObserver"),
+      native.calls
+    )
+    assertEquals(listOf<Any>(clickListener, observer), native.removed)
+  }
+
+  // The TypeScript API sends only known kinds and integer ids, so only another caller could send these.
+  @Test
+  fun ignoresAnUnknownKindAndAMissingOrMistypedEventOption() {
+    val plugin = plugin()
+
+    plugin.startEvents(call("startEvents", "kind" to "opened"))
+    plugin.startEvents(call("startEvents", "kind" to 1))
+    plugin.startEvents(call("startEvents"))
+    plugin.stopEvents(call("stopEvents"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to "3"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1.5))
+    plugin.removePushSubscriptionListener(call("removePushSubscriptionListener"))
+
+    assertTrue(native.calls.isEmpty())
+  }
+
+  // Resets and destruction
+
+  // Capacitor's reset when the WebView loads a page: on main, before the new page adds its listeners.
+  @Test
+  fun aPageLoadStopsEveryRegistrationAndDropsTheOldPagesListenersWhileThePluginKeepsWorking() {
+    val pluginThread = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnPluginThread = { pluginThread += it })
+    val oldPage = listener(plugin, "click")
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.startEvents(call("startEvents", "kind" to "user"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
+
+    plugin.removeAllListeners()
+
+    assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.userObservers.isEmpty())
+    assertTrue(native.subscriptionObservers.isEmpty())
+    pluginThread.drain()
+    val newPage = listener(plugin, "click")
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    native.clickListeners.single().onClick(NativeValues.click(testNotification(), null, null))
+    pluginThread.drain()
+    assertTrue(oldPage.resolved.isEmpty())
+    assertEquals(1, newPage.resolved.size)
+  }
+
+  @Test
+  fun javaScriptsRemoveAllListenersStopsEveryRegistrationAndResolves() {
+    val plugin = plugin()
+    val click = listener(plugin, "click")
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
+    val removeAll = call("removeAllListeners")
+
+    plugin.removeAllListeners(removeAll)
+
+    assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.subscriptionObservers.isEmpty())
+    assertEquals(listOf("{}"), removeAll.resolved.map { it.toString() })
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    native.clickListeners.single().onClick(NativeValues.click(testNotification(), null, null))
+    assertTrue(click.resolved.isEmpty())
+  }
+
+  // PluginHandle finds plugin methods by their annotation, which an override doesn't inherit.
+  @Test
+  fun javaScriptsRemoveAllListenersIsAnAnnotatedPromiseMethod() {
+    val method = SallaPushPlugin::class.java.getMethod("removeAllListeners", PluginCall::class.java)
+
+    assertEquals(PluginMethod.RETURN_PROMISE, method.getAnnotation(PluginMethod::class.java)?.returnType)
+  }
+
+  // Capacitor's quitSafely() still runs the calls it had queued after onDestroy, and native may have queued callbacks.
+  @Test
+  fun aDestroyedPluginStopsEverythingAndRegistersAndEmitsNothingMore() {
+    val main = mutableListOf<() -> Unit>()
+    val pluginThread = mutableListOf<() -> Unit>()
+    val plugin = plugin(runOnMain = { main += it }, runOnPluginThread = { pluginThread += it })
+    val click = listener(plugin, "click")
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.startEvents(call("startEvents", "kind" to "permission"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 1))
+    main.drain()
+    val clickListener = native.clickListeners.single()
+    clickListener.onClick(NativeValues.click(testNotification(), null, null))
+    pluginThread.drain()
+    assertEquals(1, click.resolved.size)
+    plugin.startEvents(call("startEvents", "kind" to "user"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 2))
+
+    plugin.handleOnDestroy()
+    main.drain()
+    pluginThread.drain()
+    clickListener.onClick(NativeValues.click(testNotification(), null, null))
+    plugin.startEvents(call("startEvents", "kind" to "click"))
+    plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 3))
+    main.drain()
+    pluginThread.drain()
+
+    assertTrue(native.clickListeners.isEmpty())
+    assertTrue(native.permissionObservers.isEmpty())
+    assertTrue(native.userObservers.isEmpty())
+    assertTrue(native.subscriptionObservers.isEmpty())
+    assertEquals(
+      listOf(
+        "addClickListener",
+        "addPermissionObserver",
+        "addSubscriptionObserver",
+        "removeClickListener",
+        "removePermissionObserver",
+        "removeSubscriptionObserver",
+      ),
+      native.calls
+    )
+    assertEquals(1, click.resolved.size)
+  }
+
   private fun plugin(
     earlyInit: StaticConfig? = null,
     native: NativeSallaPush = this.native,
     pluginConfigIsEmpty: Boolean = true,
+    runOnMain: (() -> Unit) -> Unit = { it() },
+    runOnPluginThread: (() -> Unit) -> Unit = { it() },
   ) = SallaPushPlugin(
     SallaPushPlugin.Seams(
       native = native,
       once = once,
       earlyInit = { earlyInit },
       context = context,
+      runOnMain = runOnMain,
+      runOnPluginThread = runOnPluginThread,
       pluginConfigIsEmpty = { pluginConfigIsEmpty },
     )
   )
+
+  /** A listener as JavaScript adds it: Capacitor's own addListener, which keeps the call and resolves it per event. */
+  private fun listener(plugin: SallaPushPlugin, eventName: String) =
+    RecordingCall("addListener", json("eventName" to eventName)).also(plugin::addListener)
+
+  /** Runs, in order, what the plugin posted to a thread. */
+  private fun MutableList<() -> Unit>.drain() {
+    val posted = toList()
+    clear()
+    posted.forEach { it() }
+  }
 
   /** A call as JavaScript sends it: its options in a JSObject, null values as JSON null. */
   private fun call(method: String, vararg options: Pair<String, Any?>) = RecordingCall(method, json(*options))

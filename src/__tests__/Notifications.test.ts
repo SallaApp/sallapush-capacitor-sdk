@@ -8,18 +8,25 @@ import {
   jest,
 } from '@jest/globals';
 
+import type * as NativeMock from '../internal/__mocks__/native';
 import { native } from '../internal/native';
-import { SallaPush, SallaPushIOSPermissionStatus } from '../index';
+import {
+  SallaPush,
+  SallaPushIOSPermissionStatus,
+  SallaPushPayloadSource,
+  type SallaPushClickEvent,
+  type SallaPushEventSubscription,
+} from '../index';
 
 jest.mock('../internal/native');
 
 const plugin = jest.mocked(native);
+const { emit, flush } =
+  jest.requireMock<typeof NativeMock>('../internal/native');
 const notifications = SallaPush.Notifications;
+const subscriptions: SallaPushEventSubscription[] = [];
 let warn: jest.SpiedFunction<typeof console.warn>;
 let error: jest.SpiedFunction<typeof console.error>;
-
-/** Lets the rejections of sent calls reach their handlers. */
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -27,7 +34,11 @@ beforeEach(() => {
   error = jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-afterEach(() => {
+afterEach(async () => {
+  for (const subscription of subscriptions.splice(0)) {
+    subscription.remove();
+  }
+  await flush();
   warn.mockRestore();
   error.mockRestore();
 });
@@ -200,6 +211,59 @@ describe('SallaPush.Notifications payload helpers', () => {
     expect(warn).toHaveBeenCalledWith(
       '[SallaPush] SallaPush.Notifications.trackOpened ignored: additionalData must be a plain object or null.'
     );
+  });
+});
+
+describe('SallaPush.Notifications events', () => {
+  it("passes taps to 'click' listeners, with native's typed values", async () => {
+    const listener = jest.fn<(event: SallaPushClickEvent) => void>();
+    subscriptions.push(notifications.addEventListener('click', listener));
+    await flush();
+
+    emit('click', {
+      notification: {
+        notificationId: 'msg_5a11a90001',
+        title: 'SallaPush test',
+        launchUrl: 'https://example.com/products/42',
+        additionalData: { type: 'product', id: '42' },
+        rawPayload: { sp_v: '1', sp_id: 'msg_5a11a90001', id: '42' },
+        source: 'native',
+        stringValues: { type: 'product', id: '42' },
+        intValues: { id: 42 },
+        boolValues: {},
+        numberValues: { id: 42 },
+      },
+      url: 'https://example.com/products/42',
+    });
+
+    expect(plugin.startEvents).toHaveBeenCalledWith({ kind: 'click' });
+    const event = listener.mock.calls[0]?.[0];
+    expect(event?.result).toEqual({
+      actionId: null,
+      url: 'https://example.com/products/42',
+    });
+    expect(event?.notification).toMatchObject({
+      notificationId: 'msg_5a11a90001',
+      title: 'SallaPush test',
+      source: SallaPushPayloadSource.Native,
+      additionalData: { type: 'product', id: '42' },
+    });
+    expect(event?.notification.getString('type')).toBe('product');
+    expect(event?.notification.getInt('id')).toBe(42);
+  });
+
+  it("passes permission changes to 'permissionChange' listeners", async () => {
+    const listener = jest.fn<(permission: boolean) => void>();
+    subscriptions.push(
+      notifications.addEventListener('permissionChange', listener)
+    );
+    await flush();
+
+    emit('permissionChange', { permission: true });
+    emit('permissionChange', { permission: false });
+
+    expect(plugin.startEvents).toHaveBeenCalledWith({ kind: 'permission' });
+    expect(listener.mock.calls).toEqual([[true], [false]]);
   });
 });
 

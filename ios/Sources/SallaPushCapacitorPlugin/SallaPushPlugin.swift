@@ -3,6 +3,7 @@ import Foundation
 
 /// The SallaPush plugin that Capacitor loads; apps use the TypeScript API and SallaPushCapacitor.start(). Each method
 /// reads its options on Capacitor's queue, then runs on the main thread, in call order, where SallaPush calls back.
+/// Events go to JavaScript from the main thread, so Capacitor's listener bookkeeping changes there too.
 @objc(SallaPushPlugin)
 public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SallaPushPlugin"
@@ -31,6 +32,8 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getPushSubscriptionOptedIn", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "optIn", returnType: CAPPluginReturnNone),
         CAPPluginMethod(name: "optOut", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "addPushSubscriptionListener", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "removePushSubscriptionListener", returnType: CAPPluginReturnNone),
 
         CAPPluginMethod(name: "getPermission", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "canRequestPermission", returnType: CAPPluginReturnPromise),
@@ -48,17 +51,55 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setDisplayOneSignalCompatPayloads", returnType: CAPPluginReturnNone),
 
         CAPPluginMethod(name: "getLogLevel", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone)
+        CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone),
+
+        CAPPluginMethod(name: "startEvents", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "stopEvents", returnType: CAPPluginReturnNone)
     ]
 
     /// The method logic. load() creates it over the live SDK; SallaPushPluginTests set it over FakeNativeSallaPush.
-    /// Nil before, so a plugin that was never loaded answers every request with its neutral value and does nothing else.
+    /// Nil before, so a plugin that was never loaded answers every request with its neutral value, does nothing else,
+    /// and has nothing to reset.
     var logic: SallaPushBridge?
 
     override public func load() {
         SallaPushCapacitor.shared.pluginLoaded(pluginConfigIsEmpty: getConfig().isEmpty())
-        logic = SallaPushBridge(native: LiveNativeSallaPush(), console: Console(), once: .shared) {
+        logic = SallaPushBridge(native: LiveNativeSallaPush(), console: Console(), once: .shared, emitter: self) {
             SallaPushCapacitor.shared.earlyInit
+        }
+    }
+
+    deinit {
+        // Captures the logic, never self: a weak reference to an object in deallocation is a fatal error.
+        guard let logic else { return }
+        onMain { logic.reset() }
+    }
+
+    // MARK: - Capacitor's listener bookkeeping, on the main thread
+
+    @objc override public func addListener(_ call: CAPPluginCall) {
+        // Now: the bridge saves the call only when keepAlive is set as this method returns.
+        call.keepAlive = true
+        let eventName = call.getString("eventName") ?? ""
+        onMain { self.addEventListener(eventName, listener: call) }
+    }
+
+    @objc override public func removeListener(_ call: CAPPluginCall) {
+        let eventName = call.getString("eventName") ?? ""
+        guard let callbackId = call.getString("callbackId"), let stored = bridge?.savedCall(withID: callbackId) else {
+            return
+        }
+        bridge?.releaseCall(withID: callbackId)
+        onMain { self.removeEventListener(eventName, listener: stored) }
+    }
+
+    /// Capacitor calls it with a nil call when the WebView loads a page (CapacitorBridge.reset()), on main, and
+    /// JavaScript may call it with a real one. Every native registration stops with the listeners.
+    @objc override public func removeAllListeners(_ call: CAPPluginCall?) {
+        onMain {
+            self.logic?.reset()
+            self.eventListeners?.removeAllObjects()
+            call?.resolve()
         }
     }
 
@@ -176,6 +217,16 @@ extension SallaPushPlugin {
     @objc func optOut(_ call: CAPPluginCall) {
         onMain { self.logic?.optOut() }
     }
+
+    @objc func addPushSubscriptionListener(_ call: CAPPluginCall) {
+        guard let listenerId = call.getInt("listenerId") else { return }
+        onMain { self.logic?.addPushSubscriptionListener(listenerId) }
+    }
+
+    @objc func removePushSubscriptionListener(_ call: CAPPluginCall) {
+        guard let listenerId = call.getInt("listenerId") else { return }
+        onMain { self.logic?.removePushSubscriptionListener(listenerId) }
+    }
 }
 
 // MARK: - Notifications
@@ -259,6 +310,41 @@ extension SallaPushPlugin {
     @objc func setLogLevel(_ call: CAPPluginCall) {
         guard let level = call.getString("level") else { return }
         onMain { self.logic?.logLevel = level }
+    }
+}
+
+// MARK: - Events
+
+extension SallaPushPlugin: SallaPushEventEmitter {
+    /// Registers the native listener of an event kind once JavaScript listens to it; an unknown kind is ignored.
+    @objc func startEvents(_ call: CAPPluginCall) {
+        guard let kind = call.getString("kind") else { return }
+        onMain { self.logic?.startEvents(kind) }
+    }
+
+    @objc func stopEvents(_ call: CAPPluginCall) {
+        guard let kind = call.getString("kind") else { return }
+        onMain { self.logic?.stopEvents(kind) }
+    }
+
+    func emitOnClick(_ value: [String: Any]) {
+        notifyListeners("click", data: value)
+    }
+
+    func emitOnPermissionChange(_ value: [String: Any]) {
+        notifyListeners("permissionChange", data: value)
+    }
+
+    func emitOnUserChange(_ value: [String: Any]) {
+        notifyListeners("userChange", data: value)
+    }
+
+    func emitOnLoginFailure(_ value: [String: Any]) {
+        notifyListeners("loginFailure", data: value)
+    }
+
+    func emitOnPushSubscriptionChange(_ value: [String: Any]) {
+        notifyListeners("pushSubscriptionChange", data: value)
     }
 }
 

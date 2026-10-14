@@ -2,9 +2,19 @@ import { jest } from '@jest/globals';
 
 import type { SallaPushNativePlugin } from '../native';
 
+/** A Capacitor listener's handle. The hubs keep theirs for the page's lifetime, so remove() is never expected. */
+type Handle = { remove: jest.Mock<() => Promise<void>> };
+
+/**
+ * The Capacitor listeners added in this module registry, as Capacitor keeps them for a page: jest.clearAllMocks()
+ * forgets addListener's calls, not these.
+ */
+const listeners: { eventName: string; listener: (payload: never) => void }[] =
+  [];
+
 /**
  * The native plugin for Jest: every method records its calls; requests resolve native's defaults as `{ value }`, and
- * the other methods resolve nothing.
+ * the other methods resolve nothing. addListener keeps each Capacitor listener for emit().
  */
 export const native = {
   initialize: jest.fn<SallaPushNativePlugin['initialize']>(() =>
@@ -60,6 +70,12 @@ export const native = {
   >(() => Promise.resolve({ value: false })),
   optIn: jest.fn<SallaPushNativePlugin['optIn']>(() => Promise.resolve()),
   optOut: jest.fn<SallaPushNativePlugin['optOut']>(() => Promise.resolve()),
+  addPushSubscriptionListener: jest.fn<
+    SallaPushNativePlugin['addPushSubscriptionListener']
+  >(() => Promise.resolve()),
+  removePushSubscriptionListener: jest.fn<
+    SallaPushNativePlugin['removePushSubscriptionListener']
+  >(() => Promise.resolve()),
 
   getPermission: jest.fn<SallaPushNativePlugin['getPermission']>(() =>
     Promise.resolve({ value: false })
@@ -106,4 +122,35 @@ export const native = {
   setLogLevel: jest.fn<SallaPushNativePlugin['setLogLevel']>(() =>
     Promise.resolve()
   ),
+
+  startEvents: jest.fn<SallaPushNativePlugin['startEvents']>(() =>
+    Promise.resolve()
+  ),
+  stopEvents: jest.fn<SallaPushNativePlugin['stopEvents']>(() =>
+    Promise.resolve()
+  ),
+
+  addListener: jest.fn(
+    (
+      eventName: string,
+      listener: (payload: never) => void
+    ): Promise<Handle> => {
+      listeners.push({ eventName, listener });
+      return Promise.resolve({ remove: jest.fn(async () => {}) });
+    }
+  ),
 };
+
+/** Sends an event to the Capacitor listeners added for it, as the native plugin's notifyListeners does. */
+export function emit(eventName: string, payload: unknown): void {
+  for (const added of listeners) {
+    if (added.eventName === eventName) {
+      (added.listener as (payload: unknown) => void)(payload);
+    }
+  }
+}
+
+/** Lets the hubs' native steps, and the rejections of sent calls, run to their end. */
+export function flush(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}

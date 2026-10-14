@@ -3,7 +3,7 @@ import Capacitor
 import XCTest
 
 /// The Capacitor plugin over FakeNativeSallaPush, with each call's options and results as Capacitor's bridge passes
-/// them. load(on:) needs a bridge, so the tests give the plugin its logic.
+/// them. load(on:) needs a bridge, so the tests give the plugin its logic and the listener table load(on:) creates.
 class SallaPushPluginTestCase: XCTestCase {
     let native = FakeNativeSallaPush()
     let console = RecordingConsole()
@@ -11,7 +11,10 @@ class SallaPushPluginTestCase: XCTestCase {
 
     func makePlugin(native: NativeSallaPush? = nil) -> SallaPushPlugin {
         let plugin = SallaPushPlugin()
-        plugin.logic = SallaPushBridge(native: native ?? self.native, console: console, once: once) { nil }
+        plugin.logic = SallaPushBridge(native: native ?? self.native, console: console, once: once, emitter: plugin) {
+            nil
+        }
+        plugin.eventListeners = NSMutableDictionary()
         return plugin
     }
 
@@ -27,6 +30,13 @@ class SallaPushPluginTestCase: XCTestCase {
         XCTAssertEqual(recording.resolved.count, 1, "resolutions", file: file, line: line)
         XCTAssertEqual(recording.rejected, [], file: file, line: line)
         return recording.resolved.first?["value"]
+    }
+
+    /// Runs the work queued on the main queue so far, such as the plugin's hops from Capacitor's queue.
+    func drainMainQueue() {
+        let drained = expectation(description: "the main queue ran the work queued before")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 5)
     }
 }
 
@@ -44,13 +54,14 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
             "getExternalId promise", "isLoggedIn promise", "addTag none", "addTags none", "removeTag none",
             "removeTags none", "getTags promise", "setLanguage none",
             "getPushSubscriptionId promise", "getPushSubscriptionToken promise", "getPushSubscriptionOptedIn promise",
-            "optIn none", "optOut none",
+            "optIn none", "optOut none", "addPushSubscriptionListener none", "removePushSubscriptionListener none",
             "getPermission promise", "canRequestPermission promise", "getPermissionStatus promise",
             "requestPermission promise", "registerForProvisionalAuthorization promise", "refreshPermission none",
             "registerForRemoteNotifications none", "forwardApnsToken none", "clearAll none", "removeNotification none",
             "isSallaPushNotification promise", "trackOpened promise",
             "setDisplayOneSignalCompatPayloads none",
-            "getLogLevel promise", "setLogLevel none"
+            "getLogLevel promise", "setLogLevel none",
+            "startEvents none", "stopEvents none"
         ])
     }
 
@@ -178,5 +189,155 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
         }
 
         XCTAssertNil(released)
+    }
+}
+
+/// Capacitor's listener bookkeeping, which the plugin moves to the main thread, the events it emits there, and the
+/// resets of a page load and of a released plugin.
+final class SallaPushPluginListenerTests: SallaPushPluginTestCase {
+    func testAddListenerKeepsTheCallAliveAtOnceAndStoresItOnTheMainThread() {
+        let plugin = makePlugin()
+        let listener = RecordingPluginCall(["eventName": "click"])
+        var keptAlive = false
+        var storedAtOnce = true
+        let returned = DispatchSemaphore(value: 0)
+
+        // The main thread waits on the semaphore, so the plugin's hop to it runs only after these checks.
+        DispatchQueue(label: "bridge").async {
+            plugin.addListener(listener.call)
+            keptAlive = listener.call.keepAlive
+            storedAtOnce = plugin.eventListeners?["click"] != nil
+            returned.signal()
+        }
+        returned.wait()
+        drainMainQueue()
+
+        XCTAssertTrue(keptAlive)
+        XCTAssertFalse(storedAtOnce)
+        XCTAssertEqual(plugin.eventListeners?["click"] as? [CAPPluginCall], [listener.call])
+    }
+
+    func testAnEventEmittedAfterAddListenerReachesTheCallsSuccessHandler() {
+        let plugin = makePlugin()
+        let listener = RecordingPluginCall(["eventName": "click"])
+        let other = RecordingPluginCall(["eventName": "permissionChange"])
+        plugin.addListener(listener.call)
+        plugin.addListener(other.call)
+        plugin.startEvents(call(["kind": "click"]))
+        let click: [String: Any] = ["notification": ["notificationId": "msg_1"], "url": "https://example.com/products/42"]
+
+        native.clickHandlers.first?(click)
+
+        XCTAssertEqual(listener.resolved.map { $0 as NSDictionary }, [click as NSDictionary])
+        XCTAssertEqual(listener.rejected, [])
+        XCTAssertEqual(other.resolved.count, 0)
+    }
+
+    func testEventCallsFromCapacitorsQueueReachNativeOnTheMainThreadInCallOrder() {
+        let plugin = makePlugin()
+        let ran = expectation(description: "the main thread ran the calls")
+
+        DispatchQueue(label: "bridge").async {
+            plugin.startEvents(self.call(["kind": "click"]))
+            plugin.addPushSubscriptionListener(self.call(["listenerId": 3]))
+            plugin.stopEvents(self.call(["kind": "click"]))
+            plugin.removePushSubscriptionListener(self.call(["listenerId": 3]))
+            DispatchQueue.main.async { ran.fulfill() }
+        }
+        wait(for: [ran], timeout: 5)
+
+        XCTAssertEqual(native.calls, ["addClickListener", "addSubscriptionObserver"])
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true, true])
+    }
+
+    // The TypeScript API sends only known kinds and integer ids, so only another caller could send these.
+    func testIgnoresUnknownKindsAndMissingOrMistypedOptions() {
+        let plugin = makePlugin()
+
+        plugin.startEvents(call(["kind": "opened"]))
+        plugin.startEvents(call(["kind": 1]))
+        plugin.startEvents(call())
+        plugin.stopEvents(call())
+        plugin.addPushSubscriptionListener(call(["listenerId": "3"]))
+        plugin.addPushSubscriptionListener(call())
+        plugin.removePushSubscriptionListener(call())
+
+        XCTAssertEqual(native.calls, [])
+    }
+
+    func testAPageLoadsResetWithANilCallStopsEveryRegistrationAndForgetsTheListeners() {
+        let plugin = makePlugin()
+        let listener = RecordingPluginCall(["eventName": "click"])
+        plugin.addListener(listener.call)
+        plugin.startEvents(call(["kind": "click"]))
+        plugin.startEvents(call(["kind": "user"]))
+        plugin.addPushSubscriptionListener(call(["listenerId": 1]))
+
+        // CapacitorBridge.reset() sends it with nil, on the main thread.
+        plugin.perform(#selector(CAPPlugin.removeAllListeners(_:)), with: nil)
+
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true, true, true])
+        XCTAssertEqual(plugin.eventListeners?.count, 0)
+        XCTAssertEqual(listener.resolved.count, 0)
+    }
+
+    func testRemoveAllListenersFromJavaScriptStopsEveryRegistrationAndResolvesTheCall() {
+        let plugin = makePlugin()
+        plugin.addListener(RecordingPluginCall(["eventName": "permissionChange"]).call)
+        plugin.startEvents(call(["kind": "permission"]))
+        let removeAll = RecordingPluginCall()
+
+        plugin.removeAllListeners(removeAll.call)
+
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true])
+        XCTAssertEqual(plugin.eventListeners?.count, 0)
+        XCTAssertEqual(removeAll.resolved.count, 1)
+        XCTAssertEqual(removeAll.rejected, [])
+    }
+
+    func testThePluginKeepsWorkingAfterAReset() {
+        let plugin = makePlugin()
+        plugin.startEvents(call(["kind": "click"]))
+        plugin.perform(#selector(CAPPlugin.removeAllListeners(_:)), with: nil)
+        let listener = RecordingPluginCall(["eventName": "click"])
+
+        plugin.addListener(listener.call)
+        plugin.startEvents(call(["kind": "click"]))
+        native.clickHandlers.last?(["notification": ["notificationId": "msg_2"]])
+
+        XCTAssertEqual(native.calls, ["addClickListener", "addClickListener"])
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true, false])
+        XCTAssertEqual(listener.resolved.count, 1)
+    }
+
+    func testAReleasedPluginResetsItsLogic() {
+        weak var released: SallaPushPlugin?
+
+        autoreleasepool {
+            let plugin = makePlugin()
+            plugin.startEvents(call(["kind": "click"]))
+            plugin.addPushSubscriptionListener(call(["listenerId": 1]))
+            released = plugin
+        }
+
+        XCTAssertNil(released)
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true, true])
+    }
+
+    func testAPluginReleasedOffTheMainThreadResetsItsLogicOnTheMainThread() {
+        var plugin: SallaPushPlugin? = makePlugin()
+        plugin?.startEvents(call(["kind": "click"]))
+        let released = DispatchSemaphore(value: 0)
+
+        DispatchQueue(label: "bridge").async {
+            plugin = nil
+            released.signal()
+        }
+        released.wait()
+        XCTAssertEqual(native.observations.map(\.isCancelled), [false])
+        drainMainQueue()
+
+        XCTAssertEqual(native.observations.map(\.isCancelled), [true])
+        XCTAssertEqual(native.observations.map(\.cancelledOnMainThread), [true])
     }
 }

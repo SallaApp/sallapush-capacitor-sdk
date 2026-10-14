@@ -16,6 +16,8 @@ import {
 import type {
   SallaPushConfig,
   SallaPushMigrationNamespace,
+  SallaPushNotificationsNamespace,
+  SallaPushUserNamespace,
 } from './definitions';
 
 /**
@@ -41,8 +43,8 @@ export const SallaPush: {
   setConsentGiven(given: boolean): void;
   login(externalId: string, identityToken: string): void;
   logout(): void;
-  readonly User: typeof User;
-  readonly Notifications: typeof Notifications;
+  readonly User: SallaPushUserNamespace;
+  readonly Notifications: SallaPushNotificationsNamespace;
   readonly Debug: typeof Debug;
   readonly Migration: SallaPushMigrationNamespace;
 } = {

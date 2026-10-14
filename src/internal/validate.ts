@@ -27,6 +27,11 @@ export const integer: Rule = {
   expected: 'a 32-bit integer',
 };
 
+export const func: Rule = {
+  test: (value) => typeof value === 'function',
+  expected: 'a function',
+};
+
 export const record: Rule = { test: isRecord, expected: 'a plain object' };
 
 export const array: Rule = { test: Array.isArray, expected: 'an array' };

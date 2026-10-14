@@ -1,4 +1,6 @@
+import { EventHub, addListener, removeListener } from './internal/EventHub';
 import { nullable as valueOrNull, send, value } from './internal/calls';
+import { clickEvent, permissionChange } from './internal/mapping';
 import { native } from './internal/native';
 import {
   boolean,
@@ -14,11 +16,23 @@ import type {
   SallaPushNotificationsNamespace,
 } from './definitions';
 
+const hubs = {
+  click: new EventHub({
+    kind: 'click',
+    name: "SallaPush.Notifications 'click' listener",
+    connect: (dispatch) => native.addListener('click', dispatch),
+    map: clickEvent,
+  }),
+  permissionChange: new EventHub({
+    kind: 'permission',
+    name: "SallaPush.Notifications 'permissionChange' listener",
+    connect: (dispatch) => native.addListener('permissionChange', dispatch),
+    map: permissionChange,
+  }),
+};
+
 // A dropped promise-returning call resolves false, the neutral value of a platform-only call.
-export const Notifications: Omit<
-  SallaPushNotificationsNamespace,
-  'addEventListener' | 'removeEventListener'
-> = {
+export const Notifications: SallaPushNotificationsNamespace = {
   getPermission: () => value(native.getPermission()),
   canRequestPermission: () => value(native.canRequestPermission()),
   getPermissionStatus: () =>
@@ -93,4 +107,18 @@ export const Notifications: Omit<
     }
     return value(native.trackOpened({ additionalData }));
   },
+  addEventListener: (event: unknown, listener: unknown) =>
+    addListener(
+      'SallaPush.Notifications.addEventListener',
+      hubs,
+      event,
+      listener
+    ),
+  removeEventListener: (event: unknown, listener: unknown) =>
+    removeListener(
+      'SallaPush.Notifications.removeEventListener',
+      hubs,
+      event,
+      listener
+    ),
 };

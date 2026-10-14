@@ -45,6 +45,12 @@ final class FakeNativeSallaPush: NativeSallaPush {
     var permissionAnswer = false
     var recognizesPayloads = false
     var logLevel: SallaPushLogLevel = .warn
+    private(set) var observations: [FakeObservation] = []
+    private(set) var clickHandlers: [([String: Any]) -> Void] = []
+    private(set) var permissionHandlers: [(Bool) -> Void] = []
+    private(set) var userHandlers: [([String: Any]) -> Void] = []
+    private(set) var loginFailureHandlers: [([String: Any]) -> Void] = []
+    private(set) var subscriptionHandlers: [([String: Any]) -> Void] = []
 
     func initialize(_ appId: String, configuration: SallaPushConfiguration) {
         initializedAppIds.append(appId)
@@ -128,6 +134,80 @@ final class FakeNativeSallaPush: NativeSallaPush {
         checkedPayloads.append(userInfo)
         return recognizesPayloads
     }
+
+    func addClickListener(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        clickHandlers.append(handler)
+        return observation("addClickListener")
+    }
+
+    func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation {
+        permissionHandlers.append(handler)
+        return observation("addPermissionObserver")
+    }
+
+    func addUserObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        userHandlers.append(handler)
+        return observation("addUserObserver")
+    }
+
+    func addLoginFailureHandler(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        loginFailureHandlers.append(handler)
+        return observation("addLoginFailureHandler")
+    }
+
+    func addSubscriptionObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        subscriptionHandlers.append(handler)
+        return observation("addSubscriptionObserver")
+    }
+
+    private func observation(_ call: String) -> FakeObservation {
+        calls.append(call)
+        let observation = FakeObservation()
+        observations.append(observation)
+        return observation
+    }
+}
+
+/// A native registration that records its cancellation, and the thread it came on.
+final class FakeObservation: NativeObservation {
+    private(set) var isCancelled = false
+    private(set) var cancelledOnMainThread: Bool?
+
+    func cancel() {
+        isCancelled = true
+        cancelledOnMainThread = Thread.isMainThread
+    }
+}
+
+/// Records the events the plugin's logic emits to JavaScript, in order, and whether each came on the main thread.
+final class RecordingEmitter: SallaPushEventEmitter {
+    private(set) var events: [(name: String, body: NSDictionary)] = []
+    private(set) var onMainThread: [Bool] = []
+
+    func emitOnClick(_ value: [String: Any]) {
+        record("click", value)
+    }
+
+    func emitOnPermissionChange(_ value: [String: Any]) {
+        record("permissionChange", value)
+    }
+
+    func emitOnUserChange(_ value: [String: Any]) {
+        record("userChange", value)
+    }
+
+    func emitOnLoginFailure(_ value: [String: Any]) {
+        record("loginFailure", value)
+    }
+
+    func emitOnPushSubscriptionChange(_ value: [String: Any]) {
+        record("pushSubscriptionChange", value)
+    }
+
+    private func record(_ name: String, _ value: [String: Any]) {
+        events.append((name, value as NSDictionary))
+        onMainThread.append(Thread.isMainThread)
+    }
 }
 
 /// A plugin call as Capacitor's bridge makes it, with its options coerced to JavaScript values; it records how the
@@ -136,17 +216,19 @@ final class RecordingPluginCall {
     private(set) var resolved: [[String: Any]] = []
     private(set) var rejected: [String] = []
     private let options: [String: Any]
+    private let callbackId: String
 
     private(set) lazy var call: CAPPluginCall = CAPPluginCall(
-        callbackId: "test",
+        callbackId: callbackId,
         methodName: "test",
         options: JSTypes.coerceDictionaryToJSObject(options) ?? [:],
         success: { [weak self] result, _ in self?.resolved.append(result?.data ?? [:]) },
         error: { [weak self] error in self?.rejected.append(error?.message ?? "") }
     )
 
-    init(_ options: [String: Any] = [:]) {
+    init(_ options: [String: Any] = [:], callbackId: String = "test") {
         self.options = options
+        self.callbackId = callbackId
     }
 }
 

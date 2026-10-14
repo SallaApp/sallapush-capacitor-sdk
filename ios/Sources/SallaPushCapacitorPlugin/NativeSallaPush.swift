@@ -2,7 +2,15 @@ import Foundation
 import SallaPush
 import UserNotifications
 
-/// The native SallaPush calls the wrapper makes. Tests replace it with a fake.
+/// A native registration the wrapper cancels once JavaScript stops listening.
+protocol NativeObservation: AnyObject {
+    func cancel()
+}
+
+extension SallaPushObservation: NativeObservation {}
+
+/// The native SallaPush calls the wrapper makes. Tests replace it with a fake. Listeners get their events in bridge
+/// form, as JavaScript gets them, so tests never need native's objects.
 protocol NativeSallaPush: AnyObject {
     func initialize(_ appId: String, configuration: SallaPushConfiguration)
     var isInitialized: Bool { get }
@@ -23,12 +31,16 @@ protocol NativeSallaPush: AnyObject {
     func removeTags(_ keys: [Any])
     var tags: [String: String] { get }
     func setLanguage(_ language: String?)
+    func addUserObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
+    func addLoginFailureHandler(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
 
     var pushSubscriptionId: String? { get }
     var pushSubscriptionToken: String? { get }
     var pushSubscriptionOptedIn: Bool { get }
     func optIn()
     func optOut()
+    /// Each change as previous and current; EventRegistry adds the id of the JavaScript listener.
+    func addSubscriptionObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
 
     var permission: Bool { get }
     var canRequestPermission: Bool { get }
@@ -40,6 +52,8 @@ protocol NativeSallaPush: AnyObject {
     func didRegisterForRemoteNotifications(deviceToken: Data)
     func clearAll()
     func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool
+    func addClickListener(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation
+    func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation
 
     var logLevel: SallaPushLogLevel { get set }
 }
@@ -98,6 +112,14 @@ final class LiveNativeSallaPush: NativeSallaPush {
         SallaPush.User.setLanguage(language)
     }
 
+    func addUserObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        SallaPush.User.addObserver { handler(Mapping.userChange($0)) }
+    }
+
+    func addLoginFailureHandler(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        SallaPush.User.addLoginFailureHandler { handler(Mapping.loginFailure($0)) }
+    }
+
     var pushSubscriptionId: String? { SallaPush.User.pushSubscription.id }
 
     var pushSubscriptionToken: String? { SallaPush.User.pushSubscription.token }
@@ -110,6 +132,10 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func optOut() {
         SallaPush.User.pushSubscription.optOut()
+    }
+
+    func addSubscriptionObserver(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        SallaPush.User.pushSubscription.addObserver { handler(Mapping.subscriptionChange($0)) }
     }
 
     var permission: Bool { SallaPush.Notifications.permission }
@@ -144,6 +170,14 @@ final class LiveNativeSallaPush: NativeSallaPush {
 
     func isSallaPushNotification(_ userInfo: [AnyHashable: Any]) -> Bool {
         SallaPush.Notifications.isSallaPushNotification(userInfo)
+    }
+
+    func addClickListener(_ handler: @escaping ([String: Any]) -> Void) -> NativeObservation {
+        SallaPush.Notifications.addClickListener { handler(Mapping.click($0)) }
+    }
+
+    func addPermissionObserver(_ handler: @escaping (Bool) -> Void) -> NativeObservation {
+        SallaPush.Notifications.addPermissionObserver { handler($0) }
     }
 
     var logLevel: SallaPushLogLevel {

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A1ABD90378374F302F9E950 /* SallaPushPluginMethodTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD435C2D29B1EC543454D575 /* SallaPushPluginMethodTests.swift */; };
 		153ADCB855C58DC46BE144DA /* InitOptionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4D9B1199AB119600BD3520 /* InitOptionsTests.swift */; };
+		21A05DDD57013F78A406C293 /* EventRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428E92A4FFF1865417C137E5 /* EventRegistryTests.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -20,6 +21,7 @@
 		62DCF335C7E21366EAD014F3 /* BridgeIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDA841D3408F6108A3A938E5 /* BridgeIntegrationTests.swift */; };
 		767F3BC997D989C7554C12E9 /* StaticConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A22BA0C527713508BE3873C /* StaticConfigTests.swift */; };
 		840DF4D6A3A77F0C8A58D9FA /* SallaPushPluginTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181294A3E6B4195584B969CB /* SallaPushPluginTests.swift */; };
+		8ECBB3392C3356D3433EBD09 /* MappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F34FB7FD0C3275983BC5C6D /* MappingTests.swift */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A68CEED204A33B3F351B4978 /* compat.apns in Resources */ = {isa = PBXBuildFile; fileRef = 6AAE5333D5FBA059B26619C5 /* compat.apns */; };
 		A810B3D65F10D16F7825C57A /* SallaPushBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62AED9587607DF0981665E02 /* SallaPushBridgeTests.swift */; };
@@ -46,6 +48,8 @@
 		1A22BA0C527713508BE3873C /* StaticConfigTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StaticConfigTests.swift; sourceTree = "<group>"; };
 		1CF1A168E01D9032934D6CAB /* native.apns */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = native.apns; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		3F34FB7FD0C3275983BC5C6D /* MappingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MappingTests.swift; sourceTree = "<group>"; };
+		428E92A4FFF1865417C137E5 /* EventRegistryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EventRegistryTests.swift; sourceTree = "<group>"; };
 		4A9B5E968F6304C14E68D681 /* App.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		4E098859F1151ADA6E3E6507 /* SallaPush.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = SallaPush.xcconfig; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -150,8 +154,10 @@
 			isa = PBXGroup;
 			children = (
 				DDA841D3408F6108A3A938E5 /* BridgeIntegrationTests.swift */,
+				428E92A4FFF1865417C137E5 /* EventRegistryTests.swift */,
 				99F4B65E19DA839DE59617D3 /* Fakes.swift */,
 				CF4D9B1199AB119600BD3520 /* InitOptionsTests.swift */,
+				3F34FB7FD0C3275983BC5C6D /* MappingTests.swift */,
 				F073A62247AE0B65BB41FAA3 /* NotificationCenterDelegateTests.swift */,
 				951CCAC9969BA34679DB13D4 /* NotificationsBridgeTests.swift */,
 				62AED9587607DF0981665E02 /* SallaPushBridgeTests.swift */,
@@ -297,6 +303,8 @@
 				840DF4D6A3A77F0C8A58D9FA /* SallaPushPluginTests.swift in Sources */,
 				F4E05D8EC7A1DD1CB31B17B4 /* NotificationsBridgeTests.swift in Sources */,
 				0A1ABD90378374F302F9E950 /* SallaPushPluginMethodTests.swift in Sources */,
+				21A05DDD57013F78A406C293 /* EventRegistryTests.swift in Sources */,
+				8ECBB3392C3356D3433EBD09 /* MappingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -6,6 +6,7 @@ final class NotificationsBridgeTests: XCTestCase {
     private let native = FakeNativeSallaPush()
     private let console = RecordingConsole()
     private let once = OncePerProcess()
+    private let emitter = RecordingEmitter()
 
     func testReadsThePermissionAtCallTime() {
         let bridge = makeBridge()
@@ -115,6 +116,6 @@ final class NotificationsBridgeTests: XCTestCase {
     }
 
     private func makeBridge() -> SallaPushBridge {
-        SallaPushBridge(native: native, console: console, once: once) { nil }
+        SallaPushBridge(native: native, console: console, once: once, emitter: emitter) { nil }
     }
 }

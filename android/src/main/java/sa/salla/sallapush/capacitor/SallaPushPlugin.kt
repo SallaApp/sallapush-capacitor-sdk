@@ -1,6 +1,8 @@
 package sa.salla.sallapush.capacitor
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -11,7 +13,9 @@ import org.json.JSONObject
 
 /**
  * The SallaPush plugin that Capacitor loads; apps use the TypeScript API. Capacitor calls its methods on its plugin
- * thread, in call order, and SallaPush is thread-safe, so every call goes straight to native.
+ * thread, in call order, and SallaPush is thread-safe, so every call goes straight to native. The event registrations
+ * are confined to the main thread, where native calls back, so those calls are posted there, in call order too; events
+ * go to JavaScript from the plugin thread, where Capacitor keeps its listeners.
  */
 @CapacitorPlugin(name = "SallaPush")
 class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() {
@@ -25,8 +29,15 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     val once: OncePerProcess = OncePerProcess.shared,
     val earlyInit: () -> StaticConfig? = { EarlyInit.config },
     val context: Context? = null, // null: the bridge context's applicationContext
+    val runOnMain: ((() -> Unit) -> Unit)? = null, // null: inline on main, else posted to main
+    val runOnPluginThread: ((() -> Unit) -> Unit)? = null, // null: Plugin.execute, Capacitor's plugin thread
     val pluginConfigIsEmpty: (() -> Boolean)? = null, // null: getConfig().isEmpty(), which needs a bridge
   )
+
+  // Set by handleOnDestroy(), on main; read by the registry's listeners there, by onRegistry and by emit.
+  @Volatile private var destroyed = false
+  private val events = EventRegistry(seams.native, { !destroyed }, ::emit)
+  private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
   /**
    * Starts nothing: SallaPushInitProvider started SallaPush from the manifest when the process started. A
@@ -124,7 +135,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   }
 
   @PluginMethod
-  fun getTags(call: PluginCall) = call.resolveWith { JSONObject(seams.native.tags) }
+  fun getTags(call: PluginCall) = call.resolveWith { Conversions.toJSObject(seams.native.tags) }
 
   /** JSON null, not a missing option, means the device language. */
   @PluginMethod(returnType = PluginMethod.RETURN_NONE)
@@ -151,6 +162,18 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   @PluginMethod(returnType = PluginMethod.RETURN_NONE)
   fun optOut(call: PluginCall) {
     seams.native.optOut()
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun addPushSubscriptionListener(call: PluginCall) {
+    val listenerId = call.getInt("listenerId") ?: return
+    onRegistry { events.addSubscriptionListener(listenerId) }
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun removePushSubscriptionListener(call: PluginCall) {
+    val listenerId = call.getInt("listenerId") ?: return
+    onRegistry { events.removeSubscriptionListener(listenerId) }
   }
 
   @PluginMethod
@@ -230,8 +253,74 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     seams.native.logLevel = level
   }
 
+  /** Registers the native listener of an event kind once JavaScript listens to it; an unknown kind is ignored. */
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun startEvents(call: PluginCall) {
+    val kind = call.getString("kind") ?: return
+    onRegistry { events.start(kind) }
+  }
+
+  @PluginMethod(returnType = PluginMethod.RETURN_NONE)
+  fun stopEvents(call: PluginCall) {
+    val kind = call.getString("kind") ?: return
+    onRegistry { events.stop(kind) }
+  }
+
+  /**
+   * Capacitor's reset when the WebView loads a page, on main: every native registration stops now, and Capacitor's
+   * listeners are cleared on the plugin thread, where Capacitor changes them.
+   */
+  override fun removeAllListeners() {
+    events.stopAll()
+    onPluginThread { super.removeAllListeners() }
+  }
+
+  /** JavaScript's removeAllListeners(), on the plugin thread. Capacitor runs only annotated methods, hence the repeat. */
+  @PluginMethod(returnType = PluginMethod.RETURN_PROMISE)
+  override fun removeAllListeners(call: PluginCall) {
+    onMain { events.stopAll() }
+    super.removeAllListeners(call)
+  }
+
+  /**
+   * The activity is going away. Capacitor still runs the calls it had queued, and native would hold a listener
+   * registered by one of them, with this plugin, its activity and its WebView, and give it every later tap. So every
+   * registration stops, and from now on the plugin refuses new ones and emits nothing. Public, so the tests in this
+   * package can call it; Kotlin allows widening the protected override.
+   */
+  public override fun handleOnDestroy() {
+    destroyed = true
+    events.stopAll()
+    super.handleOnDestroy()
+  }
+
   /** The application context, which native keeps; the bridge's context is the activity. */
   private fun applicationContext(): Context = seams.context ?: context.applicationContext
+
+  /** Registry work on main, refused once the activity is destroyed: Capacitor still runs the calls it had queued. */
+  private fun onRegistry(block: () -> Unit) = onMain { if (!destroyed) block() }
+
+  /** Runs [block] on the main thread: inline when already there, else posted there, in call order. */
+  private fun onMain(block: () -> Unit) {
+    val runOnMain = seams.runOnMain
+    when {
+      runOnMain != null -> runOnMain(block)
+      Looper.myLooper() == Looper.getMainLooper() -> block()
+      else -> mainHandler.post(block)
+    }
+  }
+
+  private fun onPluginThread(block: () -> Unit) {
+    val runOnPluginThread = seams.runOnPluginThread
+    if (runOnPluginThread != null) runOnPluginThread(block) else execute(block)
+  }
+
+  /** An event to JavaScript, from the plugin thread, where Capacitor reads and changes its listeners. */
+  private fun emit(event: Event, body: Map<String, Any?>) {
+    if (destroyed) return
+    val data = Conversions.toJSObject(body)
+    onPluginThread { notifyListeners(event.jsName, data) }
+  }
 
   /** A second init with the static app id and API host changes nothing natively, its options included. */
   private fun reportIgnoredOptions(options: List<Pair<String, String>>) {

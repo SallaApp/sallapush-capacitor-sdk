@@ -8,17 +8,23 @@ import {
   jest,
 } from '@jest/globals';
 
+import type * as NativeMock from '../internal/__mocks__/native';
 import { native } from '../internal/native';
-import { SallaPush } from '../index';
+import {
+  SallaPush,
+  SallaPushLoginFailure,
+  type SallaPushEventSubscription,
+  type SallaPushUserChangedState,
+} from '../index';
 
 jest.mock('../internal/native');
 
 const plugin = jest.mocked(native);
+const { emit, flush } =
+  jest.requireMock<typeof NativeMock>('../internal/native');
+const subscriptions: SallaPushEventSubscription[] = [];
 let warn: jest.SpiedFunction<typeof console.warn>;
 let error: jest.SpiedFunction<typeof console.error>;
-
-/** Lets the rejections of sent calls reach their handlers. */
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -26,7 +32,11 @@ beforeEach(() => {
   error = jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-afterEach(() => {
+afterEach(async () => {
+  for (const subscription of subscriptions.splice(0)) {
+    subscription.remove();
+  }
+  await flush();
   warn.mockRestore();
   error.mockRestore();
 });
@@ -194,6 +204,42 @@ describe('SallaPush.User without the native plugin', () => {
       [
         '[SallaPush] SallaPush.User.addTag failed: "SallaPush" plugin is not implemented on web',
       ],
+    ]);
+  });
+});
+
+describe('SallaPush.User events', () => {
+  it("passes user changes to 'change' listeners", async () => {
+    const listener = jest.fn<(state: SallaPushUserChangedState) => void>();
+    subscriptions.push(SallaPush.User.addEventListener('change', listener));
+    await flush();
+
+    emit('userChange', {
+      previous: { isLoggedIn: false },
+      current: { externalId: 'customer-7', isLoggedIn: true },
+    });
+
+    expect(plugin.startEvents).toHaveBeenCalledWith({ kind: 'user' });
+    expect(listener).toHaveBeenCalledWith({
+      previous: { externalId: null, isLoggedIn: false },
+      current: { externalId: 'customer-7', isLoggedIn: true },
+    });
+  });
+
+  it("passes login failures to 'loginFailure' listeners", async () => {
+    const listener = jest.fn<(failure: SallaPushLoginFailure) => void>();
+    subscriptions.push(
+      SallaPush.User.addEventListener('loginFailure', listener)
+    );
+    await flush();
+
+    emit('loginFailure', { failure: 'tokenRejected' });
+    emit('loginFailure', { failure: 'invalidRequest' });
+
+    expect(plugin.startEvents).toHaveBeenCalledWith({ kind: 'loginFailure' });
+    expect(listener.mock.calls).toEqual([
+      [SallaPushLoginFailure.TokenRejected],
+      [SallaPushLoginFailure.InvalidRequest],
     ]);
   });
 });

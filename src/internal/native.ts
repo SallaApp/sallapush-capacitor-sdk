@@ -1,4 +1,4 @@
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 export type ConfigSpec = {
   apiBaseUrl?: string;
@@ -12,7 +12,54 @@ export type ConfigSpec = {
   iosAutoClearBadge?: boolean;
   iosRegisterForRemoteNotificationsOnInit?: boolean;
 };
+export type NotificationSpec = {
+  notificationId?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  body?: string | null;
+  imageUrl?: string | null;
+  launchUrl?: string | null;
+  additionalData: Record<string, unknown>;
+  rawPayload: Record<string, unknown>;
+  source: string;
+  // The non-null results of native's typed accessors for each top-level additionalData key.
+  stringValues: Record<string, unknown>;
+  intValues: Record<string, unknown>;
+  boolValues: Record<string, unknown>;
+  numberValues: Record<string, unknown>;
+  sound?: string | null;
+  badge?: number | null;
+  threadId?: string | null;
+  androidNotificationId?: number | null;
+  collapseId?: string | null;
+  channelId?: string | null;
+};
+export type ClickEventSpec = {
+  notification: NotificationSpec;
+  actionId?: string | null;
+  url?: string | null;
+};
+export type PermissionChangeSpec = { permission: boolean };
+export type SubscriptionStateSpec = {
+  id?: string | null;
+  token?: string | null;
+  optedIn: boolean;
+};
+export type SubscriptionChangedSpec = {
+  listenerId: number;
+  previous: SubscriptionStateSpec;
+  current: SubscriptionStateSpec;
+};
+export type UserStateSpec = { externalId?: string | null; isLoggedIn: boolean };
+export type UserChangedSpec = {
+  previous: UserStateSpec;
+  current: UserStateSpec;
+};
+export type LoginFailureSpec = { failure: string };
 export type Value<T> = { value: T };
+
+/** The native registrations startEvents and stopEvents take; push-subscription listeners register by id instead. */
+export type EventKind = 'click' | 'permission' | 'user' | 'loginFailure';
 
 export interface SallaPushNativePlugin {
   initialize(options: { appId: string; config: ConfigSpec }): Promise<void>;
@@ -38,6 +85,10 @@ export interface SallaPushNativePlugin {
   getPushSubscriptionOptedIn(): Promise<Value<boolean>>;
   optIn(): Promise<void>;
   optOut(): Promise<void>;
+  addPushSubscriptionListener(options: { listenerId: number }): Promise<void>;
+  removePushSubscriptionListener(options: {
+    listenerId: number;
+  }): Promise<void>;
 
   getPermission(): Promise<Value<boolean>>;
   canRequestPermission(): Promise<Value<boolean>>;
@@ -64,6 +115,30 @@ export interface SallaPushNativePlugin {
 
   getLogLevel(): Promise<Value<string>>;
   setLogLevel(options: { level: string }): Promise<void>;
+
+  startEvents(options: { kind: EventKind }): Promise<void>;
+  stopEvents(options: { kind: EventKind }): Promise<void>;
+
+  addListener(
+    eventName: 'click',
+    listenerFunc: (event: ClickEventSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'permissionChange',
+    listenerFunc: (event: PermissionChangeSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'userChange',
+    listenerFunc: (event: UserChangedSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'loginFailure',
+    listenerFunc: (event: LoginFailureSpec) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'pushSubscriptionChange',
+    listenerFunc: (event: SubscriptionChangedSpec) => void
+  ): Promise<PluginListenerHandle>;
 }
 
 /**

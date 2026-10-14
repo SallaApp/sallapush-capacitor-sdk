@@ -1,14 +1,28 @@
 import { PushSubscription } from './PushSubscription';
+import { EventHub, addListener, removeListener } from './internal/EventHub';
 import { nullable as valueOrNull, send, value } from './internal/calls';
+import { loginFailure, userChange } from './internal/mapping';
 import { native } from './internal/native';
 import { array, nullable, record, string, valid } from './internal/validate';
 import type { SallaPushUserNamespace } from './definitions';
 
+const hubs = {
+  change: new EventHub({
+    kind: 'user',
+    name: "SallaPush.User 'change' listener",
+    connect: (dispatch) => native.addListener('userChange', dispatch),
+    map: userChange,
+  }),
+  loginFailure: new EventHub({
+    kind: 'loginFailure',
+    name: "SallaPush.User 'loginFailure' listener",
+    connect: (dispatch) => native.addListener('loginFailure', dispatch),
+    map: loginFailure,
+  }),
+};
+
 // The entries of addTags and removeTags go to native unchecked: native skips and logs the ones that aren't strings.
-export const User: Omit<
-  SallaPushUserNamespace,
-  'pushSubscription' | 'addEventListener' | 'removeEventListener'
-> & { readonly pushSubscription: typeof PushSubscription } = {
+export const User: SallaPushUserNamespace = {
   pushSubscription: PushSubscription,
   getExternalId: () => valueOrNull(native.getExternalId()),
   isLoggedIn: () => value(native.isLoggedIn()),
@@ -49,4 +63,8 @@ export const User: Omit<
       );
     }
   },
+  addEventListener: (event: unknown, listener: unknown) =>
+    addListener('SallaPush.User.addEventListener', hubs, event, listener),
+  removeEventListener: (event: unknown, listener: unknown) =>
+    removeListener('SallaPush.User.removeEventListener', hubs, event, listener),
 };

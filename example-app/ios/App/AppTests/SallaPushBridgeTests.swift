@@ -6,6 +6,7 @@ final class SallaPushBridgeTests: XCTestCase {
     private let native = FakeNativeSallaPush()
     private let console = RecordingConsole()
     private let once = OncePerProcess()
+    private let emitter = RecordingEmitter()
 
     // MARK: - initialize
 
@@ -279,6 +280,6 @@ final class SallaPushBridgeTests: XCTestCase {
     }
 
     private func makeBridge(earlyInit: StaticConfig? = nil) -> SallaPushBridge {
-        SallaPushBridge(native: native, console: console, once: once) { earlyInit }
+        SallaPushBridge(native: native, console: console, once: once, emitter: emitter) { earlyInit }
     }
 }

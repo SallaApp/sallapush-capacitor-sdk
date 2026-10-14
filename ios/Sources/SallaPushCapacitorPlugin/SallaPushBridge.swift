@@ -9,13 +9,16 @@ final class SallaPushBridge {
     private let console: ConsoleOutput
     private let once: OncePerProcess
     private let earlyInit: () -> StaticConfig?
+    private let events: EventRegistry
 
-    init(native: NativeSallaPush, console: ConsoleOutput, once: OncePerProcess,
+    /// The logic over `native`; it emits events through `emitter`, held weakly.
+    init(native: NativeSallaPush, console: ConsoleOutput, once: OncePerProcess, emitter: SallaPushEventEmitter,
          earlyInit: @escaping () -> StaticConfig?) {
         self.native = native
         self.console = console
         self.once = once
         self.earlyInit = earlyInit
+        events = EventRegistry(native: native, emitter: emitter)
     }
 
     // MARK: - Initialization and consent
@@ -171,6 +174,32 @@ final class SallaPushBridge {
 
     func setDisplayOneSignalCompatPayloads() {
         once.info("Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS.", to: console)
+    }
+
+    // MARK: - Events
+
+    /// Registers the native listener of an event kind once JavaScript listens to it; an unknown kind is ignored.
+    func startEvents(_ kind: String) {
+        guard let kind = EventRegistry.Kind(rawValue: kind) else { return }
+        events.start(kind)
+    }
+
+    func stopEvents(_ kind: String) {
+        guard let kind = EventRegistry.Kind(rawValue: kind) else { return }
+        events.stop(kind)
+    }
+
+    func addPushSubscriptionListener(_ listenerId: Int) {
+        events.addSubscriptionListener(listenerId)
+    }
+
+    func removePushSubscriptionListener(_ listenerId: Int) {
+        events.removeSubscriptionListener(listenerId)
+    }
+
+    /// Removes every native registration: the plugin calls it when the WebView loads a page, and when it is released.
+    func reset() {
+        events.stopAll()
     }
 
     // MARK: - Console
