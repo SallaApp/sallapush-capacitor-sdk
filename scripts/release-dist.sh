@@ -3,7 +3,8 @@
 # reduced to what an install needs, committed as a child of HEAD and tagged <version>, so nothing builds at install time.
 # It never pushes.
 #
-#   scripts/release-dist.sh <version>             a commit signed with your git signing key, and the tag, in this repository
+#   scripts/release-dist.sh <version>             a commit signed with your git signing key, and the tag, in this repository;
+#                                                 HEAD must be on origin's master
 #   scripts/release-dist.sh <version> --dry-run   the same, unsigned, in a temporary clone (RELEASE_DIST_DIR, else a new
 #                                                 temporary folder), for scripts/verify.sh consumer; prints
 #                                                 dist_repo=<clone> and dist_commit=<commit>
@@ -54,6 +55,12 @@ if ! $dry_run; then
   fi
 fi
 head="$(git -C "$root" rev-parse HEAD)"
+# A tag publishes its commit's history to every app, so a release is made only from a commit that master has.
+if ! $dry_run; then
+  git -C "$root" fetch --quiet origin master || fail "can't fetch master from origin to check that HEAD is merged"
+  git -C "$root" merge-base --is-ancestor "$head" FETCH_HEAD ||
+    fail "HEAD $head isn't on origin's master: release a merged commit"
+fi
 
 work="$(mktemp -d "${TMPDIR:-/tmp}/sallapush-release.XXXXXX")"
 trap 'rm -rf "$work"' EXIT

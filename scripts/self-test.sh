@@ -603,7 +603,20 @@ PY
   g revert --no-edit HEAD >/dev/null
   printf '\n## [1.0.0] - 2026-10-20\n\n- The SDK.\n' >>"$repo/CHANGELOG.md"
   g commit -q -am "docs: release 1.0.0"
-  check "a release that can't be signed (no signing key here) fails" fails release 1.0.0
+  check "a release without an origin to check master on is refused" fails release 1.0.0
+  says "it says why" "can't fetch master from origin"
+  # origin's master stops at the commit above, as if the next one were never merged.
+  git clone -q --bare "$repo" "$work/release-origin.git"
+  g remote add origin "$work/release-origin.git"
+  printf 'An unreviewed change.\n' >"$repo/unreviewed.txt"
+  g add unreviewed.txt
+  g commit -q -m "feat: an unreviewed change"
+  check "a release of a commit that isn't on origin's master is refused" fails release 1.0.0
+  says "it names the commit" "HEAD $(g rev-parse HEAD) isn't on origin's master: release a merged commit"
+  check "  ... and makes no tag" fails g rev-parse -q --verify refs/tags/1.0.0
+  check "  ... while a dry run of it passes, as verify.sh consumer makes one" ok dry_run "$work/dist-unmerged"
+  git -C "$work/release-origin.git" fetch -q "$repo" master:master
+  check "a merged release that can't be signed (no signing key here) fails" fails release 1.0.0
   says "it makes no dist commit" "the dist commit was not made"
   check "  ... and no tag" fails g rev-parse -q --verify refs/tags/1.0.0
 }

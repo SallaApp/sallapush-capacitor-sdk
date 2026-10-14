@@ -47,15 +47,15 @@ the built `dist/`. `scripts/release-dist.sh` makes it:
 
 1. Check out the merged commit, with a clean working tree.
 2. Run `scripts/release-dist.sh <version>`. It checks that `package.json` declares the version, that the CHANGELOG has
-   its entry, and that the tag doesn't exist yet. Then it builds the package afresh, packs it as npm does, keeps in
-   `package.json` only what an install needs (the `capacitor` key included, without which Capacitor's CLI doesn't see
-   the plugin), and commits that tree as a child of the merged commit, signed with your git signing key. It tags that
-   commit with the version. It refuses a package that would ship a file that isn't committed, such as one `.gitignore`
-   hides in `android/`: release from a fresh clone.
+   its entry, that the tag doesn't exist yet, and that `master` on `origin` has the commit, which it fetches to check.
+   Then it builds the package afresh, packs it as npm does, keeps in `package.json` only what an install needs (the
+   `capacitor` key included, without which Capacitor's CLI doesn't see the plugin), and commits that tree as a child of
+   the merged commit, signed with your git signing key. It tags that commit with the version. It refuses a package that
+   would ship a file that isn't committed, such as one `.gitignore` hides in `android/`: release from a fresh clone.
 3. Push the tag, and only the tag: `git push origin <version>`. The script never pushes, and prints that command.
 
 The release commit is on no branch, by design: `master` keeps the sources only. `scripts/release-dist.sh <version>
---dry-run` makes the same commit in a temporary clone, and changes nothing here.
+--dry-run` makes the same commit in a temporary clone, from any commit, and changes nothing here.
 
 ## After the release
 
