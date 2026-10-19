@@ -664,8 +664,8 @@ them, never on messages. Most codes exist on both platforms. These exist on one 
   `internal.error`.
 - **iOS only:** `init.no_delegate`, `config.no_app_group`, `status.launch`, `status.changed`, `api.callback_repeated`,
   `token.registration_failed`, `inbox.ingested`, `inbox.invalid_file`, `storage.keychain_locked`,
-  `notif.off_main_thread`, `lifecycle.background_expired`, `nse.attachment_failed`, `nse.expired` and
-  `nse.replaced_request`.
+  `notif.off_main_thread`, `lifecycle.background_expired`, `nse.attachment_failed`, `nse.expired`,
+  `nse.replaced_request`, `nse.received_sent` and `nse.received_deferred`.
 
 No secret or identity token is ever logged. On iOS, the info entries `status.launch` and `status.changed` hold the
 full push token and the customer's id: don't forward info entries to third parties. A log handler at `warn` or quieter
