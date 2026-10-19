@@ -76,7 +76,7 @@ repositories {
 
 dependencies {
     implementation project(':capacitor-android')
-    api "com.salla.push:sallapush:1.0.3"
+    api "com.salla.push:sallapush:1.0.4"
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.robolectric:robolectric:4.14.1"

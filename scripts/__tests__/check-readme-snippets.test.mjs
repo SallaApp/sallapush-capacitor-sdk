@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readPins } from '../check-api-parity.mjs';
 import {
   checkSnippets,
   codeBlocks,
@@ -435,14 +436,16 @@ describe('snippetLines and --print', () => {
 
   test('the command line prints a region of the repository, and refuses other arguments', () => {
     const script = path.join(ROOT, 'scripts/check-readme-snippets.mjs');
+    // The repository's own pin, so that a native bump needs no change here.
+    const { ios } = readPins(ROOT);
     assert.equal(
       execFileSync(
         process.execPath,
         [script, '--print', 'docs/snippets/Podfile#podfile-app'],
         { encoding: 'utf8' }
       ),
-      "pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'\n" +
-        "pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'\n"
+      `pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n` +
+        `pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n`
     );
     assert.throws(
       () =>

@@ -47,8 +47,8 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 - **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
   The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
   Until then devices register, but no notification arrives
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#before-you-start),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#before-you-start)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start)).
 
 ## Install
 
@@ -119,7 +119,7 @@ export GIT_CONFIG_KEY_1="url.https://x-access-token:${TOKEN}@github.com/SallaApp
 These rewrites never reach the Swift package, whose URL is `https://github.com/SallaApp/sallapush-ios-sdk.git`. A Swift
 Package Manager app builds on CI with `xcodebuild … -scmProvider system`, so that Xcode uses the machine's git
 (`npx cap build ios` doesn't pass it: call `xcodebuild` yourself), and with one of native's rewrites of that URL
-([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#private-repository-access)).
+([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#private-repository-access)).
 On a machine with an SSH key, to SSH:
 
 ```bash
@@ -248,13 +248,13 @@ yourself below `start()`.**
   notifications. The package checks 2 seconds after the app first becomes active, and logs an error that names the
   class of the delegate that replaced SallaPush's. If your delegate must be set later, forward to SallaPush from it with
   `SallaPush.Notifications.willPresent(_:)` and `didReceive(_:)`, as native apps do
-  ([native quick start](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#1-forward-from-your-app-delegate)).
+  ([native quick start](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#1-forward-from-your-app-delegate)).
 - **Leave `ios.handleApplicationNotifications` in `capacitor.config` as your app has it.** By default it is `true`,
   and Capacitor's router gets the notifications that aren't SallaPush's. OneSignal's setup sets it to `false`
   ([Migrating from OneSignal](#migrating-from-onesignal)).
 - **The three forwarding methods** hand SallaPush the APNs token, a registration failure and background
   notifications, as in a native app
-  ([native quick start](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#1-forward-from-your-app-delegate)).
+  ([native quick start](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#1-forward-from-your-app-delegate)).
   SallaPush never calls your completion handlers: call each one, once. If your `AppDelegate` already has one of these
   methods, for another push plugin, put SallaPush's line first in it ([Another push plugin](#another-push-plugin)).
 - **`import SallaPushCapacitorPlugin` also brings SallaPush's own iOS API,** `SallaPush.Notifications` included: no
@@ -269,7 +269,7 @@ yourself below `start()`.**
 
 An Objective-C app delegate imports both modules, calls `[SallaPushCapacitor start]` first, and forwards with
 SallaPush's Objective-C forms
-([native Objective-C section](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#objective-c)):
+([native Objective-C section](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#objective-c)):
 
 <!-- unchecked: an Objective-C app delegate; no app of scripts/verify.sh has one, and the forwarding calls are the native SDK's own Objective-C forms -->
 ```objc
@@ -312,8 +312,8 @@ SallaPush's private repository, so your Podfile names them. In `ios/App/Podfile`
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->
 ```ruby
-pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
 - **Add them before the first `npx cap sync` with the plugin.** The plugin's pod depends on SallaPush at this exact
@@ -333,7 +333,7 @@ notifications it handles.
 **File → New → Target → Notification Service Extension**, in Swift, named `SallaPushNotificationService`, with a
 deployment target of 15.0, or the app's when it is higher. If your app already has an extension, such as OneSignal's,
 don't add a second one: call SallaPush first in it
-([native coexistence](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#notification-service-extension)).
+([native coexistence](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#notification-service-extension)).
 
 Give the extension the app's **Version** and **Build**, on its **General** tab, and change them together with the
 app's at every release: a new target starts at 1.0 (1), and App Store Connect warns about an extension whose version or
@@ -351,8 +351,8 @@ build differs from its app's.
 <!-- snippet:docs/snippets/Podfile#podfile-extension -->
 ```ruby
 target 'SallaPushNotificationService' do
-  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
-  pod 'SallaPushExtension', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushExtension', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 end
 ```
 
@@ -459,7 +459,7 @@ Put the `google-services.json` of the Firebase project that the SallaPush team s
 
 SallaPush uses the default Firebase app, which that file configures: with another project's file, no notification
 arrives. Leave Firebase's auto-init on
-([native Firebase setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#set-up-firebase)).
+([native Firebase setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#set-up-firebase)).
 
 ### App id and notification icon
 
@@ -502,7 +502,7 @@ hands each message to SallaPush first, then to that plugin, and declare it at pr
 | No other FCM plugin | Nothing: SallaPush's service gets every message |
 | `@capacitor/push-notifications` | The service below, extending `com.capacitorjs.plugins.pushnotifications.MessagingService` |
 | `@capacitor-firebase/messaging` | The same service, extending `io.capawesome.capacitorjs.plugins.firebase.messaging.MessagingService` instead |
-| Intercom, Klaviyo, MoEngage, WebEngage or another FCM SDK | A service with SallaPush's line first, then the SDK's calls ([native guide](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks)) |
+| Intercom, Klaviyo, MoEngage, WebEngage or another FCM SDK | A service with SallaPush's line first, then the SDK's calls ([native guide](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#coexistence-with-other-sdks)) |
 | OneSignal (`@onesignal/capacitor-plugin`) | Nothing for FCM: OneSignal shows its own format's notifications ([Migrating from OneSignal](#migrating-from-onesignal)) |
 
 For `@capacitor/push-notifications`, in `android/app/src/main/java/<your package path>/SallaPushMessagingService.java`:
@@ -559,7 +559,7 @@ Inside `<application>` in `android/app/src/main/AndroidManifest.xml`:
   forward to Intercom or Klaviyo for example, don't add a second one: put the SallaPush lines first in it, keep its
   forwarding, and give its intent filter `android:priority="1"`. Android Studio's Merged Manifest tab, or
   `apkanalyzer manifest print`, lists the services
-  ([native FCM setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#3-make-sure-fcm-reaches-sallapush)).
+  ([native FCM setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#3-make-sure-fcm-reaches-sallapush)).
 - **Don't call `unregister()` of `@capacitor/push-notifications` or `deleteToken()` of
   `@capacitor-firebase/messaging`.** On Android both delete the app's FCM token, which SallaPush uses too, and
   `unregister()` also turns FCM's auto-init off; on iOS, `unregister()` unregisters the app from APNs, for every SDK.
@@ -596,7 +596,7 @@ dependencyResolutionManagement {
 ```
 
 Keep the group exactly `com.salla.push`
-([native repository setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#1-add-the-repository)).
+([native repository setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#1-add-the-repository)).
 
 ### JDK 21
 
@@ -724,7 +724,7 @@ SallaPush.User.addEventListener('loginFailure', (failure) => {
 
 Don't call `login` again from this listener: when push-service couldn't check the token, an immediate retry only
 repeats the refusal
-([native login failures](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md#login-failures)).
+([native login failures](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#login-failures)).
 
 ### Notification permission
 
@@ -931,7 +931,7 @@ const subscription = SallaPush.User.pushSubscription.addEventListener(
   opted-in state.
 - **Read the subscription here, not from the getters at launch.** Right after a cold start, the getters show only this
   launch's calls until SallaPush has loaded its saved state
-  ([native state at launch](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/BEHAVIOUR.md#state-at-launch)).
+  ([native state at launch](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md#state-at-launch)).
 - **The push token is private.** Don't send it to analytics or third parties.
 
 ### User and permission changes
@@ -976,8 +976,8 @@ export function privacyChoiceChanged(allowsNotifications: boolean): void {
   SallaPushRequiresUserConsent, …` (on Android, `com.salla.push.APP_ID` and `com.salla.push.REQUIRES_USER_CONSENT`).
 
 The full rules are native's
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/BEHAVIOUR.md#consent),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md#consent)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md#consent),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#consent)).
 
 ## Logging
 
@@ -1009,8 +1009,8 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
   the customer's id: don't forward info entries to third parties. A handler at `warn` or quieter never receives them,
   and every other entry shows at most the push token's last 6 characters and no customer identifier. The native docs
   list every code
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference)).
 - **Ship with the console level at `warn`,** the default. At `info` or more, set by the static key, `initialize`'s
   `logLevel` or `SallaPush.Debug.setLogLevel`, iOS also writes `status.launch` and `status.changed` to the device log,
   in release builds too.
@@ -1079,8 +1079,8 @@ working:
 
 **Keep the OneSignal SDK in your app until the SallaPush team confirms you can remove it.** Add SallaPush next to it,
 and keep OneSignal initialized
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#onesignal),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#onesignal-5)). Keep
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal-5)). Keep
 `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as OneSignal's Capacitor setup asks.
 
 | `@onesignal/capacitor-plugin` 1.2 | SallaPush |
@@ -1201,8 +1201,8 @@ Before you ship, check on a device, with a real app id:
 5. **Sign in:** no `'loginFailure'` event follows.
 
 The native guides list the codes to expect at each launch
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/RELEASING.md#verify-your-integration),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/RELEASING.md#verify-your-integration)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/RELEASING.md#verify-your-integration),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/RELEASING.md#verify-your-integration)).
 Set the default level back before release.
 
 ## Updating the native SDKs
