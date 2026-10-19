@@ -4,7 +4,7 @@ SallaPush is Salla's push notification service. This package brings it to Capaci
 native SallaPush iOS and Android SDKs, so an app behaves as a native SallaPush app does. The API follows OneSignal v5,
 so most calls will look familiar.
 
-- **Version:** 1.0.0, not released yet. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
+- **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
   [CHANGELOG.md](CHANGELOG.md).
 - **Private:** this package and the native SDKs it wraps live in private repositories of the SallaApp organization
   ([Access to the private repositories](#access-to-the-private-repositories)).
