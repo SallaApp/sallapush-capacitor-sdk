@@ -1,9 +1,0 @@
-// The SallaPush line of a Capacitor app's android/app/build.gradle: the app id that the manifest meta-data
-// com.salla.push.APP_ID reads. scripts/verify.sh consumer adds it to fresh apps and builds them.
-android {
-    defaultConfig {
-        // snippet:placeholders
-        manifestPlaceholders += [sallaPushAppId: "your_app_id"]
-        // end-snippet
-    }
-}

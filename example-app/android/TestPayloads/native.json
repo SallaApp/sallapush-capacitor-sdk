@@ -1,9 +1,0 @@
-{
-  "sp_v": "1",
-  "sp_id": "msg_5a11a90001",
-  "sp_title": "SallaPush test",
-  "sp_body": "A native SallaPush notification",
-  "sp_url": "https://example.com/products/42",
-  "type": "product",
-  "id": "42"
-}
