@@ -1,11 +1,11 @@
 # SallaPush Capacitor SDK: troubleshooting
 
 Common problems, what each one means and how to fix it. Log codes are SallaPush's own: the native docs list every one
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/LOGGING.md#log-code-reference)), and the
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference)), and the
 native troubleshooting guides cover more
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/TROUBLESHOOTING.md),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/TROUBLESHOOTING.md)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/TROUBLESHOOTING.md),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/TROUBLESHOOTING.md)).
 
 Back to the [README](../README.md). Other docs: [Setup guide](SETUP.md), [Reference](REFERENCE.md)
 
@@ -28,7 +28,7 @@ Back to the [README](../README.md). Other docs: [Setup guide](SETUP.md), [Refere
 | Yarn can't fetch the package on a machine that has an SSH key | The dependency uses the `github:` shorthand, which Yarn fetches over HTTPS, never SSH | Use the `git+ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git#<version>` form. |
 | npm: `ERESOLVE`, "could not resolve", for the peer dependency `@capacitor/core@"^8.0.0"` | The app uses Capacitor 9, which this release doesn't support yet | Stay on Capacitor 8 for now ([Versions](SETUP.md#versions)). Yarn and pnpm, and Capacitor's CLI with Swift Package Manager, only warn: the app may build, but this release isn't tested with Capacitor 9. |
 | The app's JavaScript: `"SallaPush" plugin is not implemented on ios` (or `android`) | The native app doesn't contain the plugin: `npx cap sync` didn't run after the install, or the app wasn't rebuilt since | Run `npx cap sync`, then rebuild the app. On the web the same error is expected ([JavaScript](#javascript)). |
-| `npx cap sync ios`, `npx cap add ios` or `pod install`: "Unable to find a specification for `SallaPush (= 1.0.3)` depended upon by `Salla.saSallapushCapacitor`" | A CocoaPods app without the Podfile lines: the SallaPush pods aren't in the public specs repository | Add the [Podfile lines](SETUP.md#swift-package-manager-or-cocoapods), and the extension's target when the app has the extension, then run `npx cap sync ios` again. In a new app, add the iOS platform before the plugin: `npx cap add ios` syncs too. |
+| `npx cap sync ios`, `npx cap add ios` or `pod install`: "Unable to find a specification for `SallaPush (= 1.0.4)` depended upon by `Salla.saSallapushCapacitor`" | A CocoaPods app without the Podfile lines: the SallaPush pods aren't in the public specs repository | Add the [Podfile lines](SETUP.md#swift-package-manager-or-cocoapods), and the extension's target when the app has the extension, then run `npx cap sync ios` again. In a new app, add the iOS platform before the plugin: `npx cap add ios` syncs too. |
 | `npx cap sync ios` or `pod install`, after an update of the package: `CocoaPods could not find compatible versions for pod "SallaPush"`, or ``There are multiple dependencies with different sources for `SallaPushCore` in `Podfile` `` | The new release pins another SallaPush iOS version, and the Podfile's SallaPush tags didn't move with it, or only some of them did | Set every SallaPush `:tag =>` of the Podfile, in the App target and the extension's, to the SallaPush iOS version of the [versions table](../README.md#requirements), then run `npx cap sync ios` again ([Updating the package](SETUP.md#updating-the-package)). |
 | Xcode or `xcodebuild`, after an update of the package: "Dependencies could not be resolved because root depends on 'sallapush-ios-sdk' …" | A Swift Package Manager app with the Notification Service Extension: the rule of the extension's SallaPush package still names the version of an earlier release | Set that rule, **Exact Version**, in the project's **Package Dependencies**, to the SallaPush iOS version of the [versions table](../README.md#requirements) ([Updating the package](SETUP.md#updating-the-package)). |
 | `pod install` or the package install: "Permission denied (publickey)", or "Repository not found" | The machine's git can't read `SallaApp/sallapush-ios-sdk` or this repository | Use an SSH key from an account with read access. On a machine with only a token, set the two rewrites of [CI machines](SETUP.md#ci-machines) in the job's environment. |

@@ -30,8 +30,8 @@ Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
 - **Native SallaPush does the work.** Registration, tokens, identity, tags, events, retries, consent, display and
   logging are the native SDKs'. The package adds a Capacitor plugin, the TypeScript API and start-up hooks, and no push
   logic of its own. So every rule of the native docs holds, and this reference links to them
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/BEHAVIOUR.md),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md)).
 - **SallaPush starts natively, before JavaScript.**
   - iOS: `SallaPushCapacitor.start()`, the first statement of `application(_:didFinishLaunchingWithOptions:)`,
     initializes SallaPush from the Info.plist when `SallaPushAppId` is set. Then, with or without an app id, it makes
@@ -58,8 +58,8 @@ Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
   registers listeners on the main thread. So a getter called after a setter reads the setter's effect.
 - **Getters are asynchronous and uncached.** Each one reads native at call time. Right after a cold start they show
   only this launch's calls, until native has loaded its saved state
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/BEHAVIOUR.md#state-at-launch),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md#state-at-launch)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md#state-at-launch),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#state-at-launch)).
 - **Native listeners are registered lazily.** The first JavaScript listener of an event adds one Capacitor listener,
   kept for the page, and then registers one native listener or observer; removing the last JavaScript listener removes
   the native one. So native keeps the taps made before any listener, and hands them over when the first click listener
@@ -103,8 +103,8 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md
 | The default channel | – | `com.salla.push.default_channel_id`, `com.salla.push.default_channel_name` | native | SallaPush's own channel |
 
 The native keys follow native's rules
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#5-set-the-infoplist-keys),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#configuration)). This
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#5-set-the-infoplist-keys),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#configuration)). This
 package reads its own keys with these rules:
 
 - **iOS strings** are trimmed, and an empty value counts as absent: an unset build setting such as
@@ -184,8 +184,8 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `ios?.registerForRemoteNotificationsOnInit?: boolean` | `registerForRemoteNotificationsOnInit` | `true`. Set it to `false` only if the app registers at every launch itself. |
 
 The `ios` options are ignored on Android. The native configurations are described in full in the native docs
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#configuration),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#configuration)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#configuration),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#configuration)).
 
 ### SallaPush.User
 
@@ -207,8 +207,8 @@ The `ios` options are ignored on Android. The native configurations are describe
 Tag changes are sent at most once every 10 seconds while the app is in the foreground, at once when it goes to the
 background, after a pending login or logout, and are retried until the server confirms them. With
 `clearTagsOnLogout`, a logout and an account switch delete the device's tags first
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/BEHAVIOUR.md#tags),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md#tags)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md#tags),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#tags)).
 
 ### SallaPush.User.pushSubscription
 
@@ -322,8 +322,8 @@ listener: a foreground notification stays hidden, or a kept tap is lost. It need
 is rare; this release doesn't guard against it.
 
 Native's own rules for observers and taps:
-[iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#taps),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/BEHAVIOUR.md#observers-and-listeners).
+[iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#taps),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#observers-and-listeners).
 
 ## Foreground display
 
@@ -365,8 +365,8 @@ More rules:
 - **The local copy reaches SallaPush's delegate first,** before Capacitor's router: it carries SallaPush's payload, so
   it shows with native's options, and never reaches `@capacitor/local-notifications`.
 - **Native runs no listener while the user is opted out,** and shows no SallaPush notification
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#foreground-notifications),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#foreground-notifications)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#foreground-notifications),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#foreground-notifications)).
 - **A listener that throws** doesn't stop the others or the decision.
 - **The last listener's removal** stops native from holding new notifications, while one already on its way still
   gets its decision: it is shown.
@@ -487,8 +487,8 @@ vi.mock('@salla.sa/sallapush-capacitor', () => {
 
 - **Native does every conversion.** The typed getters return what native's own accessors returned for each top-level
   key when the notification was mapped. Native's rules differ per platform, and stay native's
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#routing-taps-yourself),
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#reading-notification-data)).
+  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#routing-taps-yourself),
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#reading-notification-data)).
 - **Values reach JavaScript as JSON.** Capacitor carries every event as a JSON object, so a `null` in `additionalData`,
   at any depth, arrives as `null` on both platforms, and lists keep their length.
 - **JavaScript numbers are exact up to 2^53.** A larger integer in `additionalData`, or from `getInt` or `getNumber`,
@@ -512,8 +512,8 @@ What JavaScript passes to native:
 SallaPush never swizzles, never takes over another SDK's notifications, and removes only its own, except on iOS 15,
 where clearing the badge can remove every delivered notification of the app
 ([Removing delivered notifications](#removing-delivered-notifications)). The rules of the native SDKs hold
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#coexistence-with-other-sdks),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#coexistence-with-other-sdks)).
 
 ### Capacitor's notification router
 
@@ -601,7 +601,7 @@ Android nothing changes.
 Intercom, Klaviyo, MoEngage, WebEngage and any other SDK with an FCM service outrank SallaPush's service at −450. Add
 the forwarding service of the [setup guide](SETUP.md#another-fcm-plugin), with that SDK's calls after SallaPush's
 line, as the native guide shows
-([Android coexistence](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#coexistence-with-other-sdks)).
+([Android coexistence](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#coexistence-with-other-sdks)).
 On iOS, keep their own forwarding: their notifications are never SallaPush's.
 
 ### Removing delivered notifications
@@ -614,7 +614,7 @@ the other plugins' `removeDeliveredNotifications(…)` for theirs.
 On iOS 15, `autoClearBadge`, on by default, sets the app's badge to 0 whenever the app becomes active with a badge,
 and iOS 15 can remove the app's delivered notifications with it, other SDKs' and plugins' included. To keep them, set
 `SallaPushAutoClearBadge` to `NO` in the Info.plist, or `ios.autoClearBadge` to `false` in `initialize`'s config
-([native badge and clearing](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#badge-and-clearing)).
+([native badge and clearing](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badge-and-clearing)).
 
 ### Other notification-center delegates
 
@@ -648,14 +648,14 @@ and was completed without a handler.` Whether iOS ever hands such a tap over tha
 Keep the OneSignal SDK in every release until the SallaPush team confirms Phase 2 for your app: until then, Salla's
 backend reaches customers through OneSignal too. Add SallaPush next to it, then follow the setup guide's steps
 ([Migrating from OneSignal](SETUP.md#migrating-from-onesignal)) and the native guides
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/REFERENCE.md#migrating-from-onesignal),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/REFERENCE.md#migrating-from-onesignal)).
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#migrating-from-onesignal),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#migrating-from-onesignal)).
 
 ## Logging
 
 The native docs list every log code, with its level and meaning
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/docs/LOGGING.md),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/docs/LOGGING.md)). Codes are stable: match on
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md)). Codes are stable: match on
 them, never on messages. Most codes exist on both platforms. These exist on one only:
 
 - **Android only:** `init.not_main_process`, `api.null_argument`, `api.callback_threw`, `token.firebase_missing`,
@@ -696,7 +696,7 @@ with `console.error`, and prints one console error per method and page for a cal
 
 ## Compatibility
 
-- **Native SDKs:** SallaPush iOS 1.0.3 and SallaPush Android 1.0.3.
+- **Native SDKs:** SallaPush iOS 1.0.4 and SallaPush Android 1.0.4.
 - **Capacitor 8,** 8.0.0 or later and below 9. Release checks build apps with Capacitor 8.0.2 and 8.5.3, in both iOS
   app shapes: the storyboard template of 8.0 to 8.4 and the UIScene template of 8.5, with Swift Package Manager and
   CocoaPods. Capacitor 9 isn't supported yet, and the tools stop it unevenly: npm refuses the install (a peer
@@ -708,9 +708,9 @@ with `console.error`, and prints one console error per method and page for a cal
   your app's `minSdkVersion` and `compileSdkVersion` (`variables.gradle` in Capacitor's template) when it sets them;
   Java 21. The plugin compiles with your app's Kotlin Gradle plugin (`kotlin_version`), else 2.2.20. The native SDK
   brings `firebase-messaging`, `androidx.core`, `androidx.work` and the Kotlin standard library; a newer version in your
-  app wins ([native requirements](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/README.md#requirements)).
+  app wins ([native requirements](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/README.md#requirements)).
 - **R8.** Minified release builds need no rule of your own: the package's consumer rules, and those of
-  SallaPush Android 1.0.3, add the one that the WorkManager version SallaPush brings lacks. Without it, R8's strict
+  SallaPush Android 1.0.4, add the one that the WorkManager version SallaPush brings lacks. Without it, R8's strict
   full mode, the default from the Android Gradle plugin 9, removes the constructor of WorkManager's database class, and
   the app crashes at start. Capacitor's own rules keep the plugin class. The example's release build is minified.
 - **JavaScript.** The package's code is ES2017, as Capacitor's own, so it runs on the oldest Android System WebView

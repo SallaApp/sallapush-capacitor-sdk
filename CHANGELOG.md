@@ -33,4 +33,4 @@ and versions follow [Semantic Versioning](https://semver.org/).
   calls print one console error each.
 - Minified Android builds: the package's consumer rules keep what R8 must keep, so a minified app needs no rule of its
   own, also on the Android Gradle plugin 9.
-- The native versions: SallaPush iOS 1.0.3 and SallaPush Android 1.0.3.
+- The native versions: SallaPush iOS 1.0.4 and SallaPush Android 1.0.4.

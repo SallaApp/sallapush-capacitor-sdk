@@ -4,7 +4,7 @@ SallaPush is Salla's push notification service. This package brings it to Capaci
 native SallaPush iOS and Android SDKs, so an app behaves as a native SallaPush app does. The API follows OneSignal v5,
 so most calls will look familiar.
 
-- **Version:** 1.0.0, not released yet. It wraps SallaPush iOS 1.0.3 and SallaPush Android 1.0.3. See
+- **Version:** 1.0.0, not released yet. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
   [CHANGELOG.md](CHANGELOG.md).
 - **Private:** this package and the native SDKs it wraps live in private repositories of the SallaApp organization
   ([Access to the private repositories](#access-to-the-private-repositories)).
@@ -29,7 +29,7 @@ so most calls will look familiar.
 
 | Wrapper | SallaPush iOS | SallaPush Android | Framework | iOS | Android | Node |
 |---|---|---|---|---|---|---|
-| Capacitor 1.0.0 | 1.0.3 | 1.0.3 | Capacitor 8 (8.0 or later; Capacitor 9 isn't supported yet) | 15.0, Xcode 26 | minSdk 24 (SallaPush itself needs 23), compileSdk 36, JDK 21 | 22 or later, for Capacitor 8's CLI |
+| Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (8.0 or later; Capacitor 9 isn't supported yet) | 15.0, Xcode 26 | minSdk 24 (SallaPush itself needs 23), compileSdk 36, JDK 21 | 22 or later, for Capacitor 8's CLI |
 
 - **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
   The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
@@ -61,8 +61,8 @@ Then run `npx cap sync`, which adds the plugin to both native projects:
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->
 ```ruby
-pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.3'
+pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
 ### Access to the private repositories
@@ -332,7 +332,7 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
   tag `SallaPush`. The static keys `SallaPushLogLevel` and `com.salla.push.LOG_LEVEL` set the level too.
 - **Every entry has a stable `code`,** such as `register.ok`. Match on it, not on the message. Secrets and identity
   tokens are never logged.
-- **Privacy, with SallaPush iOS 1.0.3:** the info entries `status.launch` and `status.changed` hold the full push token
+- **Privacy, with SallaPush iOS 1.0.4:** the info entries `status.launch` and `status.changed` hold the full push token
   and the customer's id. Keep the console level at `warn` in release builds, and don't forward info entries to third
   parties ([Logging](docs/SETUP.md#logging)).
 
@@ -385,8 +385,8 @@ code for each.
 - [CONTRIBUTING.md](CONTRIBUTING.md): working on this package, its checks and its pull requests.
 - [RELEASING.md](RELEASING.md): versions, releases, native updates and the checks on devices.
 - [CHANGELOG.md](CHANGELOG.md): the changes of each release.
-- The native SDKs' docs: [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.3/README.md) and
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.3/README.md).
+- The native SDKs' docs: [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/README.md) and
+  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/README.md).
 
 ## License
 
