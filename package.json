@@ -79,6 +79,9 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2"
   },
+  "resolutions": {
+    "xcode/uuid": "^14.0.0"
+  },
   "workspaces": [
     "example-app"
   ],
