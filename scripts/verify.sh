@@ -257,7 +257,8 @@ if os.path.isfile(project):
                             "compiled: add it to its target")
 uses = re.compile(r"^\s*(?:-\s+)?uses:\s*(['\"]?)([^\s'\"#]+)\1\s*(?:#.*)?$")
 pinned = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[^@\s]+)?@[0-9a-f]{40}$")
-allowed = re.compile(r"^(SallaApp/\.CI/[A-Za-z0-9_./-]+@master|\./\.github/[A-Za-z0-9_./-]+)$")
+# Only the repository's own actions may go unpinned: their code is in the commit.
+allowed = re.compile(r"^\./\.github/[A-Za-z0-9_./-]+$")
 for name in files:
     if re.match(r"^\.github/workflows/[^/]+\.ya?ml$", name) and os.path.isfile(os.path.join(root, name)):
         with open(os.path.join(root, name), encoding="utf-8") as handle:

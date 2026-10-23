@@ -610,6 +610,12 @@ test_verify_tree() {
   fresh; edit "$case_dir/.github/workflows/ci.yml" "$checkout_pin" "actions/checkout@v7"
   check "an action pinned to a tag fails" fails run tree
   says "it says what to do" "uses actions/checkout@v7; pin it to a full commit id"
+  # An organization's shared action at a branch gets no exception either: a public repository can't run a private one.
+  fresh; printf '      - uses: %s%s\n' 'SallaApp/' '.CI/testing-ready@master' >>"$case_dir/.github/workflows/ci.yml"
+  check "an organization's action at a branch fails" fails run tree
+  says "it says what to do" ".CI/testing-ready@master; pin it to a full commit id"
+  fresh; printf '      - uses: ./.github/actions/setup\n' >>"$case_dir/.github/workflows/ci.yml"
+  check "the repository's own action passes unpinned" ok run tree
   fresh; rm "$case_dir/api/sallapush-capacitor.api"
   check "a missing required file fails" fails run tree
   says "it names it" "api/sallapush-capacitor.api is missing from what a commit takes"
