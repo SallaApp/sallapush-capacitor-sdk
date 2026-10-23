@@ -15,7 +15,7 @@ so most calls will look familiar.
 - Links the signed-in customer to the device. Salla checks the customer's token first.
 - Keeps tags, the language and the opt-in state on the server.
 - Reports `received`, `displayed` and `opened` events on its own, and `dismissed` on Android.
-- Counts its notifications on the app icon's badge, and clears the badge when the app opens.
+- Keeps the app icon's badge: counts SallaPush notifications on iOS, and clears the badge when the app opens.
 - Hands taps, foreground notifications, permission, customer and subscription changes, and log entries to JavaScript
   listeners.
 - Capacitor 8, on iOS with Swift Package Manager or CocoaPods, and on Android.
@@ -146,9 +146,8 @@ func application(_ application: UIApplication,
 
 **The Notification Service Extension,** optional and recommended, shows the images of SallaPush notifications,
 reports `received`, and counts the app icon's badge. Add a `SallaPushNotificationService` target with SallaPush's
-`SallaPushExtension` library and the example's `NotificationService.swift`, and the same App Group in the app and the
-extension, which counting needs
-([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
+`SallaPushExtension` library and the example's `NotificationService.swift`, and give the app and the extension the same
+App Group, which counting needs ([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
 
 ### Android
 
