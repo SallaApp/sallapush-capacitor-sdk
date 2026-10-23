@@ -9,6 +9,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 - The package is available under the MIT License; `package.json` and the podspec declare it.
 - The docs' Podfile lines fetch the SallaPush pods over HTTPS instead of SSH.
+- Android: SallaPush Android now comes from Maven Central. The package no longer adds a GitHub Packages repository to
+  your build, and no GitHub token is needed: remove `gpr.user` and `gpr.key` if you set them for SallaPush, and the
+  `SallaPushGitHubPackages` repository if your settings declare it.
 
 ## [1.0.0] - 2026-10-19
 

@@ -67,12 +67,10 @@ pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :t
 
 ### Access to the private repositories
 
-This repository, `SallaApp/sallapush-ios-sdk` and `SallaApp/sallapush-android-sdk` are private: every developer and
-CI machine that builds the app needs read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in
-to a GitHub account that can read it (**Xcode → Settings → Accounts**). The package install uses your git, over SSH,
-and the pods your git, over HTTPS. Gradle reads a classic token with the `read:packages` scope from the Gradle
-properties `gpr.user` (your GitHub login) and `gpr.key`, for example in `~/.gradle/gradle.properties`, or from
-`GITHUB_ACTOR` and `GITHUB_TOKEN`. Never commit them. CI machines: [CI machines](docs/SETUP.md#ci-machines).
+This repository and `SallaApp/sallapush-ios-sdk` are private: every developer and CI machine that builds the app needs
+read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in to a GitHub account that can read it
+(**Xcode → Settings → Accounts**). The package install uses your git, over SSH, and the pods your git, over HTTPS. CI
+machines: [CI machines](docs/SETUP.md#ci-machines).
 
 ### Updating the package
 
@@ -144,10 +142,8 @@ example's `NotificationService.swift`
 
 ### Android
 
-**GitHub Packages.** The package's Gradle script adds SallaPush's GitHub Packages repository to every project of your
-build, and Gradle needs the token of [Access to the private repositories](#access-to-the-private-repositories). Build
-with a JDK 21. A build whose settings refuse project repositories declares the repository itself
-([Builds that refuse project repositories](docs/SETUP.md#builds-that-refuse-project-repositories)).
+**Maven Central and JDK 21.** Gradle downloads SallaPush Android from Maven Central, which Capacitor's template
+already declares: there is no repository or token to add. Build with a JDK 21 ([JDK 21](docs/SETUP.md#jdk-21)).
 
 **Firebase.** Put the `google-services.json` of the Firebase project that the SallaPush team set up for your app id in
 `android/app`, and leave Firebase's auto-init on. With another project's file, no notification arrives
@@ -366,7 +362,7 @@ code for each.
 |---|---|
 | `npx cap sync ios` or `pod install`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. |
 | Xcode can't resolve `sallapush-ios-sdk` | Sign in to Xcode with an account that can read `SallaApp/sallapush-ios-sdk`; on CI, see [CI machines](docs/SETUP.md#ci-machines). |
-| Gradle: `Could not find com.salla.push:sallapush`, 401, or `Username must not be null!` | Give Gradle a classic token with `read:packages` in `gpr.user` and `gpr.key` ([Access to the private repositories](#access-to-the-private-repositories)). |
+| Gradle: `Could not find com.salla.push:sallapush` | Add `mavenCentral()` to your build's repositories, or to the settings' when they set `RepositoriesMode.PREFER_SETTINGS` ([Builds that refuse project repositories](docs/SETUP.md#builds-that-refuse-project-repositories)). |
 | No notification on Android, or `token.firebase_missing` | Add the right project's `google-services.json`, and with another FCM plugin, the [forwarding service](docs/SETUP.md#another-fcm-plugin). |
 | The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first in `didFinishLaunchingWithOptions`, and add the click listener in your entry module ([Initialize](#initialize)). |
 

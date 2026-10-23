@@ -70,8 +70,8 @@ Set these Gradle properties in `android/sallapush.properties`, or in `~/.gradle/
 | `sallapushApiBaseUrl` | optional: push-service's URL (default: SallaPush's production URL) |
 
 Put your Firebase project's `google-services.json` in `android/app/`. Without it the app still builds, and SallaPush
-logs `token.firebase_missing`. Gradle downloads the SallaPush Android SDK from GitHub Packages with `gpr.user` and
-`gpr.key` (a classic token with `read:packages`) in `~/.gradle/gradle.properties`. Capacitor 8 builds with JDK 21.
+logs `token.firebase_missing`. Gradle downloads the SallaPush Android SDK from Maven Central. Capacitor 8 builds with
+JDK 21.
 
 ## Run it
 

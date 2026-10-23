@@ -37,13 +37,10 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 ## Before you start
 
-- **Read access to three private repositories,** for every developer and CI machine that builds the app: this one,
-  `SallaApp/sallapush-ios-sdk`, which serves the iOS Swift package and pods, and `SallaApp/sallapush-android-sdk`,
-  whose GitHub Packages registry serves the Android library. Ask the repositories' admins for access.
+- **Read access to two private repositories,** for every developer and CI machine that builds the app: this one, and
+  `SallaApp/sallapush-ios-sdk`, which serves the iOS Swift package and pods. Ask the repositories' admins for access.
 - **A network that the SallaApp organization allows,** CI machines included: the organization accepts git and package
   fetches from its private repositories only from allowed networks, and GitHub-hosted runners aren't among them.
-- **A personal access token (classic) with the `read:packages` scope,** from an account that can read
-  `SallaApp/sallapush-android-sdk`, for Gradle. Fine-grained tokens don't work with GitHub Packages' Maven registry.
 - **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
   The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
   Until then devices register, but no notification arrives
@@ -94,10 +91,8 @@ The native SDKs come from their private repositories, as in native apps:
   Settings → Accounts**).
 - **iOS with CocoaPods:** the [Podfile lines](#swift-package-manager-or-cocoapods) fetch the SallaPush pods from
   `SallaApp/sallapush-ios-sdk` with your own git, over HTTPS, so `pod install` needs git credentials that can read it.
-- **Android:** the package's Gradle script adds SallaPush's GitHub Packages repository to every project of your
-  build. Gradle reads the credentials from the Gradle properties `gpr.user` (your GitHub login) and `gpr.key` (the
-  token), for example in `~/.gradle/gradle.properties`, outside every project, or from the environment variables
-  `GITHUB_ACTOR` and `GITHUB_TOKEN`. Never commit them.
+- **Android:** Gradle downloads SallaPush Android, `com.salla.push:sallapush`, from Maven Central, which Capacitor's
+  template already declares: there is no repository or token to add.
 
 ### CI machines
 
@@ -114,7 +109,7 @@ export GIT_CONFIG_KEY_1="url.https://x-access-token:${TOKEN}@github.com/SallaApp
 ```
 
 `TOKEN` comes from the machine's secrets: a token that can read the contents of this repository and of
-`SallaApp/sallapush-ios-sdk`. Gradle still needs `GITHUB_ACTOR` and `GITHUB_TOKEN`, with the classic token.
+`SallaApp/sallapush-ios-sdk`.
 
 These rewrites never reach the iOS SDK's HTTPS URL, `https://github.com/SallaApp/sallapush-ios-sdk.git`, which the
 Swift package and the pods use. A Swift Package Manager app builds on CI with `xcodebuild … -scmProvider system`, so
@@ -561,37 +556,11 @@ Inside `<application>` in `android/app/src/main/AndroidManifest.xml`:
 
 ### Builds that refuse project repositories
 
-The package adds SallaPush's GitHub Packages repository to every project of your build, under the name
-`SallaPushGitHubPackages`, unless the project has one by that name. A build whose settings set `RepositoriesMode`
-`PREFER_SETTINGS` ignores it: declare the repository in `android/settings.gradle` instead, under the same name. Gradle
-then still warns that a build file added a repository; the warning is harmless. `FAIL_ON_PROJECT_REPOS` can't work in
-a Capacitor app at all, since Capacitor's own Gradle files declare project repositories too.
-
-<!-- unchecked: the native SDK's settings block, for builds that refuse project repositories; the example's build doesn't need it -->
-```groovy
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        exclusiveContent {
-            forRepository {
-                maven {
-                    url = uri("https://maven.pkg.github.com/SallaApp/sallapush-android-sdk")
-                    name = "SallaPushGitHubPackages"
-                    credentials {
-                        username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
-                        password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
-                    }
-                }
-            }
-            filter { includeGroup("com.salla.push") }
-        }
-    }
-}
-```
-
-Keep the group exactly `com.salla.push`
-([native repository setup](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#1-add-the-repository)).
+SallaPush Android, `com.salla.push:sallapush`, comes from Maven Central. A build whose settings set `RepositoriesMode`
+`PREFER_SETTINGS` ignores the projects' repositories, so its settings declare `google()` and `mavenCentral()`, as
+Capacitor's own libraries need too. Gradle then still warns that a build file added a repository; the warning is
+harmless. `FAIL_ON_PROJECT_REPOS` can't work in a Capacitor app at all, since Capacitor's own Gradle files declare
+project repositories.
 
 ### JDK 21
 

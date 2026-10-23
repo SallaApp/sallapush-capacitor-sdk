@@ -40,8 +40,6 @@ says how to configure and run it.
 
 ## Credentials
 
-- **Gradle:** a personal access token (classic) with `read:packages`, in the Gradle properties `gpr.user` and
-  `gpr.key` of `~/.gradle/gradle.properties`, or in `GITHUB_ACTOR` and `GITHUB_TOKEN`.
 - **Swift Package Manager:** an account in Xcode that can read `SallaApp/sallapush-ios-sdk`, or, for
   `scripts/verify.sh`, a clean clone of it in `VERIFY_IOS_SDK_CHECKOUT` ([Commands](#commands)).
 - **CocoaPods:** git credentials that can read `SallaApp/sallapush-ios-sdk` over HTTPS.
@@ -51,9 +49,10 @@ says how to configure and run it.
 Every machine also needs a network that the SallaApp organization allows: elsewhere, it refuses git and package fetches
 from its private repositories.
 
-Never commit a credential. `scripts/verify.sh` checks that the credentials it needs exist, without reading them, and
-its `tree` step refuses credential files, tokens, private keys, personal paths and Apple team ids in what a commit
-takes.
+Gradle needs no credentials: SallaPush Android comes from Maven Central.
+
+Never commit a credential. The `tree` step of `scripts/verify.sh` refuses credential files, tokens, private keys,
+personal paths and Apple team ids in what a commit takes.
 
 ## Layout
 
