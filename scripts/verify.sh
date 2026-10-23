@@ -10,8 +10,8 @@
 #   ios         the example's release build with its Notification Service Extension, then its XCTest suite
 #   smoke       the example's self-test on a booted iOS simulator and a running Android emulator: a test push, a page
 #               reload, and a second test push that the reloaded page's listener gets once
-#   consumer    fresh Capacitor apps that install a dry run of the release with only what the README and the setup
-#               guide show: the package as npm would publish it, with Swift Package Manager and with CocoaPods and
+#   consumer    fresh Capacitor apps that install a dry run of the release with only what the README shows: the
+#               package as npm would publish it, with Swift Package Manager and with CocoaPods and
 #               @capacitor/push-notifications; from git, the oldest Capacitor 8 with the storyboard template with npm,
 #               and a Yarn install
 #
