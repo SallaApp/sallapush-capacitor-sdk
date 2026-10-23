@@ -67,7 +67,7 @@ export const SallaPush: {
   readonly Notifications: SallaPushNotificationsNamespace;
   /** SallaPush's log level and log handler. */
   readonly Debug: SallaPushDebugNamespace;
-  /** Settings for apps that move from OneSignal. */
+  /** For apps whose other push SDK can show SallaPush's notifications in the compatible format. */
   readonly Migration: SallaPushMigrationNamespace;
 } = {
   initialize(appId, config) {

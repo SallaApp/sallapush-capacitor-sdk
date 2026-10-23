@@ -44,7 +44,7 @@ export const SallaPushLoginFailure = {
 export type SallaPushLoginFailure =
   (typeof SallaPushLoginFailure)[keyof typeof SallaPushLoginFailure];
 
-/** The format a notification arrived in: SallaPush's own, or the OneSignal-compatible one used while apps migrate. */
+/** The format a notification arrived in: SallaPush's native format, or its compatible format with typed data. */
 export const SallaPushPayloadSource = {
   Native: 'native',
   Compat: 'compat',
@@ -54,7 +54,7 @@ export type SallaPushPayloadSource =
 
 /**
  * A SallaPush notification. Route with the typed getters: native payloads carry their data as strings, while
- * OneSignal-compatible ones keep JSON types.
+ * compatible ones keep JSON types.
  */
 export interface SallaPushNotification {
   /** The SallaPush message id; null when the payload has none. */
@@ -77,7 +77,7 @@ export interface SallaPushNotification {
   readonly additionalData: Readonly<Record<string, unknown>>;
   /** The payload as received; on Android the FCM data map, where `custom` stays JSON text. */
   readonly rawPayload: Readonly<Record<string, unknown>>;
-  /** The payload's format: SallaPush's own, or the OneSignal-compatible one. */
+  /** The payload's format: native or compatible. */
   readonly source: SallaPushPayloadSource;
   /** The sound the payload names; null when it names none. */
   readonly sound: string | null;
@@ -343,7 +343,7 @@ export interface SallaPushNotificationsNamespace {
   refreshPermission(): void;
   /** iOS only; does nothing on Android. */
   registerForRemoteNotifications(): void;
-  /** iOS only: forwards the APNs token (hexadecimal text) another SDK holds, e.g. the `token` of `@capacitor-firebase/messaging`'s `'apnsTokenReceived'` event; does nothing on Android. */
+  /** iOS only: forwards the APNs token (hexadecimal text) that another SDK holds; does nothing on Android. */
   forwardApnsToken(apnsToken: string): void;
   /**
    * Removes the delivered SallaPush notifications only. On iOS it also sets the app icon's badge to 0 while
@@ -355,7 +355,7 @@ export interface SallaPushNotificationsNamespace {
   removeNotification(androidNotificationId: number): void;
   /** Whether a payload another SDK received (an FCM data map, an APNs userInfo) is SallaPush's. */
   isSallaPushNotification(payload: Record<string, unknown>): Promise<boolean>;
-  /** Android only: records `opened` for a notification another SDK (OneSignal) showed; false on iOS. */
+  /** Android only: records `opened` for a SallaPush notification that another push SDK showed; false on iOS. */
   trackOpened(additionalData: Record<string, unknown> | null): Promise<boolean>;
   /**
    * Every tap. Taps made before the first click listener, such as the tap that launched the app, arrive a moment after
@@ -415,11 +415,12 @@ export interface SallaPushDebugNamespace {
   ): void;
 }
 
-/** Settings for apps that move from OneSignal. */
+/** For apps whose other push SDK can show SallaPush's notifications in the compatible format. */
 export interface SallaPushMigrationNamespace {
   /**
-   * Android only; does nothing on iOS. Applies to this process only: for every process, set the meta-data
-   * com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS instead.
+   * Android only; does nothing on iOS. Whether SallaPush shows the notifications in the compatible format that reach it
+   * (default true): turn it off when the app's other push SDK shows them. Applies to this process only: for every
+   * process, set the meta-data com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS instead.
    */
   setDisplayOneSignalCompatPayloads(display: boolean): void;
 }
