@@ -4,8 +4,8 @@
 #
 #   scripts/verify.sh [step...]    run from anywhere; without steps, every step in order, stopping at the first failure
 #
-# CI runs the portable steps (PORTABLE_STEPS) on Linux. The others need macOS with Xcode 26, JDK 21 and the Android
-# SDK:
+# CI runs the portable steps (PORTABLE_STEPS) and android on Linux, and swiftlint and ios on macOS; smoke and consumer
+# run locally. The native steps need macOS with Xcode 26, JDK 21 and the Android SDK (android also runs on Linux):
 #   swiftlint   SwiftLint 0.63.2, strict
 #   android     the plugin's unit tests and lint, a minified release build of the example, and its merged manifest
 #   ios         the example's release build with its Notification Service Extension, then its XCTest suite
