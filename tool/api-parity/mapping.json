@@ -1303,7 +1303,7 @@
         "com/salla/push/SallaPushNotifications#onNewToken (Landroid/content/Context;Ljava/lang/String;)V"
       ],
       "ts": [],
-      "reason": "Called by the app's FCM forwarding service, which the README shows for @capacitor/push-notifications and @capacitor-firebase/messaging, or by SallaPush's own. JavaScript can't run inside FCM's service within its time window."
+      "reason": "Called by the app's FCM forwarding service, which the reference shows for an app with another push plugin, or by SallaPush's own. JavaScript can't run inside FCM's service within its time window."
     },
     {
       "id": "P74",
