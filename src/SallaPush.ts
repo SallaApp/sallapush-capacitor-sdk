@@ -32,7 +32,9 @@ export const SallaPush: {
    * API URL changes nothing, its config included.
    */
   initialize(appId: string, config?: SallaPushConfig): void;
+  /** Whether SallaPush is running. */
   isInitialized(): Promise<boolean>;
+  /** The app id SallaPush runs with; null before it started. */
   getAppId(): Promise<string | null>;
   /** The native SallaPush SDK version on this platform, for example "1.0.2". */
   getSdkVersion(): Promise<string>;
@@ -41,12 +43,31 @@ export const SallaPush: {
    * (SallaPushRequiresUserConsent / com.salla.push.REQUIRES_USER_CONSENT) instead: SallaPush starts before JavaScript.
    */
   setConsentRequired(required: boolean): void;
+  /**
+   * The user's consent, saved for the app. `false`, while consent is required, withdraws consent that was given: the
+   * device opts out, its tags are deleted and it is unlinked on the server.
+   */
   setConsentGiven(given: boolean): void;
+  /**
+   * Links this device to the customer who signed in, once Salla has checked their token. `externalId` is the
+   * customer's id, and `identityToken` the customer token your app received from Salla when the customer signed in,
+   * without a `Bearer ` prefix. SallaPush keeps the token in memory only: call login again whenever your app refreshes
+   * it, and call logout() before another customer's login. A refusal reaches the User 'loginFailure' listeners, once
+   * per refusal; there is no success event.
+   */
   login(externalId: string, identityToken: string): void;
+  /**
+   * Unlinks the device from the customer; it stays registered as a guest. Needs no token, works offline, and is
+   * retried until the server confirms it. Call it at every sign-out, and at launch while no customer is signed in.
+   */
   logout(): void;
+  /** The customer, and this device's tags, language and push subscription. */
   readonly User: SallaPushUserNamespace;
+  /** The notification permission, listeners for taps and foreground notifications, and helpers for other SDKs. */
   readonly Notifications: SallaPushNotificationsNamespace;
+  /** SallaPush's log level and log handler. */
   readonly Debug: SallaPushDebugNamespace;
+  /** Settings for apps that move from OneSignal. */
   readonly Migration: SallaPushMigrationNamespace;
 } = {
   initialize(appId, config) {

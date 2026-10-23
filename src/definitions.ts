@@ -59,9 +59,13 @@ export type SallaPushPayloadSource =
 export interface SallaPushNotification {
   /** The SallaPush message id; null when the payload has none. */
   readonly notificationId: string | null;
+  /** The title; null when the notification has none. */
   readonly title: string | null;
+  /** The subtitle; null when the notification has none. */
   readonly subtitle: string | null;
+  /** The text; null when the notification has none. */
   readonly body: string | null;
+  /** The image, https only; null when the notification has none. */
   readonly imageUrl: string | null;
   /**
    * The launch URL as sent. SallaPush opens https URLs itself only with the open-launch-URLs option, and the click
@@ -73,7 +77,9 @@ export interface SallaPushNotification {
   readonly additionalData: Readonly<Record<string, unknown>>;
   /** The payload as received; on Android the FCM data map, where `custom` stays JSON text. */
   readonly rawPayload: Readonly<Record<string, unknown>>;
+  /** The payload's format: SallaPush's own, or the OneSignal-compatible one. */
   readonly source: SallaPushPayloadSource;
+  /** The sound the payload names; null when it names none. */
   readonly sound: string | null;
   /** iOS only; null on Android. */
   readonly badge: number | null;
@@ -113,13 +119,17 @@ export interface SallaPushClickResult {
 
 /** A tap on a SallaPush notification. */
 export interface SallaPushClickEvent {
+  /** The notification that was tapped. */
   readonly notification: SallaPushNotification;
+  /** The action button and the launch URL of the tap. */
   readonly result: SallaPushClickResult;
 }
 
 /** A SallaPush notification about to be shown while the app is in the foreground. */
 export interface SallaPushWillDisplayEvent {
+  /** The notification about to be shown. */
   readonly notification: SallaPushNotification;
+  /** Whether a listener called preventDefault(), so the notification stays hidden. */
   readonly isPrevented: boolean;
   /**
    * Keeps the notification hidden. It counts only when called before the listener returns, so call it before any
@@ -130,27 +140,35 @@ export interface SallaPushWillDisplayEvent {
 
 /** The push subscription at one moment. */
 export interface SallaPushSubscriptionState {
+  /** The SallaPush device id; null until the device has registered. */
   readonly id: string | null;
   /** The push token. It is private: never send it to analytics or logs. */
   readonly token: string | null;
+  /** Permission granted, not opted out, and a token. */
   readonly optedIn: boolean;
 }
 
 /** A change of the push subscription. */
 export interface SallaPushSubscriptionChangedState {
+  /** The state before the change; equal to current in the first event a new listener gets. */
   readonly previous: SallaPushSubscriptionState;
+  /** The state after the change. */
   readonly current: SallaPushSubscriptionState;
 }
 
 /** The customer this device is logged in for, at one moment. */
 export interface SallaPushUserState {
+  /** The external id of the login; null for a guest. */
   readonly externalId: string | null;
+  /** Whether a customer is logged in on this device. */
   readonly isLoggedIn: boolean;
 }
 
 /** A change of the customer login. */
 export interface SallaPushUserChangedState {
+  /** The login before the change. */
   readonly previous: SallaPushUserState;
+  /** The login after the change. */
   readonly current: SallaPushUserState;
 }
 
@@ -160,11 +178,13 @@ export interface SallaPushUserChangedState {
  * third parties.
  */
 export interface SallaPushLogEntry {
+  /** The entry's level. */
   readonly level: SallaPushLogLevel;
   /** The area: lifecycle, registration, identity, notifications, events, tags, network, storage, consent. */
   readonly category: string;
   /** A stable code, such as register.ok. */
   readonly code: string;
+  /** What happened, in words. It may change between versions: match on code instead. */
   readonly message: string;
   /** Details such as http_status, error_code and request_id. */
   readonly metadata: Readonly<Record<string, string>>;
@@ -180,10 +200,22 @@ export interface SallaPushEventSubscription {
 
 /** Options for `SallaPush.initialize`. An option that is left out keeps native's default. */
 export interface SallaPushConfig {
+  /**
+   * The SallaPush server's URL, ending in `/notifications/v1/sallapush`. Default: the native key
+   * (SallaPushAPIBaseURL / com.salla.push.API_BASE_URL), else SallaPush's production URL. https only; http only for
+   * local development hosts.
+   */
   apiBaseUrl?: string;
+  /** The console log level. Default: the native key (SallaPushLogLevel / com.salla.push.LOG_LEVEL), else `warn`. */
   logLevel?: SallaPushLogLevel;
+  /** The app version sent to SallaPush. Default: CFBundleShortVersionString on iOS, versionName on Android. */
   appVersion?: string;
+  /** Deletes the device's tags on logout and when another customer logs in. Default `true`. */
   clearTagsOnLogout?: boolean;
+  /**
+   * Requires `setConsentGiven(true)` before SallaPush sends or stores anything but the consent answer. Default
+   * `false`.
+   */
   requiresUserConsent?: boolean;
   /** SallaPush opens https launch URLs on tap. The click listener still gets the tap: it must not open the URL again. */
   openLaunchUrls?: boolean;
@@ -204,28 +236,49 @@ export interface SallaPushConfig {
   autoUpdateBadge?: boolean;
   /** iOS only; ignored on Android. */
   ios?: {
+    /**
+     * The App Group shared with the Notification Service Extension, which badge counting and the extension's
+     * `received` need. Default: the SallaPushAppGroup key.
+     */
     appGroupIdentifier?: string;
+    /** The APNs environment of this build. Default `automatic`: read from the provisioning profile. */
     apnsEnvironment?: SallaPushAPNsEnvironment;
     /**
      * @deprecated Use the top-level `autoClearBadge`, which applies on both platforms. This one still applies on iOS
      * when `autoClearBadge` is left out.
      */
     autoClearBadge?: boolean;
+    /**
+     * Registers for remote notifications when SallaPush starts, unless consent is required and not given. Default
+     * `true`; set it to `false` only if the app registers at every launch itself.
+     */
     registerForRemoteNotificationsOnInit?: boolean;
   };
 }
 
 /** The customer, and this device's tags and language. */
 export interface SallaPushUserNamespace {
+  /** This device's push subscription. */
   readonly pushSubscription: SallaPushSubscriptionNamespace;
   /** The external id of the current login; null for a guest. */
   getExternalId(): Promise<string | null>;
+  /** Whether the last call was a login: it doesn't say whether the SallaPush server accepted the link. */
   isLoggedIn(): Promise<boolean>;
-  /** Native trims and lowercases keys; an empty value removes the tag. */
+  /**
+   * Adds or changes a tag on the server. Native trims and lowercases keys, which must then be 1 to 64 characters of
+   * a-z, 0-9 and _; values are cut at 255 characters, and an empty value removes the tag. At most 100 tags.
+   */
   addTag(key: string, value: string): void;
+  /** Adds or changes several tags, by the rules of addTag. */
   addTags(tags: Record<string, string>): void;
+  /** Removes a tag. */
   removeTag(key: string): void;
+  /** Removes several tags. */
   removeTags(keys: string[]): void;
+  /**
+   * The device's tags, with your latest changes, also before they reach the server; right after a cold start, only
+   * this launch's.
+   */
   getTags(): Promise<Record<string, string>>;
   /** For example "ar"; null uses the device language. */
   setLanguage(language: string | null): void;
@@ -239,10 +292,12 @@ export interface SallaPushUserNamespace {
     event: 'loginFailure',
     listener: (failure: SallaPushLoginFailure) => void
   ): SallaPushEventSubscription;
+  /** Removes a 'change' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'change',
     listener: (state: SallaPushUserChangedState) => void
   ): void;
+  /** Removes a 'loginFailure' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'loginFailure',
     listener: (failure: SallaPushLoginFailure) => void
@@ -259,6 +314,7 @@ export interface SallaPushSubscriptionNamespace {
   getOptedIn(): Promise<boolean>;
   /** Clears an earlier opt-out, and shows the permission prompt while it can still show. */
   optIn(): void;
+  /** Stops SallaPush notifications on this device until optIn(); the permission stays as it is. */
   optOut(): void;
   /**
    * Changes of the id, the token or the opted-in state. As with native observers, each listener added while the device
@@ -268,6 +324,7 @@ export interface SallaPushSubscriptionNamespace {
     event: 'change',
     listener: (state: SallaPushSubscriptionChangedState) => void
   ): SallaPushEventSubscription;
+  /** Removes a 'change' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'change',
     listener: (state: SallaPushSubscriptionChangedState) => void
@@ -278,6 +335,7 @@ export interface SallaPushSubscriptionNamespace {
 export interface SallaPushNotificationsNamespace {
   /** Whether notifications are allowed; on iOS false until native has read the permission, shortly after start. */
   getPermission(): Promise<boolean>;
+  /** Whether the system can still show the permission prompt. */
   canRequestPermission(): Promise<boolean>;
   /** iOS only; null on Android. */
   getPermissionStatus(): Promise<SallaPushIOSPermissionStatus | null>;
@@ -323,14 +381,17 @@ export interface SallaPushNotificationsNamespace {
     event: 'permissionChange',
     listener: (permission: boolean) => void
   ): SallaPushEventSubscription;
+  /** Removes a 'click' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'click',
     listener: (event: SallaPushClickEvent) => void
   ): void;
+  /** Removes a 'foregroundWillDisplay' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'foregroundWillDisplay',
     listener: (event: SallaPushWillDisplayEvent) => void
   ): void;
+  /** Removes a 'permissionChange' listener; the subscription's remove() does the same. */
   removeEventListener(
     event: 'permissionChange',
     listener: (permission: boolean) => void
