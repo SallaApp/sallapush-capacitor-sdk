@@ -653,13 +653,13 @@ Watch for login failures:
 ```ts
 SallaPush.User.addEventListener('loginFailure', (failure) => {
   // tokenRejected: log in again once the app has a current token, never from here.
-  // invalidRequest: push-service refused the request as invalid; tell the Salla team.
+  // invalidRequest: the SallaPush server refused the request as invalid; tell the Salla team.
   telemetry.report('sallapush', `login_${failure}`, 'Login refused', {});
 });
 ```
 
-Don't call `login` again from this listener: when push-service couldn't check the token, an immediate retry only
-repeats the refusal
+Don't call `login` again from this listener: when the SallaPush server couldn't check the token, an immediate retry
+only repeats the refusal
 ([native login failures](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#login-failures)).
 
 ### Notification permission

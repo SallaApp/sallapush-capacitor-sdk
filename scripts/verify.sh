@@ -629,8 +629,8 @@ smoke_ios() {
   example_sync ios
   keep_example_project
   local_ios_sdk "$root/example-app/ios/App"
-  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it. The push service is
-  # a closed port of the Mac, so no request leaves it.
+  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it. The SallaPush
+  # server is a closed port of the Mac, so no request leaves it.
   example_build smoke Release SALLAPUSH_APP_ID=example_smoke \
     SALLAPUSH_API_BASE_URL=http://localhost:9/notifications/v1/sallapush SALLAPUSH_EXAMPLE_BUNDLE_ID="$SP_EXAMPLE_ID"
   app="$work/derived-smoke/Build/Products/Release-iphonesimulator/$SP_EXAMPLE.app"
@@ -901,8 +901,8 @@ PY
   echo "${1##*/}: the README's imports, start and forwarding regions are in the template's AppDelegate.swift"
 }
 
-# consumer_info_plist <app> [<push service URL>]: the README's Info.plist key (the app id from the build setting
-# SALLAPUSH_APP_ID), and for a run, the push service on a closed port of the Mac.
+# consumer_info_plist <app> [<server URL>]: the README's Info.plist key (the app id from the build setting
+# SALLAPUSH_APP_ID), and for a run, the SallaPush server on a closed port of the Mac.
 consumer_info_plist() {
   local app_id
   app_id="$(snippet example-app/ios/App/App/Info.plist#app-id)"

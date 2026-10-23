@@ -33,9 +33,9 @@ export type SallaPushIOSPermissionStatus =
 /** Why SallaPush's server refused the current login. */
 export const SallaPushLoginFailure = {
   /**
-   * push-service refused the token for this external id: it expired, was revoked or is another customer's, it has a
-   * Bearer prefix, or Salla couldn't check it. Call login again when the app next refreshes the token or at the next
-   * launch, never from the loginFailure listener.
+   * The SallaPush server refused the token for this external id: it expired, was revoked or is another customer's, it
+   * has a Bearer prefix, or Salla couldn't check it. Call login again when the app next refreshes the token or at the
+   * next launch, never from the loginFailure listener.
    */
   TokenRejected: 'tokenRejected',
   /** The login request was refused; it is not sent again. */

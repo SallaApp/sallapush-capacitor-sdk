@@ -24,8 +24,8 @@ Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
 ## How the package works
 
 ```text
- JavaScript ── SallaPush.* ── Capacitor plugin "SallaPush" ──▶ SallaPush iOS SDK ─────▶ push-service ──▶ APNs ──▶ device
-                                                           └─▶ SallaPush Android SDK ─▶ push-service ──▶ FCM ───▶ device
+ JavaScript ── SallaPush.* ── Capacitor plugin "SallaPush" ──▶ SallaPush iOS SDK ─────▶ SallaPush server ──▶ APNs ──▶ device
+                                                           └─▶ SallaPush Android SDK ─▶ SallaPush server ──▶ FCM ───▶ device
 ```
 
 - **Native SallaPush does the work.** Registration, tokens, identity, tags, events, retries, consent, display and
@@ -99,7 +99,7 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md
 | The APNs environment | `SallaPushAPNsEnvironment` (String: `automatic`, `sandbox` or `production`) | – | this package, with the app id | `automatic` |
 | Show OneSignal-format notifications | – | `com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS` | this package, with or without an app id | `true` |
 | The log level | `SallaPushLogLevel` | `com.salla.push.LOG_LEVEL` | native | `warn` |
-| The push-service URL | `SallaPushAPIBaseURL` | `com.salla.push.API_BASE_URL` | native | `https://api.salla.dev/notifications/v1/sallapush` |
+| The SallaPush server's URL | `SallaPushAPIBaseURL` | `com.salla.push.API_BASE_URL` | native | `https://api.salla.dev/notifications/v1/sallapush` |
 | The App Group, in the app and the extension | `SallaPushAppGroup` | – | native | None |
 | The small icon (required) | – | `com.salla.push.default_notification_icon` (`android:resource`) | native | Firebase's `com.google.firebase.messaging.default_notification_icon`, else SallaPush's bell, with `display.default_icon` |
 | The default channel | – | `com.salla.push.default_channel_id`, `com.salla.push.default_channel_name` | native | SallaPush's own channel |
@@ -196,7 +196,7 @@ The `ios` options are ignored on Android. The native configurations are describe
 | Member | Native | Behaviour |
 |---|---|---|
 | `getExternalId(): Promise<string \| null>` | `externalId` | The id of the last `login`; `null` for a guest, and as soon as `logout()` returns |
-| `isLoggedIn(): Promise<boolean>` | `isLoggedIn` | Your last `login` or `logout`, at once. Neither getter says whether push-service accepted the link. |
+| `isLoggedIn(): Promise<boolean>` | `isLoggedIn` | Your last `login` or `logout`, at once. Neither getter says whether the SallaPush server accepted the link. |
 | `addTag(key: string, value: string): void` | `addTag` | Keys are trimmed and lowercased, then must be 1 to 64 characters of `a-z`, `0-9` and `_`, or are dropped (`tags.invalid_key`). Values are cut at 255 characters (`tags.value_truncated`); an empty value removes the tag. At most 100 tags (`tags.limit`). |
 | `addTags(tags: Record<string, string>): void` | `addTags:` (Objective-C); `addTags(Map)` | The entries reach native unchanged: native skips a key or a value that isn't a string, and logs it (`api.invalid_argument`) |
 | `removeTag(key: string): void` | `removeTag` | |

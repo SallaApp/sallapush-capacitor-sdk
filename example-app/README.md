@@ -49,7 +49,7 @@ Copy `ios/App/Config/SallaPush.local.xcconfig.example` to `ios/App/Config/SallaP
 | `SALLAPUSH_EXAMPLE_BUNDLE_ID` | the bundle id the Salla team set up; the Notification Service Extension's is `<bundle id>.SallaPushNotificationService` |
 | `DEVELOPMENT_TEAM` | your Apple team, to run on a device |
 | `SALLAPUSH_APP_GROUP` | optional: an App Group for the app and the extension |
-| `SALLAPUSH_API_BASE_URL` | optional: push-service's URL (default: SallaPush's production URL) |
+| `SALLAPUSH_API_BASE_URL` | optional: the SallaPush server's URL (default: SallaPush's production URL) |
 
 With an App Group, also add the App Groups capability with that group to the App and SallaPushNotificationService
 targets in Xcode, and keep that change local: the committed entitlements have no group, since an empty one breaks
@@ -67,7 +67,7 @@ Set these Gradle properties in `android/sallapush.properties`, or in `~/.gradle/
 |---|---|
 | `sallapushAppId` | your Android app id |
 | `sallapushApplicationId` | the application id the Salla team set up (default `sa.salla.sallapush.example`) |
-| `sallapushApiBaseUrl` | optional: push-service's URL (default: SallaPush's production URL) |
+| `sallapushApiBaseUrl` | optional: the SallaPush server's URL (default: SallaPush's production URL) |
 
 Put your Firebase project's `google-services.json` in `android/app/`. Without it the app still builds, and SallaPush
 logs `token.firebase_missing`. Gradle downloads the SallaPush Android SDK from Maven Central. Capacitor 8 builds with
@@ -122,7 +122,7 @@ example's own plugin, `SmokeReporter` (`ios/App/App/SmokeReporterPlugin.swift` a
 `sa.salla.sallapush.example`, category `smoke`) and to Logcat on Android (tag `SallaPushSmoke`). Like
 `TestPushReceiver`, it exists for the smoke tests: never copy it into an app.
 
-The smoke tests build the Release app with that app id and a push-service URL on a closed local port, so no call
+The smoke tests build the Release app with that app id and a SallaPush server URL on a closed local port, so no call
 reaches a server. After `yarn example build` and `npx cap sync`:
 
 ```sh
