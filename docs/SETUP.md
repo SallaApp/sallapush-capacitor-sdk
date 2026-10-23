@@ -347,14 +347,18 @@ final class NotificationService: UNNotificationServiceExtension {
 `didReceive` returns false for notifications that aren't SallaPush's, and never touches them.
 
 **4. An App Group,** which badge counting needs, and through which the extension reports `received`. Add the App
-Groups capability, with the same group, to both targets, and this key to both Info.plist files, with
-`SALLAPUSH_APP_GROUP` defined like `SALLAPUSH_APP_ID`:
+Groups capability, with the same group, to both targets, and this key to both Info.plist files:
 
 <!-- snippet:example-app/ios/App/App/Info.plist#app-group -->
 ```xml
 <key>SallaPushAppGroup</key>
 <string>$(SALLAPUSH_APP_GROUP)</string>
 ```
+
+Define `SALLAPUSH_APP_GROUP` for both targets: in the project's base xcconfig, as the example does
+([Info.plist](#infoplist)), or in the project's **Build Settings**, not only the App target's. A target without it
+reads an empty group, and the extension then neither counts nor reports `received`. It says so only at info level, in
+`nse.badge_skipped`, which shows when the extension's own Info.plist sets `SallaPushLogLevel` to `info`.
 
 `xcrun simctl push` never runs the extension: test images on a device.
 

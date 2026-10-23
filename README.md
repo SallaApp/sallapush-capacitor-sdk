@@ -131,8 +131,11 @@ set no `UNUserNotificationCenter.current().delegate` after it. SallaPush never c
 example's [NotificationService.swift](example-app/ios/App/SallaPushNotificationService/NotificationService.swift)
 ([steps for each package manager](docs/SETUP.md#notification-service-extension)).
 
-**5. An App Group,** which the badge count and `received` need: the same group on both targets, and in both
-Info.plist files the key `SallaPushAppGroup`, set to `$(SALLAPUSH_APP_GROUP)`, a build setting like `SALLAPUSH_APP_ID`.
+**5. An App Group,** which the badge count and `received` need: add the App Groups capability with the same group to
+both targets, and add the key `SallaPushAppGroup` to both Info.plist files, set to `$(SALLAPUSH_APP_GROUP)`. Define
+`SALLAPUSH_APP_GROUP` for both targets: in an xcconfig that is the project's base configuration, as the example does,
+or in the project's **Build Settings**, not only the App target's. With an empty value the extension neither counts
+nor reports `received`, and says so only at info level.
 
 ### Android
 
