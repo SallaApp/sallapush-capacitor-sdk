@@ -134,4 +134,6 @@ you, [open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues)
   - another SDK's tap that launches the app reaches that SDK as it does without SallaPush; the check also notes whether
     the line "A notification response that isn't SallaPush's arrived before Capacitor's notification router existed"
     appears;
-  - after a page reload, a tap reaches the new page's click listener once.
+  - after a page reload, a tap reaches the new page's click listener once;
+  - the app icon's badge: counted on iOS with the extension and the App Group, and cleared when the app opens, on iOS
+    and Android.
