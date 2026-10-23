@@ -69,7 +69,8 @@ runs every check a pull request needs, in this order, and stops at the first fai
 | `swiftlint`, `android`, `ios` | SwiftLint; the Android unit tests, lint and minified build; the iOS build and XCTest suite |
 | `smoke`, `consumer` | The example's self-test on a simulator and an emulator; fresh Capacitor apps built with only what the README shows |
 
-CI runs every step but `smoke` and `consumer`, which stay local release steps ([RELEASING.md](RELEASING.md)).
+CI runs every step but `smoke` and `consumer`, which stay local release steps ([RELEASING.md](RELEASING.md)). Their
+apps run with made-up app ids, which SallaPush refuses (`register.dormant` with `404 unknown_app`): that is expected.
 `VERIFY_LOG_DIR` keeps a log per step, and `VERIFY_SIMULATOR_UDID` and `VERIFY_EMULATOR_SERIAL` pick the devices. The
 scripts never shut down or erase a simulator or an emulator.
 
