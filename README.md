@@ -79,8 +79,10 @@ pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git'
 pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
-**Updating:** run `npm update @salla.sa/sallapush-capacitor`, then `npx cap sync`. When the new release names another
-SallaPush iOS version, move your app's own SallaPush pins first ([Updating](docs/SETUP.md#updating-the-package)).
+**Updating:** run `npm update @salla.sa/sallapush-capacitor`. When the new release's row in
+[Requirements](#requirements) names another SallaPush iOS version, first set your app's own SallaPush pins to it:
+every `:tag =>` of the Podfile in a CocoaPods app, or the extension's SallaPush package rule with Swift Package
+Manager. Then run `npx cap sync` ([Updating](docs/SETUP.md#updating-the-package)).
 
 ## Platform setup
 
