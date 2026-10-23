@@ -90,6 +90,7 @@ From the repository's root:
 | `typecheck` | `yarn typecheck` |
 | `test` | `yarn test --coverage` and `yarn test:scripts`; fails when the scripts' tests ran none |
 | `build` | `yarn build`, that `dist/plugin.cjs.js` loads, and that Capacitor's notification router still routes by the rule that SallaPush's delegate repeats |
+| `pack` | What npm would publish (`npm pack --dry-run`, whose `prepack` builds `dist/` afresh): the built library, the native sources, `Package.swift`, the podspec, `LICENSE`, `README.md` and `package.json`, and no test, mock or dotfile; and that `package.json` publishes with public access |
 | `api` | `api/sallapush-capacitor.api` is the current public API, and TypeScript, Swift and Kotlin declare the same plugin methods, with the same return kinds, and the same events (`scripts/check-plugin-methods.mjs`) |
 | `parity` | Every native symbol is mapped once, as wrapped, platform-only, native-only or not wrapped with a reason, and every wrapped one exists in the API |
 | `snippets` | The README's and the docs' code blocks equal their sources in the example and `docs/snippets/`, and the versions they name are the pins |
@@ -102,7 +103,7 @@ From the repository's root:
 | `smoke` | The example's self-test on a simulator and a running emulator: a test push in the foreground, a page reload, and a second test push that the reloaded page's listener gets once. It builds the example with its own bundle id and application id, `sa.salla.sallapush.example`, whatever your local settings name. |
 | `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README shows, and build: Swift Package Manager on Capacitor 8.5.3, CocoaPods with `@capacitor/push-notifications`, the oldest Capacitor 8 with the storyboard template, and a Yarn install. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
 
-The first ten steps need no private access, and CI runs them. The others need macOS, the native SDKs and devices. A
+The first eleven steps need no private access, and CI runs them. The others need macOS, the native SDKs and devices. A
 full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and longer the
 first time. A run that starts on a clean working tree fails when a step leaves a file behind that no ignore file
 covers. Environment variables:
@@ -170,11 +171,15 @@ events: Capacitor itself would only fail a missing method at run time, with "not
   `node scripts/check-readme-snippets.mjs --print <source>[#<region>]` prints what a block must hold.
 - **The native pins** are listed once, in `SP_PINS` of `scripts/common.sh`: `bump-native.sh` sets them all and `pins`
   checks them. A new file that names a native version needs its entry there.
-- **The release's `package.json`** keeps only the keys an install needs, the `capacitor` key among them: Capacitor's
-  CLI treats a package as a plugin only with it. `scripts/release-dist.sh` refuses a release without it or without a
-  key the podspec reads, and a `files` entry that names a nested folder without a glob, which Yarn's pack would drop.
-- **Nothing builds at install time.** The package has no `prepare`, `prepack` or `capacitor:*` scripts: git installs
-  run none, and Capacitor's CLI would run a plugin's `capacitor:*` scripts at every sync.
+- **The release's `package.json`** keeps only the keys an install needs and those npm publishes and shows: the
+  `capacitor` key among them, since Capacitor's CLI treats a package as a plugin only with it, and `publishConfig`,
+  which publishes the scoped package with public access. `scripts/release-dist.sh` refuses a release without the
+  `capacitor` key or without a key the podspec reads, and a `files` entry that names a nested folder without a glob,
+  which Yarn's pack would drop.
+- **Nothing builds at install time.** The package has no `prepare`, `install` or `capacitor:*` scripts, and the
+  release's `package.json` keeps no scripts at all: installs run none, and Capacitor's CLI would run a plugin's
+  `capacitor:*` scripts at every sync. Only `prepack` builds: it makes `dist/` afresh when `npm pack` or `npm publish`
+  packs a checkout of the sources.
 - **Dependencies and tools are pinned:** the native SDKs, the workflow actions, each to a commit with its version in a
   comment, Yarn, Capacitor's packages, and the tool versions of `scripts/common.sh`.
 
@@ -190,7 +195,7 @@ events: Capacitor itself would only fail a missing method at run time, with "not
 - **Titles:** `<type>(<scope>): <subject>`, with a scope, such as the ticket key.
 - **Checks:** the organization requires `Validate PR title`, `Validate branch name`, `Greptile Review` and
   `Testing Ready`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `JavaScript, types and unit tests`
-  (the first nine steps), `Shell scripts` (the `shell` step) and `Native verified`; `Testing Ready` passes only when
+  (the first ten steps), `Shell scripts` (the `shell` step) and `Native verified`; `Testing Ready` passes only when
   all three did.
 - **`Native verified`.** CI can't build the native code: the native SDKs are private, and no macOS runner exists. So
   after each push, run `scripts/verify.sh` with no step names on a Mac, at the pull request's head commit, with

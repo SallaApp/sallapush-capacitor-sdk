@@ -37,8 +37,8 @@ jobs:
         run: |
           corepack enable
           yarn install --immutable
-      - name: Lint, types, unit tests, checker self-tests, build, API surface, parity, README snippets, version pins and tree
-        run: scripts/verify.sh lint typecheck test build api parity snippets pins tree
+      - name: Lint, types, unit tests, checker self-tests, build, package contents, API surface, parity, README snippets, version pins and tree
+        run: scripts/verify.sh lint typecheck test build pack api parity snippets pins tree
 
   shell-scripts:
     name: Shell scripts

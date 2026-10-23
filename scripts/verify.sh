@@ -26,8 +26,8 @@
 # SHELLCHECK, SWIFTLINT, ANDROID_HOME, SALLAPUSH_JAVA_HOME.
 set -euo pipefail
 
-readonly STEPS="lint typecheck test build api parity snippets pins tree shell swiftlint android ios smoke consumer"
-readonly PORTABLE_STEPS="lint typecheck test build api parity snippets pins tree shell"
+readonly STEPS="lint typecheck test build pack api parity snippets pins tree shell swiftlint android ios smoke consumer"
+readonly PORTABLE_STEPS="lint typecheck test build pack api parity snippets pins tree shell"
 
 scripts="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 root="$(cd "$scripts/.." && pwd -P)"
@@ -125,6 +125,45 @@ if (problems.length > 0) {
   done
   version="$(node -p 'require(process.argv[1]).version' "$root/node_modules/@capacitor/ios/package.json")"
   echo "@capacitor/ios $version: NotificationRouter still holds the ${#ROUTER_LINES[@]} lines the delegate's router branch repeats"
+}
+
+# What npm would publish: npm pack --dry-run, whose prepack builds dist/ afresh. The package holds the built library,
+# every native source, Package.swift, the podspec, LICENSE, README.md and package.json, and nothing else: no test, mock
+# or dotfile. package.json isn't private, and publishes with public access, which a scoped package needs.
+step_pack() {
+  (cd "$root" && npm pack --dry-run --json) >"$work/pack.json" || fail "npm pack --dry-run failed"
+  git -C "$root" ls-files --cached --others --exclude-standard -- ios/Sources android/src/main >"$work/native-files"
+  python3 - "$work/pack.json" "$work/native-files" "$root/package.json" <<'PY'
+import json, re, sys
+
+listing, native, manifest = sys.argv[1:4]
+with open(listing, encoding="utf-8") as handle:
+    packed = [entry["path"] for entry in json.load(handle)[0]["files"]]
+with open(manifest, encoding="utf-8") as handle:
+    package = json.load(handle)
+allowed = re.compile(r"^(?:dist/.+|android/src/main/.+|ios/Sources/.+|android/build\.gradle|android/consumer-rules\.pro|"
+                     r"Package\.swift|Salla\.saSallapushCapacitor\.podspec|LICENSE|README\.md|package\.json)$")
+refused = re.compile(r"(?:^|/)(?:__tests__|__mocks__|\.[^/]+)(?:/|$)")
+needed = ["dist/esm/index.js", "dist/esm/index.d.ts", "dist/plugin.cjs.js", "dist/plugin.js", "Package.swift",
+          "Salla.saSallapushCapacitor.podspec", "android/build.gradle", "android/consumer-rules.pro", "LICENSE",
+          "README.md", "package.json"]
+with open(native, encoding="utf-8") as handle:
+    needed += [line.strip() for line in handle if line.strip()]
+problems = [f"npm would publish {name}, which isn't part of the package" for name in packed
+            if not allowed.match(name) or refused.search(name)]
+problems += [f"npm would not publish {name}" for name in needed if name not in packed]
+if package.get("private"):
+    problems.append("package.json is private, so npm refuses to publish it")
+if (package.get("publishConfig") or {}).get("access") != "public":
+    problems.append("package.json's publishConfig.access is not \"public\": npm would publish the scoped package as "
+                    "restricted")
+for problem in problems:
+    print(problem)
+if problems:
+    sys.exit(f"verify.sh: npm pack --dry-run: {len(problems)} problem(s)")
+print(f"npm pack --dry-run: {len(packed)} files, the built library, the native sources, Package.swift, the podspec, "
+      "LICENSE, README.md and package.json, and no test, mock or dotfile; package.json publishes with public access")
+PY
 }
 
 step_api() {

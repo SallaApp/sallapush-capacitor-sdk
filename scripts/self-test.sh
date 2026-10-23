@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Tests of this repository's shell tooling, on throwaway copies in a temporary directory, with stand-ins for every
 # network or build tool: Yarn's resolution, the JDK selection and the VERIFY_IOS_SDK_CHECKOUT check in common.sh,
-# verified-label.sh, bump-native.sh, release-dist.sh, and the tree step, the summary and the clean-run check of
-# verify.sh. It needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never
+# verified-label.sh, bump-native.sh, release-dist.sh, and the tree and pack steps, the summary and the clean-run check
+# of verify.sh. It needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never
 # signed, and nothing is pushed.
 #
 #   scripts/self-test.sh
@@ -495,16 +495,17 @@ EOF
   python3 - "$repo/package.json" <<'PY'
 import json, sys
 package = {
-    "name": "@salla.sa/sallapush-capacitor", "version": "1.0.0", "description": "SallaPush.", "private": True,
-    "license": "MIT", "author": "Salla",
+    "name": "@salla.sa/sallapush-capacitor", "version": "1.0.0", "description": "SallaPush.", "license": "MIT",
+    "author": "Salla",
     "repository": {"type": "git", "url": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git"},
     "bugs": {"url": "https://github.com/SallaApp/sallapush-capacitor-sdk/issues"},
     "homepage": "https://github.com/SallaApp/sallapush-capacitor-sdk#readme", "keywords": ["capacitor"],
     "main": "dist/plugin.cjs.js", "module": "dist/esm/index.js", "types": "dist/esm/index.d.ts",
     "unpkg": "dist/plugin.js", "files": ["dist/**", "android/build.gradle", "android/src/main/**", "ios/Sources/**",
                                          "Package.swift", "Salla.saSallapushCapacitor.podspec"],
-    "capacitor": {"ios": {"src": "ios"}, "android": {"src": "android"}},
-    "scripts": {"build": "tsc && rollup -c rollup.config.mjs"}, "peerDependencies": {"@capacitor/core": "^8.0.0"},
+    "capacitor": {"ios": {"src": "ios"}, "android": {"src": "android"}}, "publishConfig": {"access": "public"},
+    "scripts": {"build": "tsc && rollup -c rollup.config.mjs", "prepack": "tsc && rollup -c rollup.config.mjs"},
+    "peerDependencies": {"@capacitor/core": "^8.0.0"},
     "devDependencies": {"typescript": "6.0.3"}, "workspaces": ["example-app"], "packageManager": "yarn@4.11.0",
     "jest": {"testEnvironment": "node"},
 }
@@ -558,12 +559,14 @@ PY
   check "  ... with the built library" ok git -C "$clone" cat-file -e "$commit:dist/plugin.cjs.js"
   check "  ... and the native sources" ok git -C "$clone" cat-file -e \
     "$commit:ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
-  check "  ... and a package.json reduced to the allowlist, capacitor kept" ok python3 -c '
+  check "  ... and a package.json reduced to the allowlist, capacitor and publishConfig kept, no scripts" ok python3 -c '
 import json, subprocess, sys
 package = json.loads(subprocess.check_output(["git", "-C", sys.argv[1], "show", sys.argv[2] + ":package.json"]))
-assert list(package) == ["name", "version", "description", "private", "license", "repository", "homepage", "main",
-                         "module", "types", "unpkg", "files", "capacitor", "peerDependencies"], list(package)
-assert package["capacitor"] == {"ios": {"src": "ios"}, "android": {"src": "android"}}, package["capacitor"]' \
+assert list(package) == ["name", "version", "description", "license", "repository", "bugs", "homepage", "keywords",
+                         "main", "module", "types", "unpkg", "files", "capacitor", "publishConfig",
+                         "peerDependencies"], list(package)
+assert package["capacitor"] == {"ios": {"src": "ios"}, "android": {"src": "android"}}, package["capacitor"]
+assert package["publishConfig"] == {"access": "public"}, package["publishConfig"]' \
     "$clone" "$commit"
   check "  ... and this repository has no tag" fails g rev-parse -q --verify refs/tags/1.0.0
   check "  ... and a clean working tree" ok test -z "$(g status --porcelain)"
@@ -604,10 +607,10 @@ PY
   check "a nested folder in files without a glob is refused" fails dry_run "$work/dist-4"
   says "it says what to write" "files lists the folder android/src/main, which Yarn's pack drops: write android/src/main/**"
   g revert --no-edit HEAD >/dev/null
-  printf 's.summary = package["keywords"]\n' >>"$repo/Salla.saSallapushCapacitor.podspec"
-  g commit -q -am "feat: a podspec that reads keywords"
+  printf 's.authors = package["author"]\n' >>"$repo/Salla.saSallapushCapacitor.podspec"
+  g commit -q -am "feat: a podspec that reads author"
   check "a podspec that reads a key the dist drops is refused" fails dry_run "$work/dist-3"
-  says "it names the key" "the podspec reads package.json's keywords, which the dist package.json lacks"
+  says "it names the key" "the podspec reads package.json's author, which the dist package.json lacks"
   g revert --no-edit HEAD >/dev/null
   printf '\n## [1.0.0] - 2026-10-20\n\n- The SDK.\n' >>"$repo/CHANGELOG.md"
   g commit -q -am "docs: release 1.0.0"
@@ -641,7 +644,7 @@ test_verify_tree() {
   fresh
   check "this repository's files pass" ok run tree
   check "an unknown step is refused" fails run everything
-  says "it lists the steps" "steps: lint typecheck test build api parity snippets pins tree shell"
+  says "it lists the steps" "steps: lint typecheck test build pack api parity snippets pins tree shell"
   fresh; printf '{}\n' >"$case_dir/example-app/android/app/google-services.json"
   g add -f example-app/android/app/google-services.json
   check "a Firebase configuration added past .gitignore fails" fails run tree
@@ -711,6 +714,64 @@ test_verify_tree() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# verify.sh pack: what npm would publish, from a stand-in npm pack --dry-run --json listing.
+
+test_verify_pack() {
+  local bin="$work/bin-pack" listing="$work/pack-listing.json"
+  section "verify.sh: the pack step (what npm would publish)"
+  # Stands in for npm pack --dry-run --json: prints $FAKE_PACK, and refuses any other command.
+  stand_in "$bin/npm" <<'EOF'
+[ "$1 $2 $3" = "pack --dry-run --json" ] || exit 64
+cat "$FAKE_PACK"
+EOF
+  # pack_listing [--without <path>] [<extra path>...]: the listing of a correct package, built from the copy's files.
+  pack_listing() {
+    python3 - "$case_dir" "$listing" "$@" <<'PY'
+import json, os, subprocess, sys
+
+case, listing, args = sys.argv[1], sys.argv[2], sys.argv[3:]
+without = {args[index + 1] for index, arg in enumerate(args) if arg == "--without"}
+extra = [arg for index, arg in enumerate(args) if arg != "--without" and (index == 0 or args[index - 1] != "--without")]
+native = subprocess.check_output(["git", "-C", case, "ls-files", "--cached", "--others", "--exclude-standard", "--",
+                                  "ios/Sources", "android/src/main"], text=True).split()
+paths = ["LICENSE", "README.md", "package.json", "Package.swift", "Salla.saSallapushCapacitor.podspec",
+         "android/build.gradle", "android/consumer-rules.pro", "dist/esm/index.js", "dist/esm/index.d.ts",
+         "dist/plugin.cjs.js", "dist/plugin.js", "dist/plugin.js.map"] + native + extra
+with open(listing, "w", encoding="utf-8") as handle:
+    json.dump([{"files": [{"path": path} for path in paths if path not in without]}], handle)
+PY
+  }
+  packed() { (cd "$case_dir" && env PATH="$bin:$PATH" FAKE_PACK="$listing" scripts/verify.sh pack); }
+
+  fresh; pack_listing
+  check "the built library, the native sources and the manifests pass" ok packed
+  says "it says what npm would publish" "the built library, the native sources, Package.swift, the podspec"
+  fresh; pack_listing android/src/test/java/sa/salla/sallapush/capacitor/MappingTest.kt
+  check "an Android unit test in the package fails" fails packed
+  says "it names it" "npm would publish android/src/test/java/sa/salla/sallapush/capacitor/MappingTest.kt"
+  fresh; pack_listing dist/esm/internal/__mocks__/native.js
+  check "a mock in the built library fails" fails packed
+  says "it names it" "npm would publish dist/esm/internal/__mocks__/native.js"
+  fresh; pack_listing .github/workflows/publish.yml
+  check "a dotfile fails" fails packed
+  says "it names it" "npm would publish .github/workflows/publish.yml"
+  fresh; pack_listing --without dist/plugin.cjs.js
+  check "a package without the CommonJS build fails" fails packed
+  says "it names it" "npm would not publish dist/plugin.cjs.js"
+  fresh; pack_listing --without ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift
+  check "a package without a native source fails" fails packed
+  says "it names it" "npm would not publish ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
+  fresh; pack_listing
+  edit "$case_dir/package.json" '"license": "MIT",' '"private": true, "license": "MIT",'
+  check "a private package.json fails" fails packed
+  says "it says why" "package.json is private, so npm refuses to publish it"
+  fresh; pack_listing
+  edit "$case_dir/package.json" '"access": "public"' '"access": "restricted"'
+  check "a package.json without public access fails" fails packed
+  says "it says why" "npm would publish the scoped package as restricted"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
 # verify.sh summary.tsv, the evidence an attestation quotes, and the clean run: in a copy that is committed, as a run's
 # would be.
 
@@ -763,6 +824,7 @@ make_pristine
 test_bump_native
 test_release_dist
 test_verify_tree
+test_verify_pack
 test_verify_summary
 
 printf '\nself-test: %d passed, %d failed\n' "$passed" "$failed"

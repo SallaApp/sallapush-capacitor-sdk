@@ -16,10 +16,11 @@ root="$(cd "$scripts/.." && pwd -P)"
 # shellcheck source=common.sh
 . "$scripts/common.sh"
 
-# What the dist package.json keeps. capacitor is load-bearing: Capacitor's CLI treats a package as a plugin only with it;
-# and the podspec reads version, description and homepage.
-readonly KEPT_KEYS="name version description private license repository homepage main module types unpkg files
-peerDependencies capacitor"
+# What the dist package.json keeps: what an install needs, and what npm needs to publish it and show it. capacitor is
+# load-bearing: Capacitor's CLI treats a package as a plugin only with it; publishConfig publishes the scoped package
+# with public access; and the podspec reads version, description and homepage.
+readonly KEPT_KEYS="name version description license repository bugs homepage keywords main module types unpkg files
+peerDependencies capacitor publishConfig"
 readonly PACKED_FILES="dist/esm/index.js dist/esm/index.d.ts dist/plugin.cjs.js dist/plugin.js Package.swift
 Salla.saSallapushCapacitor.podspec android/build.gradle android/src/main/AndroidManifest.xml
 android/src/main/java/sa/salla/sallapush/capacitor/SallaPushPlugin.kt

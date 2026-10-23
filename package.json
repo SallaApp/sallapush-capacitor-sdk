@@ -2,7 +2,6 @@
   "name": "@salla.sa/sallapush-capacitor",
   "version": "1.0.0",
   "description": "SallaPush push notifications for Capacitor apps, built on the SallaPush iOS and Android SDKs.",
-  "private": true,
   "license": "MIT",
   "author": "Salla <mobile@salla.sa> (https://salla.sa)",
   "repository": {
@@ -18,7 +17,9 @@
     "plugin",
     "native",
     "push",
-    "notifications"
+    "notifications",
+    "push-notifications",
+    "salla"
   ],
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -44,10 +45,14 @@
       "src": "android"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "example": "yarn workspace @salla.sa/sallapush-capacitor-example",
     "clean": "del-cli dist",
     "build": "yarn clean && tsc -p tsconfig.build.json && rollup -c rollup.config.mjs",
+    "prepack": "del-cli dist && tsc -p tsconfig.build.json && rollup -c rollup.config.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && yarn workspace @salla.sa/sallapush-capacitor-example typecheck",
     "test": "jest",
