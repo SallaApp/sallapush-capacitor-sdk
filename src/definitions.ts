@@ -349,7 +349,10 @@ export interface SallaPushNotificationsNamespace {
   registerForRemoteNotifications(): void;
   /** iOS only: forwards the APNs token (hexadecimal text) another SDK holds, e.g. the `token` of `@capacitor-firebase/messaging`'s `'apnsTokenReceived'` event; does nothing on Android. */
   forwardApnsToken(apnsToken: string): void;
-  /** Removes the delivered SallaPush notifications only. */
+  /**
+   * Removes the delivered SallaPush notifications only. On iOS it also sets the app icon's badge to 0 while
+   * `autoUpdateBadge` is on; on Android the badge drops with the notifications.
+   */
   clearAll(): void;
   /** Android only; does nothing on iOS. */
   removeNotification(androidNotificationId: number): void;
