@@ -360,7 +360,7 @@ Define `SALLAPUSH_APP_GROUP` for both targets: in the project's base xcconfig, a
 reads an empty group, and the extension then neither counts nor reports `received`. It says so only at info level, in
 `nse.badge_skipped`, which shows when the extension's own Info.plist sets `SallaPushLogLevel` to `info`.
 
-`xcrun simctl push` never runs the extension: test images on a device.
+`xcrun simctl push` never runs the extension: test images and the badge count on a device.
 
 ### Another push plugin
 
@@ -1137,16 +1137,17 @@ Before you ship, check on a device, with a real app id:
    messages shown). This line, with no `[SallaPush]` error before it, shows that `SallaPushCapacitor.start()` ran
    before Capacitor's bridge and that the plugin took the delegate back. Otherwise an error names the problem
    ([Capacitor setup](TROUBLESHOOTING.md#capacitor-setup)).
-3. **Watch the registration.** `init.started` names the app id and the API URL; `token.received` and `register.ok`
-   follow once the device is registered, and `register.ok` names the device id.
+3. **Watch the registration.** `init.started` names the app id and the API URL; at the first launch,
+   `token.received` and `register.ok` follow once the device is registered, and `register.ok` names the device id.
    `SallaPush.User.pushSubscription.getId()` then resolves it, and the Salla team can look it up. Check this in a build
    of every configuration you ship, Release included: SallaPush doesn't start in a build without the app id, and
-   nothing logs it ([Identity](TROUBLESHOOTING.md#identity)).
+   nothing logs it ([Identity](TROUBLESHOOTING.md#identity)). Later launches log `token.unchanged` instead of
+   `register.ok`; on iOS, the registration survives a reinstall.
 4. **Push a test notification to the iOS simulator,** without a server, before you ask for a real one: on an iOS 16 or
    later simulator on a Mac with Apple silicon or a T2 chip (an iOS 15 simulator gets no APNs token), run
    `xcrun simctl push booted <your bundle id> native.apns` with the example's
    [test payload](../example-app/ios/TestPayloads/native.apns). The simulator never runs the Notification Service
-   Extension: check images on a device.
+   Extension: check images and the badge count on a device.
 5. **Ask the Salla team to send a test notification** to that device, with the app in the foreground, then in the
    background, and tap it: the click listener gets the tap.
 6. **Sign in:** `login.ok` follows, and no `'loginFailure'` event. A later launch with the same customer logs

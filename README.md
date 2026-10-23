@@ -203,8 +203,10 @@ run listener work that navigates in `NgZone.run`. An app that knows its app id o
 
 ## Verify it works
 
-1. **Turn on verbose logs** in a debug build: `SallaPushLogLevel` (Info.plist) and `com.salla.push.LOG_LEVEL`
-   (manifest) set to `verbose` show the entries of the launch too.
+1. **Turn on verbose logs** while you integrate: `SallaPushLogLevel` (Info.plist) and `com.salla.push.LOG_LEVEL`
+   (manifest) set to `verbose` show the entries of the launch too. Set them back to `warn` before you ship, or set
+   them in debug builds only: from a build setting that only Debug defines, and in
+   `android/app/src/debug/AndroidManifest.xml`.
 2. **Run the app** on a device, on an iOS 16 or later simulator on a Mac with Apple silicon or a T2 chip, or on an
    Android emulator with Google APIs. Allow notifications, and filter on `SallaPush` (Xcode, `adb logcat -s SallaPush`).
 3. **Expect these entries:**
@@ -212,12 +214,13 @@ run listener work that navigates in `NgZone.run`. An app that knows its app id o
    | Entry | What it shows |
    |---|---|
    | `init.started` | SallaPush started, with the app id and the API URL |
-   | `token.received`, then `register.ok` | The device registered: `register.ok` names its device id |
+   | `token.received`, then `register.ok` | The first launch registered the device: `register.ok` names its device id. Later launches log `token.unchanged` instead; on iOS, the registration survives a reinstall |
    | `login.ok`, or `logout.skipped` while signed out | The launch identity call; later launches log `login.skipped_same` or `logout.skipped` |
    | `[SallaPush] SallaPush's notification-center delegate is the current one; it hands other notifications to Capacitor's notification router.` | iOS, at info level, 2 seconds after the app first becomes active: `SallaPushCapacitor.start()` ran first |
 
 4. **Push a test notification to the iOS simulator** without a server, with the example's
    [test payload](example-app/ios/TestPayloads/native.apns): `xcrun simctl push booted <your bundle id> native.apns`.
+   The simulator never runs the Notification Service Extension: check images and the badge count on a device.
 5. **Ask the Salla team to send a test notification** to your device id,
    `await SallaPush.User.pushSubscription.getId()`, and tap it: the click listener gets the tap. The setup guide's
    [Verify your integration](docs/SETUP.md#verify-your-integration) has the details.

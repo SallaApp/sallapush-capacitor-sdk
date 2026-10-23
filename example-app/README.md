@@ -95,7 +95,7 @@ From `example-app/`, with the bundle id and application id you set (`sa.salla.sa
 
 - **iOS simulator:** `xcrun simctl push booted <bundle id> ios/TestPayloads/native.apns`, or `compat.apns` for the
   OneSignal-compatible format. iOS shows it only once notifications are allowed. A Notification Service Extension
-  never runs for `simctl push`: test images on a device.
+  never runs for `simctl push`: test images and the badge count on a device.
 - **Android:** `adb shell am broadcast -n <application id>/sa.salla.sallapush.example.TestPushReceiver --es payload
   "'$(tr -d '\n' < android/TestPayloads/native.json)'"`, or `compat.json`; the receiver's class name keeps the
   example's package whatever the application id. `TestPushReceiver` hands the data to SallaPush as FCM delivers a
