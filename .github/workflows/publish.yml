@@ -139,15 +139,19 @@ jobs:
         run: |
           set -euo pipefail
           git show HEAD^:CHANGELOG.md >"$RUNNER_TEMP/CHANGELOG.md"
-          python3 - "$TAG" "$RUNNER_TEMP/CHANGELOG.md" >"$RUNNER_TEMP/notes.md" <<'PY'
+          python3 - "$TAG" "$RUNNER_TEMP/CHANGELOG.md" "$RUNNER_TEMP/notes.md" <<'PY'
           import sys
 
-          tag, changelog = sys.argv[1], sys.argv[2]
+          tag, changelog, notes = sys.argv[1], sys.argv[2], sys.argv[3]
           with open(changelog, encoding="utf-8") as handle:
               lines = handle.read().split("\n")
-          start = next(index for index, line in enumerate(lines) if line.startswith(f"## [{tag}]"))
+          start = next((index for index, line in enumerate(lines) if line.startswith(f"## [{tag}]")), None)
+          if start is None:
+              print(f"::error::the CHANGELOG of the tag's parent has no '## [{tag}]' entry for the release notes")
+              sys.exit(1)
           end = next((index for index in range(start + 1, len(lines)) if lines[index].startswith("## ")), len(lines))
-          print("\n".join(lines[start + 1:end]).strip())
+          with open(notes, "w", encoding="utf-8") as handle:
+              handle.write("\n".join(lines[start + 1:end]).strip() + "\n")
           PY
           args=(release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md")
           [ "$PRERELEASE" != true ] || args+=(--prerelease)
