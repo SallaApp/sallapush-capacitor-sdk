@@ -954,7 +954,7 @@ class SallaPushPluginTest {
     plugin.startEvents(call("startEvents", "kind" to "user"))
     plugin.addPushSubscriptionListener(call("addPushSubscriptionListener", "listenerId" to 2))
 
-    plugin.handleOnDestroy()
+    PluginLifecycle.destroy(plugin)
     main.drain()
     pluginThread.drain()
     clickListener.onClick(NativeValues.click(testNotification(), null, null))

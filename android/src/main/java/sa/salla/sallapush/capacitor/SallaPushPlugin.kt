@@ -304,10 +304,9 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   /**
    * The activity is going away. Capacitor still runs the calls it had queued, and native would hold a listener
    * registered by one of them, with this plugin, its activity and its WebView, and give it every later tap. So every
-   * registration stops, and from now on the plugin refuses new ones and emits nothing. Public, so the tests in this
-   * package can call it; Kotlin allows widening the protected override.
+   * registration stops, and from now on the plugin refuses new ones and emits nothing.
    */
-  public override fun handleOnDestroy() {
+  override fun handleOnDestroy() {
     destroyed = true
     events.stopAll()
     displays.clear()
