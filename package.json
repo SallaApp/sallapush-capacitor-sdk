@@ -1,7 +1,7 @@
 {
   "name": "@salla.sa/sallapush-capacitor",
   "version": "1.0.0",
-  "description": "SallaPush push notifications for Capacitor apps, built on the SallaPush iOS and Android SDKs.",
+  "description": "SallaPush Capacitor SDK: push notifications for the mobile apps of Salla stores, built on the native SallaPush SDKs.",
   "license": "MIT",
   "author": "Salla <mobile@salla.sa> (https://salla.sa)",
   "repository": {
@@ -14,12 +14,13 @@
   "homepage": "https://github.com/SallaApp/sallapush-capacitor-sdk#readme",
   "keywords": [
     "capacitor",
-    "plugin",
-    "native",
-    "push",
-    "notifications",
+    "capacitor-plugin",
     "push-notifications",
-    "salla"
+    "notifications",
+    "salla",
+    "sallapush",
+    "ios",
+    "android"
   ],
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

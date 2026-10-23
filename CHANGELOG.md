@@ -32,6 +32,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
   `git+https://github.com/SallaApp/sallapush-capacitor-sdk.git#<version>`.
 - The README is rewritten for developers: the app id and the push credentials, installation, the iOS and Android
   setup, a quick start, how to verify the integration, every common task, the app badge, and other push SDKs.
+- The package's description, also the podspec's summary, says that SallaPush is for the mobile apps of Salla stores,
+  and its npm keywords name Capacitor plugins, push notifications, iOS and Android.
 
 ### Deprecated
 
