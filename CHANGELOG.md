@@ -5,8 +5,19 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `autoClearBadge` and `autoUpdateBadge` in `SallaPush.initialize`'s config, for both platforms, both on by default:
+  SallaPush clears the app icon's badge when the app opens, and raises and lowers it for its notifications. Their
+  static keys are `SallaPushAutoClearBadge` (as before) and the new `SallaPushAutoUpdateBadge` in the Info.plist, and
+  the new meta-data `com.salla.push.AUTO_CLEAR_BADGE` and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest.
+
 ### Changed
 
+- By default, SallaPush counts its notifications on the iOS app icon's badge, with the Notification Service Extension
+  and the same App Group in the app and the extension, and a SallaPush notification shown while the app is open no
+  longer changes the iOS badge. On Android, SallaPush removes its notifications that show on the badge from the shade
+  when the app comes to the foreground. `autoUpdateBadge` and `autoClearBadge` turn each part off.
 - The package is available under the MIT License; `package.json` and the podspec declare it.
 - The docs' Podfile lines fetch the SallaPush pods over HTTPS instead of SSH.
 - Android: SallaPush Android now comes from Maven Central. The package no longer adds a GitHub Packages repository to
@@ -15,6 +26,11 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Install the package from npm: `npm install @salla.sa/sallapush-capacitor`, with no git access or `allow-git`
   setting. A release tag still installs from git, over HTTPS, as a fallback:
   `git+https://github.com/SallaApp/sallapush-capacitor-sdk.git#<version>`.
+
+### Deprecated
+
+- `ios.autoClearBadge` in `SallaPush.initialize`'s config. Use the top-level `autoClearBadge`, which applies on both
+  platforms; `ios.autoClearBadge` still applies on iOS when `autoClearBadge` is left out.
 
 ## [1.0.0] - 2026-10-19
 

@@ -116,6 +116,8 @@ function configSpec(config: SallaPushConfig): ConfigSpec | null {
         optional(boolean),
       ],
       'config.openLaunchUrls': [config.openLaunchUrls, optional(boolean)],
+      'config.autoClearBadge': [config.autoClearBadge, optional(boolean)],
+      'config.autoUpdateBadge': [config.autoUpdateBadge, optional(boolean)],
       'config.ios': [config.ios, optional(record)],
     })
   ) {
@@ -148,6 +150,8 @@ function configSpec(config: SallaPushConfig): ConfigSpec | null {
     clearTagsOnLogout: config.clearTagsOnLogout,
     requiresUserConsent: config.requiresUserConsent,
     openLaunchUrls: config.openLaunchUrls,
+    autoClearBadge: config.autoClearBadge,
+    autoUpdateBadge: config.autoUpdateBadge,
     iosAppGroupIdentifier: ios.appGroupIdentifier,
     iosApnsEnvironment: ios.apnsEnvironment,
     iosAutoClearBadge: ios.autoClearBadge,

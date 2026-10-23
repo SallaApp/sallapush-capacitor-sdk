@@ -10,6 +10,7 @@ struct StaticConfig: Equatable {
     var clearTagsOnLogout: Bool?
     var appVersion: String?
     var autoClearBadge: Bool?
+    var autoUpdateBadge: Bool?
     var registerForRemoteNotificationsOnInit: Bool?
     var apnsEnvironment: SallaPushAPNsEnvironment?
 }
@@ -22,6 +23,7 @@ extension StaticConfig {
         static let clearTagsOnLogout = "SallaPushClearTagsOnLogout"
         static let appVersion = "SallaPushAppVersion"
         static let autoClearBadge = "SallaPushAutoClearBadge"
+        static let autoUpdateBadge = "SallaPushAutoUpdateBadge"
         static let registerForRemoteNotificationsOnInit = "SallaPushRegisterForRemoteNotificationsOnInit"
         static let apnsEnvironment = "SallaPushAPNsEnvironment"
     }
@@ -35,6 +37,7 @@ extension StaticConfig {
             clearTagsOnLogout: reader.flag(Key.clearTagsOnLogout),
             appVersion: reader.text(Key.appVersion),
             autoClearBadge: reader.flag(Key.autoClearBadge),
+            autoUpdateBadge: reader.flag(Key.autoUpdateBadge),
             registerForRemoteNotificationsOnInit: reader.flag(Key.registerForRemoteNotificationsOnInit),
             apnsEnvironment: reader.apnsEnvironment(Key.apnsEnvironment)
         )
@@ -48,6 +51,7 @@ extension StaticConfig {
         if let clearTagsOnLogout { configuration.clearTagsOnLogout = clearTagsOnLogout }
         if let appVersion { configuration.appVersion = appVersion }
         if let autoClearBadge { configuration.autoClearBadge = autoClearBadge }
+        if let autoUpdateBadge { configuration.autoUpdateBadge = autoUpdateBadge }
         if let registerForRemoteNotificationsOnInit {
             configuration.registerForRemoteNotificationsOnInit = registerForRemoteNotificationsOnInit
         }

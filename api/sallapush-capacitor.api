@@ -67,6 +67,8 @@ SallaPushClickResult.url: string | null [readonly]
 interface SallaPushConfig
 SallaPushConfig.apiBaseUrl?: string
 SallaPushConfig.appVersion?: string
+SallaPushConfig.autoClearBadge?: boolean
+SallaPushConfig.autoUpdateBadge?: boolean
 SallaPushConfig.clearTagsOnLogout?: boolean
 SallaPushConfig.ios?: { ... }
 SallaPushConfig.ios.apnsEnvironment?: SallaPushAPNsEnvironment

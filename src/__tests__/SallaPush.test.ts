@@ -52,6 +52,8 @@ describe('SallaPush.initialize', () => {
       clearTagsOnLogout: false,
       requiresUserConsent: true,
       openLaunchUrls: true,
+      autoClearBadge: false,
+      autoUpdateBadge: false,
       ios: {
         appGroupIdentifier: 'group.sa.salla.example',
         apnsEnvironment: SallaPushAPNsEnvironment.Sandbox,
@@ -70,6 +72,8 @@ describe('SallaPush.initialize', () => {
         clearTagsOnLogout: false,
         requiresUserConsent: true,
         openLaunchUrls: true,
+        autoClearBadge: false,
+        autoUpdateBadge: false,
         iosAppGroupIdentifier: 'group.sa.salla.example',
         iosApnsEnvironment: 'sandbox',
         iosAutoClearBadge: false,
@@ -83,6 +87,8 @@ describe('SallaPush.initialize', () => {
     [{ clearTagsOnLogout: false }, { clearTagsOnLogout: false }],
     [{ requiresUserConsent: true }, { requiresUserConsent: true }],
     [{ openLaunchUrls: true }, { openLaunchUrls: true }],
+    [{ autoClearBadge: false }, { autoClearBadge: false }],
+    [{ autoUpdateBadge: false }, { autoUpdateBadge: false }],
     [{ ios: { autoClearBadge: false } }, { iosAutoClearBadge: false }],
     [
       { ios: { registerForRemoteNotificationsOnInit: false } },
@@ -93,6 +99,23 @@ describe('SallaPush.initialize', () => {
 
     expect(plugin.initialize.mock.calls).toEqual([
       [{ appId: 'st_42_capacitor', config: spec }],
+    ]);
+  });
+
+  // The bridges decide between them: iOS takes autoClearBadge first, and Android never reads the iOS option.
+  it('passes the deprecated ios.autoClearBadge beside autoClearBadge', () => {
+    SallaPush.initialize('st_42_capacitor', {
+      autoClearBadge: true,
+      ios: { autoClearBadge: false },
+    });
+
+    expect(plugin.initialize.mock.calls).toEqual([
+      [
+        {
+          appId: 'st_42_capacitor',
+          config: { autoClearBadge: true, iosAutoClearBadge: false },
+        },
+      ],
     ]);
   });
 
@@ -173,6 +196,20 @@ describe('SallaPush.initialize', () => {
       '[SallaPush] SallaPush.initialize ignored: config.requiresUserConsent must be a boolean.'
     );
   });
+
+  it.each(['autoClearBadge', 'autoUpdateBadge'])(
+    'drops a call whose %s is not a boolean',
+    (option) => {
+      SallaPush.initialize('st_42_capacitor', {
+        [option]: 'false',
+      } as unknown as SallaPushConfig);
+
+      expect(plugin.initialize).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(
+        `[SallaPush] SallaPush.initialize ignored: config.${option} must be a boolean.`
+      );
+    }
+  );
 
   it('drops a call whose iOS options are not an object', () => {
     SallaPush.initialize('st_42_capacitor', {

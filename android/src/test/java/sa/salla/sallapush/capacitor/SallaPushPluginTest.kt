@@ -106,8 +106,10 @@ class SallaPushPluginTest {
           "clearTagsOnLogout" to false,
           "requiresUserConsent" to true,
           "openLaunchUrls" to true,
+          "autoClearBadge" to false,
+          "autoUpdateBadge" to false,
           "iosAppGroupIdentifier" to "group.sa.salla.example",
-          "iosAutoClearBadge" to false,
+          "iosAutoClearBadge" to true,
         ),
       )
     )
@@ -121,7 +123,19 @@ class SallaPushPluginTest {
     assertFalse(config.clearTagsOnLogout)
     assertTrue(config.requiresUserConsent)
     assertTrue(config.openLaunchUrls)
+    assertFalse(config.autoClearBadge)
+    assertFalse(config.autoUpdateBadge)
     assertTrue(errors().isEmpty())
+  }
+
+  // The deprecated ios.autoClearBadge is iOS only: Android keeps its own default.
+  @Test
+  fun ignoresTheDeprecatedIOSBadgeOption() {
+    plugin().initialize(
+      call("initialize", "appId" to "st_42_android", "config" to json("iosAutoClearBadge" to false))
+    )
+
+    assertTrue(native.initConfigs.single().autoClearBadge)
   }
 
   // Each boolean alone, at the value that isn't native's default, so options swapped with each other can't pass.
@@ -131,6 +145,8 @@ class SallaPushPluginTest {
       "clearTagsOnLogout" to { it.clearTagsOnLogout },
       "requiresUserConsent" to { it.requiresUserConsent },
       "openLaunchUrls" to { it.openLaunchUrls },
+      "autoClearBadge" to { it.autoClearBadge },
+      "autoUpdateBadge" to { it.autoUpdateBadge },
     )
     val defaults = SallaPushConfig.Builder().build()
     options.forEach { (name, read) ->
@@ -163,6 +179,8 @@ class SallaPushPluginTest {
       assertTrue(config.clearTagsOnLogout)
       assertFalse(config.requiresUserConsent)
       assertFalse(config.openLaunchUrls)
+      assertTrue(config.autoClearBadge)
+      assertTrue(config.autoUpdateBadge)
     }
   }
 
@@ -196,7 +214,13 @@ class SallaPushPluginTest {
       call(
         "initialize",
         "appId" to "st_42_android",
-        "config" to json("appVersion" to 2, "openLaunchUrls" to "yes", "requiresUserConsent" to 1),
+        "config" to json(
+          "appVersion" to 2,
+          "openLaunchUrls" to "yes",
+          "requiresUserConsent" to 1,
+          "autoClearBadge" to "false",
+          "autoUpdateBadge" to 0,
+        ),
       )
     )
 
@@ -205,6 +229,8 @@ class SallaPushPluginTest {
     assertNull(config.appVersion)
     assertFalse(config.openLaunchUrls)
     assertFalse(config.requiresUserConsent)
+    assertTrue(config.autoClearBadge)
+    assertTrue(config.autoUpdateBadge)
   }
 
   // The early-init console errors
@@ -246,17 +272,20 @@ class SallaPushPluginTest {
           "clearTagsOnLogout" to true,
           "requiresUserConsent" to true,
           "openLaunchUrls" to false,
+          "autoClearBadge" to true,
+          "autoUpdateBadge" to true,
         ),
       )
     )
 
     assertEquals(
       listOf(
-        "[SallaPush] initialize ignored logLevel, appVersion, clearTagsOnLogout, requiresUserConsent, openLaunchUrls: " +
-          "SallaPush already started with this app id from com.salla.push.APP_ID, so the call changes nothing. Set " +
-          "them with the meta-data com.salla.push.LOG_LEVEL, com.salla.push.APP_VERSION, " +
-          "com.salla.push.CLEAR_TAGS_ON_LOGOUT, com.salla.push.REQUIRES_USER_CONSENT, " +
-          "com.salla.push.OPEN_LAUNCH_URLS instead."
+        "[SallaPush] initialize ignored logLevel, appVersion, clearTagsOnLogout, requiresUserConsent, " +
+          "openLaunchUrls, autoClearBadge, autoUpdateBadge: SallaPush already started with this app id from " +
+          "com.salla.push.APP_ID, so the call changes nothing. Set them with the meta-data com.salla.push.LOG_LEVEL, " +
+          "com.salla.push.APP_VERSION, com.salla.push.CLEAR_TAGS_ON_LOGOUT, com.salla.push.REQUIRES_USER_CONSENT, " +
+          "com.salla.push.OPEN_LAUNCH_URLS, com.salla.push.AUTO_CLEAR_BADGE, com.salla.push.AUTO_UPDATE_BADGE " +
+          "instead."
       ),
       errors()
     )

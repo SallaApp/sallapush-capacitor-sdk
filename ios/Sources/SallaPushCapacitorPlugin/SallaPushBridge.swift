@@ -237,9 +237,12 @@ struct InitOptions {
     var clearTagsOnLogout: Bool?
     var requiresUserConsent: Bool?
     var openLaunchUrls: Bool?
+    var autoClearBadge: Bool?
+    var autoUpdateBadge: Bool?
     var appGroupIdentifier: String?
     var apnsEnvironment: SallaPushAPNsEnvironment?
-    var autoClearBadge: Bool?
+    /// The deprecated `ios.autoClearBadge`: it applies only when `autoClearBadge` is left out.
+    var iosAutoClearBadge: Bool?
     var registerForRemoteNotificationsOnInit: Bool?
 }
 
@@ -252,9 +255,11 @@ extension InitOptions {
             clearTagsOnLogout: options["clearTagsOnLogout"] as? Bool,
             requiresUserConsent: options["requiresUserConsent"] as? Bool,
             openLaunchUrls: options["openLaunchUrls"] as? Bool,
+            autoClearBadge: options["autoClearBadge"] as? Bool,
+            autoUpdateBadge: options["autoUpdateBadge"] as? Bool,
             appGroupIdentifier: options["iosAppGroupIdentifier"] as? String,
             apnsEnvironment: (options["iosApnsEnvironment"] as? String).flatMap(SallaPushAPNsEnvironment.init(name:)),
-            autoClearBadge: options["iosAutoClearBadge"] as? Bool,
+            iosAutoClearBadge: options["iosAutoClearBadge"] as? Bool,
             registerForRemoteNotificationsOnInit: options["iosRegisterForRemoteNotificationsOnInit"] as? Bool
         )
     }
@@ -273,13 +278,19 @@ extension InitOptions {
         if let clearTagsOnLogout { configuration.clearTagsOnLogout = clearTagsOnLogout }
         if let requiresUserConsent { configuration.requiresUserConsent = requiresUserConsent }
         if let openLaunchUrls { configuration.openLaunchURLs = openLaunchUrls }
+        applyBadgeOptions(to: configuration)
         if let appGroupIdentifier { configuration.appGroupIdentifier = appGroupIdentifier }
         if let apnsEnvironment { configuration.apnsEnvironment = apnsEnvironment }
-        if let autoClearBadge { configuration.autoClearBadge = autoClearBadge }
         if let registerForRemoteNotificationsOnInit {
             configuration.registerForRemoteNotificationsOnInit = registerForRemoteNotificationsOnInit
         }
         return configuration
+    }
+
+    /// The badge options: autoClearBadge, else the deprecated ios.autoClearBadge, and autoUpdateBadge.
+    private func applyBadgeOptions(to configuration: SallaPushConfiguration) {
+        if let autoClearBadge = autoClearBadge ?? iosAutoClearBadge { configuration.autoClearBadge = autoClearBadge }
+        if let autoUpdateBadge { configuration.autoUpdateBadge = autoUpdateBadge }
     }
 
     /// The given options that only the first initialize applies, each with the Info.plist key that sets it at launch.
@@ -290,9 +301,14 @@ extension InitOptions {
             clearTagsOnLogout.map { _ in ("clearTagsOnLogout", StaticConfig.Key.clearTagsOnLogout) },
             requiresUserConsent.map { _ in ("requiresUserConsent", StaticConfig.Key.requiresUserConsent) },
             openLaunchUrls.map { _ in ("openLaunchUrls", StaticConfig.Key.openLaunchURLs) },
+            autoClearBadge.map { _ in ("autoClearBadge", StaticConfig.Key.autoClearBadge) },
+            autoUpdateBadge.map { _ in ("autoUpdateBadge", StaticConfig.Key.autoUpdateBadge) },
             appGroupIdentifier.map { _ in ("ios.appGroupIdentifier", "SallaPushAppGroup") },
             apnsEnvironment.map { _ in ("ios.apnsEnvironment", StaticConfig.Key.apnsEnvironment) },
-            autoClearBadge.map { _ in ("ios.autoClearBadge", StaticConfig.Key.autoClearBadge) },
+            // The deprecated alias counts only without autoClearBadge, which would win over it.
+            (autoClearBadge == nil ? iosAutoClearBadge : nil).map { _ in
+                ("ios.autoClearBadge", StaticConfig.Key.autoClearBadge)
+            },
             registerForRemoteNotificationsOnInit.map { _ in
                 ("ios.registerForRemoteNotificationsOnInit", StaticConfig.Key.registerForRemoteNotificationsOnInit)
             }

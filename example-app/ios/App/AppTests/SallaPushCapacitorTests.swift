@@ -41,6 +41,7 @@ final class SallaPushCapacitorTests: SallaPushCapacitorTestCase {
         let start = makeStart(info: [
             "SallaPushAppId": "st_42_ios",
             "SallaPushOpenLaunchURLs": true,
+            "SallaPushAutoUpdateBadge": false,
             "SallaPushAPNsEnvironment": "sandbox"
         ])
 
@@ -49,8 +50,10 @@ final class SallaPushCapacitorTests: SallaPushCapacitorTestCase {
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])
         XCTAssertEqual(native.configurations.first?.openLaunchURLs, true)
+        XCTAssertEqual(native.configurations.first?.autoUpdateBadge, false)
         XCTAssertEqual(native.configurations.first?.apnsEnvironment, .sandbox)
-        XCTAssertEqual(start.earlyInit, StaticConfig(appId: "st_42_ios", openLaunchURLs: true, apnsEnvironment: .sandbox))
+        XCTAssertEqual(start.earlyInit, StaticConfig(appId: "st_42_ios", openLaunchURLs: true, autoUpdateBadge: false,
+                                                     apnsEnvironment: .sandbox))
     }
 
     func testStartsNothingWithoutAnAppId() {

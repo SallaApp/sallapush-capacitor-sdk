@@ -82,6 +82,7 @@ SallaPush | swift.property | SallaPushConfiguration.apnsEnvironment | @objc var 
 SallaPush | swift.property | SallaPushConfiguration.appGroupIdentifier | @objc var appGroupIdentifier: String?
 SallaPush | swift.property | SallaPushConfiguration.appVersion | @objc var appVersion: String?
 SallaPush | swift.property | SallaPushConfiguration.autoClearBadge | @objc var autoClearBadge: Bool
+SallaPush | swift.property | SallaPushConfiguration.autoUpdateBadge | @objc var autoUpdateBadge: Bool
 SallaPush | swift.property | SallaPushConfiguration.clearTagsOnLogout | @objc var clearTagsOnLogout: Bool
 SallaPush | swift.property | SallaPushConfiguration.logLevel | @objc var logLevel: SallaPushLogLevel { get set }
 SallaPush | swift.property | SallaPushConfiguration.openLaunchURLs | @objc var openLaunchURLs: Bool

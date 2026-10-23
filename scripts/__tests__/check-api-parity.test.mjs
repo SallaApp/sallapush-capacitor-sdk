@@ -189,9 +189,9 @@ public final class com/salla/push/SallaPushLogLevel : java/lang/Enum {
     ]);
   });
 
-  test('the real dump has 168 symbols', () => {
+  test('the real dump has 172 symbols', () => {
     const text = fs.readFileSync(path.join(ROOT, FILES.android), 'utf8');
-    assert.equal(androidKeys(text).length, 168);
+    assert.equal(androidKeys(text).length, 172);
   });
 
   for (const [name, text] of [
@@ -402,5 +402,5 @@ describe('the command line', () => {
 test('the repository maps every native symbol of the pinned SDKs once', () => {
   const result = checkParity(ROOT);
   assert.deepEqual(result.problems, []);
-  assert.deepEqual(result.native, { ios: 175, android: 168 });
+  assert.deepEqual(result.native, { ios: 176, android: 172 });
 });

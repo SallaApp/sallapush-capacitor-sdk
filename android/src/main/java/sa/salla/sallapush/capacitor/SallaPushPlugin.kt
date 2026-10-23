@@ -362,6 +362,8 @@ private class InitOptions(config: JSONObject) {
   val clearTagsOnLogout = config.booleanOrNull("clearTagsOnLogout")
   val requiresUserConsent = config.booleanOrNull("requiresUserConsent")
   val openLaunchUrls = config.booleanOrNull("openLaunchUrls")
+  val autoClearBadge = config.booleanOrNull("autoClearBadge")
+  val autoUpdateBadge = config.booleanOrNull("autoUpdateBadge")
 
   /** The given options that only the first init applies, each with the meta-data that sets it at launch. */
   val startOptions: List<Pair<String, String>>
@@ -371,6 +373,8 @@ private class InitOptions(config: JSONObject) {
       clearTagsOnLogout?.let { "clearTagsOnLogout" to StaticConfig.CLEAR_TAGS_ON_LOGOUT },
       requiresUserConsent?.let { "requiresUserConsent" to StaticConfig.REQUIRES_USER_CONSENT },
       openLaunchUrls?.let { "openLaunchUrls" to StaticConfig.OPEN_LAUNCH_URLS },
+      autoClearBadge?.let { "autoClearBadge" to StaticConfig.AUTO_CLEAR_BADGE },
+      autoUpdateBadge?.let { "autoUpdateBadge" to StaticConfig.AUTO_UPDATE_BADGE },
     )
 
   /** The native configuration with the options that were given, and native's defaults for the others. */
@@ -382,6 +386,8 @@ private class InitOptions(config: JSONObject) {
     clearTagsOnLogout?.let { builder.setClearTagsOnLogout(it) }
     requiresUserConsent?.let { builder.setRequiresUserConsent(it) }
     openLaunchUrls?.let { builder.setOpenLaunchUrls(it) }
+    autoClearBadge?.let { builder.setAutoClearBadge(it) }
+    autoUpdateBadge?.let { builder.setAutoUpdateBadge(it) }
     return builder.build()
   }
 }

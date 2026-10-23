@@ -10,7 +10,8 @@ final class InitOptionsTests: XCTestCase {
             ("clearTagsOnLogout", { $0.clearTagsOnLogout }),
             ("requiresUserConsent", { $0.requiresUserConsent }),
             ("openLaunchUrls", { $0.openLaunchURLs }),
-            ("iosAutoClearBadge", { $0.autoClearBadge }),
+            ("autoClearBadge", { $0.autoClearBadge }),
+            ("autoUpdateBadge", { $0.autoUpdateBadge }),
             ("iosRegisterForRemoteNotificationsOnInit", { $0.registerForRemoteNotificationsOnInit })
         ]
         let defaults = SallaPushConfiguration()
@@ -21,6 +22,14 @@ final class InitOptionsTests: XCTestCase {
                 XCTAssertEqual(readOther(configuration), expected, "\(name) alone: \(other)")
             }
         }
+    }
+
+    // The deprecated ios.autoClearBadge still applies alone; autoClearBadge, for both platforms, wins over it.
+    func testTakesAutoClearBadgeBeforeTheDeprecatedIOSOption() {
+        XCTAssertFalse(InitOptions(["iosAutoClearBadge": false]).configuration().autoClearBadge)
+        XCTAssertTrue(InitOptions(["autoClearBadge": true, "iosAutoClearBadge": false]).configuration().autoClearBadge)
+        XCTAssertFalse(InitOptions(["autoClearBadge": false, "iosAutoClearBadge": true]).configuration().autoClearBadge)
+        XCTAssertTrue(InitOptions(["iosAutoClearBadge": false]).configuration().autoUpdateBadge)
     }
 
     func testMapsEveryLogLevelAndAPNsEnvironmentByName() {

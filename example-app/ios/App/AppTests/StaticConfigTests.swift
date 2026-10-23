@@ -15,6 +15,7 @@ final class StaticConfigTests: XCTestCase {
             Key.clearTagsOnLogout: false,
             Key.appVersion: "2.1.0",
             Key.autoClearBadge: false,
+            Key.autoUpdateBadge: false,
             Key.registerForRemoteNotificationsOnInit: false,
             Key.apnsEnvironment: "sandbox"
         ], console: console)
@@ -26,6 +27,7 @@ final class StaticConfigTests: XCTestCase {
             clearTagsOnLogout: false,
             appVersion: "2.1.0",
             autoClearBadge: false,
+            autoUpdateBadge: false,
             registerForRemoteNotificationsOnInit: false,
             apnsEnvironment: .sandbox
         ))
@@ -38,6 +40,7 @@ final class StaticConfigTests: XCTestCase {
             Key.requiresUserConsent: "true",
             Key.clearTagsOnLogout: "NO",
             Key.autoClearBadge: " 0 ",
+            Key.autoUpdateBadge: "No",
             Key.registerForRemoteNotificationsOnInit: "1"
         ], console: console)
 
@@ -46,6 +49,7 @@ final class StaticConfigTests: XCTestCase {
             requiresUserConsent: true,
             clearTagsOnLogout: false,
             autoClearBadge: false,
+            autoUpdateBadge: false,
             registerForRemoteNotificationsOnInit: true
         ))
         XCTAssertEqual(console.errors, [])
@@ -91,6 +95,13 @@ final class StaticConfigTests: XCTestCase {
         XCTAssertEqual(console.errors, ["Ignored SallaPushRequiresUserConsent: \"maybe\" is not true, false, YES, NO, 1 or 0."])
     }
 
+    func testIgnoresAnAutoUpdateBadgeThatIsNotABooleanWithOneConsoleLine() {
+        let config = StaticConfig(info: [Key.appId: "st_42_ios", Key.autoUpdateBadge: "never"], console: console)
+
+        XCTAssertNil(config.autoUpdateBadge)
+        XCTAssertEqual(console.errors, ["Ignored SallaPushAutoUpdateBadge: \"never\" is not true, false, YES, NO, 1 or 0."])
+    }
+
     func testIgnoresANumberForABooleanKey() {
         let config = StaticConfig(info: [Key.openLaunchURLs: NSNumber(value: 1)], console: console)
 
@@ -129,6 +140,7 @@ final class StaticConfigTests: XCTestCase {
 
         XCTAssertTrue(configuration.openLaunchURLs)
         XCTAssertFalse(configuration.autoClearBadge)
+        XCTAssertEqual(configuration.autoUpdateBadge, defaults.autoUpdateBadge)
         XCTAssertEqual(configuration.requiresUserConsent, defaults.requiresUserConsent)
         XCTAssertEqual(configuration.clearTagsOnLogout, defaults.clearTagsOnLogout)
         XCTAssertEqual(configuration.registerForRemoteNotificationsOnInit, defaults.registerForRemoteNotificationsOnInit)
@@ -147,6 +159,7 @@ final class StaticConfigTests: XCTestCase {
             clearTagsOnLogout: false,
             appVersion: "2.1.0",
             autoClearBadge: false,
+            autoUpdateBadge: false,
             registerForRemoteNotificationsOnInit: false,
             apnsEnvironment: .production
         ).configuration()
@@ -156,6 +169,7 @@ final class StaticConfigTests: XCTestCase {
         XCTAssertFalse(configuration.clearTagsOnLogout)
         XCTAssertEqual(configuration.appVersion, "2.1.0")
         XCTAssertFalse(configuration.autoClearBadge)
+        XCTAssertFalse(configuration.autoUpdateBadge)
         XCTAssertFalse(configuration.registerForRemoteNotificationsOnInit)
         XCTAssertEqual(configuration.apnsEnvironment, .production)
     }

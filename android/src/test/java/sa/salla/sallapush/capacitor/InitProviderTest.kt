@@ -34,6 +34,8 @@ class InitProviderTest {
       requiresUserConsent = true,
       clearTagsOnLogout = false,
       appVersion = "2.1.0",
+      autoClearBadge = false,
+      autoUpdateBadge = false,
     )
 
     EarlyInit.start(context, config, native)
@@ -45,6 +47,8 @@ class InitProviderTest {
     assertTrue(nativeConfig.requiresUserConsent)
     assertFalse(nativeConfig.clearTagsOnLogout)
     assertEquals("2.1.0", nativeConfig.appVersion)
+    assertFalse(nativeConfig.autoClearBadge)
+    assertFalse(nativeConfig.autoUpdateBadge)
     assertEquals(config, EarlyInit.config)
   }
 

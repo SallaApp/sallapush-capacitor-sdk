@@ -33,11 +33,25 @@ class StaticConfigTest {
       putString(StaticConfig.CLEAR_TAGS_ON_LOGOUT, "0")
       putString(StaticConfig.APP_VERSION, " 2.1.0 ")
       putString(StaticConfig.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS, "No")
+      putString(StaticConfig.AUTO_CLEAR_BADGE, "false")
+      putString(StaticConfig.AUTO_UPDATE_BADGE, "NO")
     }
 
     val config = StaticConfig.from(context, metaData)
 
-    assertEquals(StaticConfig("st_42_android", true, true, false, "2.1.0", false), config)
+    assertEquals(
+      StaticConfig(
+        appId = "st_42_android",
+        openLaunchUrls = true,
+        requiresUserConsent = true,
+        clearTagsOnLogout = false,
+        appVersion = "2.1.0",
+        displayOneSignalCompatPayloads = false,
+        autoClearBadge = false,
+        autoUpdateBadge = false,
+      ),
+      config
+    )
     assertTrue(errors().isEmpty())
   }
 
@@ -48,6 +62,8 @@ class StaticConfigTest {
       putBoolean(StaticConfig.REQUIRES_USER_CONSENT, false)
       putBoolean(StaticConfig.CLEAR_TAGS_ON_LOGOUT, true)
       putBoolean(StaticConfig.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS, false)
+      putBoolean(StaticConfig.AUTO_CLEAR_BADGE, false)
+      putBoolean(StaticConfig.AUTO_UPDATE_BADGE, true)
     }
 
     val config = StaticConfig.from(context, metaData)
@@ -58,6 +74,8 @@ class StaticConfigTest {
         requiresUserConsent = false,
         clearTagsOnLogout = true,
         displayOneSignalCompatPayloads = false,
+        autoClearBadge = false,
+        autoUpdateBadge = true,
       ),
       config
     )
@@ -140,6 +158,22 @@ class StaticConfigTest {
   }
 
   @Test
+  fun ignoresABadgeValueThatIsNotABooleanWithOneConsoleLine() {
+    val metaData = Bundle().apply {
+      putString(StaticConfig.APP_ID, "st_42_android")
+      putString(StaticConfig.AUTO_UPDATE_BADGE, "never")
+    }
+
+    val config = StaticConfig.from(context, metaData)
+
+    assertNull(config.autoUpdateBadge)
+    assertEquals(
+      listOf("[SallaPush] Ignored com.salla.push.AUTO_UPDATE_BADGE: \"never\" is not true, false, YES, NO, 1 or 0."),
+      errors()
+    )
+  }
+
+  @Test
   fun readsTheMetaDataOfTheAppsManifest() {
     val packageInfo = shadowOf(context.packageManager).getInternalMutablePackageInfo(context.packageName)
     packageInfo.applicationInfo?.metaData = Bundle().apply {
@@ -160,6 +194,8 @@ class StaticConfigTest {
     assertNull(config.appVersion)
     assertNull(config.apiBaseUrl)
     assertNull(config.logLevel)
+    assertTrue(config.autoClearBadge)
+    assertTrue(config.autoUpdateBadge)
   }
 
   @Test
@@ -171,12 +207,28 @@ class StaticConfigTest {
       clearTagsOnLogout = true,
       appVersion = "2.1.0",
       displayOneSignalCompatPayloads = false,
+      autoClearBadge = false,
+      autoUpdateBadge = false,
     ).toSallaPushConfig()
 
     assertFalse(config.openLaunchUrls)
     assertTrue(config.requiresUserConsent)
     assertTrue(config.clearTagsOnLogout)
     assertEquals("2.1.0", config.appVersion)
+    assertFalse(config.autoClearBadge)
+    assertFalse(config.autoUpdateBadge)
+  }
+
+  // Each badge setting alone, at the value that isn't native's default, so the two swapped can't pass.
+  @Test
+  fun passesEachBadgeSettingAlone() {
+    val clear = StaticConfig(autoClearBadge = false).toSallaPushConfig()
+    val update = StaticConfig(autoUpdateBadge = false).toSallaPushConfig()
+
+    assertFalse(clear.autoClearBadge)
+    assertTrue(clear.autoUpdateBadge)
+    assertTrue(update.autoClearBadge)
+    assertFalse(update.autoUpdateBadge)
   }
 
   private fun errors(): List<String> =

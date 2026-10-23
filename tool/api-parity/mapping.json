@@ -364,16 +364,53 @@
       "reason": null
     },
     {
-      "id": "P21",
-      "status": "I",
+      "id": "P21a",
+      "status": "W",
       "ios": [
         "SallaPush | swift.property | SallaPushConfiguration.autoClearBadge | @objc var autoClearBadge: Bool"
       ],
-      "android": [],
+      "android": [
+        "com/salla/push/SallaPushConfig$Builder#setAutoClearBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;"
+      ],
       "ts": [
+        "SallaPushConfig.autoClearBadge",
         "SallaPushConfig.ios.autoClearBadge"
       ],
       "reason": null
+    },
+    {
+      "id": "P21b",
+      "status": "N",
+      "ios": [],
+      "android": [
+        "com/salla/push/SallaPushConfig#getAutoClearBadge ()Z"
+      ],
+      "ts": [],
+      "reason": "The Android bridge builds the configuration with the builder's setters and never reads it back."
+    },
+    {
+      "id": "P21c",
+      "status": "W",
+      "ios": [
+        "SallaPush | swift.property | SallaPushConfiguration.autoUpdateBadge | @objc var autoUpdateBadge: Bool"
+      ],
+      "android": [
+        "com/salla/push/SallaPushConfig$Builder#setAutoUpdateBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;"
+      ],
+      "ts": [
+        "SallaPushConfig.autoUpdateBadge"
+      ],
+      "reason": null
+    },
+    {
+      "id": "P21d",
+      "status": "N",
+      "ios": [],
+      "android": [
+        "com/salla/push/SallaPushConfig#getAutoUpdateBadge ()Z"
+      ],
+      "ts": [],
+      "reason": "The Android bridge builds the configuration with the builder's setters and never reads it back."
     },
     {
       "id": "P22",

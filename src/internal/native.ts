@@ -7,8 +7,11 @@ export type ConfigSpec = {
   clearTagsOnLogout?: boolean;
   requiresUserConsent?: boolean;
   openLaunchUrls?: boolean;
+  autoClearBadge?: boolean;
+  autoUpdateBadge?: boolean;
   iosAppGroupIdentifier?: string;
   iosApnsEnvironment?: string;
+  // The deprecated ios.autoClearBadge: iOS applies it only without autoClearBadge.
   iosAutoClearBadge?: boolean;
   iosRegisterForRemoteNotificationsOnInit?: boolean;
 };

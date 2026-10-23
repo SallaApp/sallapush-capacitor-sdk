@@ -18,9 +18,11 @@ final class SallaPushBridgeTests: XCTestCase {
             "clearTagsOnLogout": false,
             "requiresUserConsent": true,
             "openLaunchUrls": true,
+            "autoClearBadge": false,
+            "autoUpdateBadge": false,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "sandbox",
-            "iosAutoClearBadge": false,
+            "iosAutoClearBadge": true,
             "iosRegisterForRemoteNotificationsOnInit": false
         ])
 
@@ -34,7 +36,8 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertTrue(configuration.openLaunchURLs)
         XCTAssertEqual(configuration.appGroupIdentifier, "group.sa.salla.example")
         XCTAssertEqual(configuration.apnsEnvironment, .sandbox)
-        XCTAssertFalse(configuration.autoClearBadge)
+        XCTAssertFalse(configuration.autoClearBadge, "autoClearBadge wins over the deprecated ios.autoClearBadge")
+        XCTAssertFalse(configuration.autoUpdateBadge)
         XCTAssertFalse(configuration.registerForRemoteNotificationsOnInit)
         XCTAssertEqual(console.errors, [])
     }
@@ -53,6 +56,7 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertNil(configuration.appGroupIdentifier)
         XCTAssertEqual(configuration.apnsEnvironment, defaults.apnsEnvironment)
         XCTAssertEqual(configuration.autoClearBadge, defaults.autoClearBadge)
+        XCTAssertEqual(configuration.autoUpdateBadge, defaults.autoUpdateBadge)
         XCTAssertEqual(configuration.registerForRemoteNotificationsOnInit, defaults.registerForRemoteNotificationsOnInit)
     }
 
@@ -82,20 +86,23 @@ final class SallaPushBridgeTests: XCTestCase {
             "clearTagsOnLogout": true,
             "requiresUserConsent": true,
             "openLaunchUrls": false,
+            "autoClearBadge": true,
+            "autoUpdateBadge": true,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "production",
             "iosAutoClearBadge": true,
             "iosRegisterForRemoteNotificationsOnInit": true
         ])
 
+        // ios.autoClearBadge isn't named beside autoClearBadge, which wins over it.
         XCTAssertEqual(console.errors, [
             "initialize ignored logLevel, appVersion, clearTagsOnLogout, requiresUserConsent, openLaunchUrls, "
-                + "ios.appGroupIdentifier, ios.apnsEnvironment, ios.autoClearBadge, "
+                + "autoClearBadge, autoUpdateBadge, ios.appGroupIdentifier, ios.apnsEnvironment, "
                 + "ios.registerForRemoteNotificationsOnInit: SallaPush already started with this app id from "
                 + "SallaPushAppId, so the call changes nothing. Set them with the Info.plist keys SallaPushLogLevel, "
                 + "SallaPushAppVersion, SallaPushClearTagsOnLogout, SallaPushRequiresUserConsent, "
-                + "SallaPushOpenLaunchURLs, SallaPushAppGroup, SallaPushAPNsEnvironment, SallaPushAutoClearBadge, "
-                + "SallaPushRegisterForRemoteNotificationsOnInit instead."
+                + "SallaPushOpenLaunchURLs, SallaPushAutoClearBadge, SallaPushAutoUpdateBadge, SallaPushAppGroup, "
+                + "SallaPushAPNsEnvironment, SallaPushRegisterForRemoteNotificationsOnInit instead."
         ])
     }
 

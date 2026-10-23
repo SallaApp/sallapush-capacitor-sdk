@@ -19,6 +19,8 @@ internal data class StaticConfig(
   val clearTagsOnLogout: Boolean? = null,
   val appVersion: String? = null,
   val displayOneSignalCompatPayloads: Boolean? = null,
+  val autoClearBadge: Boolean? = null,
+  val autoUpdateBadge: Boolean? = null,
 ) {
 
   /** The native configuration with the options the manifest sets, and native's defaults for the others. */
@@ -28,6 +30,8 @@ internal data class StaticConfig(
     requiresUserConsent?.let { builder.setRequiresUserConsent(it) }
     clearTagsOnLogout?.let { builder.setClearTagsOnLogout(it) }
     appVersion?.let { builder.setAppVersion(it) }
+    autoClearBadge?.let { builder.setAutoClearBadge(it) }
+    autoUpdateBadge?.let { builder.setAutoUpdateBadge(it) }
     return builder.build()
   }
 
@@ -38,6 +42,8 @@ internal data class StaticConfig(
     const val CLEAR_TAGS_ON_LOGOUT = "com.salla.push.CLEAR_TAGS_ON_LOGOUT"
     const val APP_VERSION = "com.salla.push.APP_VERSION"
     const val DISPLAY_ONESIGNAL_COMPAT_PAYLOADS = "com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS"
+    const val AUTO_CLEAR_BADGE = "com.salla.push.AUTO_CLEAR_BADGE"
+    const val AUTO_UPDATE_BADGE = "com.salla.push.AUTO_UPDATE_BADGE"
 
     fun read(context: Context): StaticConfig = from(context, metaData(context))
 
@@ -50,6 +56,8 @@ internal data class StaticConfig(
         clearTagsOnLogout = values.flag(CLEAR_TAGS_ON_LOGOUT),
         appVersion = values.text(APP_VERSION),
         displayOneSignalCompatPayloads = values.flag(DISPLAY_ONESIGNAL_COMPAT_PAYLOADS),
+        autoClearBadge = values.flag(AUTO_CLEAR_BADGE),
+        autoUpdateBadge = values.flag(AUTO_UPDATE_BADGE),
       )
     }
 

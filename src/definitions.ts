@@ -187,10 +187,29 @@ export interface SallaPushConfig {
   requiresUserConsent?: boolean;
   /** SallaPush opens https launch URLs on tap. The click listener still gets the tap: it must not open the URL again. */
   openLaunchUrls?: boolean;
+  /**
+   * Clears the app icon's badge when the app opens. Default `true`. On iOS, SallaPush sets the badge, and its count of
+   * SallaPush notifications, to 0 every time the app becomes active; on iOS 15 that can also remove the app's delivered
+   * notifications. On Android, SallaPush removes its notifications that show on the badge from the shade when the app
+   * comes to the foreground (Android 8.0 and later), but not when the phone was unlocked with the app on screen.
+   */
+  autoClearBadge?: boolean;
+  /**
+   * SallaPush raises and lowers the app icon's badge for its notifications. Default `true`. On iOS, the Notification
+   * Service Extension counts each SallaPush notification, which needs the extension and the same App Group in the app
+   * and the extension; `false` sets no number, and a push's own badge applies. On Android, SallaPush creates its
+   * notification channels with badges; `false` creates them without, and Android keeps a channel's badge setting once
+   * the channel exists.
+   */
+  autoUpdateBadge?: boolean;
   /** iOS only; ignored on Android. */
   ios?: {
     appGroupIdentifier?: string;
     apnsEnvironment?: SallaPushAPNsEnvironment;
+    /**
+     * @deprecated Use the top-level `autoClearBadge`, which applies on both platforms. This one still applies on iOS
+     * when `autoClearBadge` is left out.
+     */
     autoClearBadge?: boolean;
     registerForRemoteNotificationsOnInit?: boolean;
   };
