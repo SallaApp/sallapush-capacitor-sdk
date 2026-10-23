@@ -20,7 +20,7 @@ The package follows [Semantic Versioning](https://semver.org). Its pins of the n
 - **A minor** wraps new native API, or adds API of its own that changes nothing for existing apps.
 - **A major** changes the package's API in a way that apps must follow.
 
-A release is a git tag on this repository, the version itself without a `v`, such as `1.0.1` or `1.1.0-beta.1`, and
+A release is a git tag on this repository, the version itself without a `v`, such as `1.1.0` or `1.2.0-beta.1`, and
 the same version on npm. Apps install it from npm, or from the tag ([README](README.md#installation)). A pushed tag
 never moves and is never deleted, and npm never takes a version twice: an app's lockfile records what it installed. A
 defect in a release is fixed by the next version. Every release after 1.0.0 is on npm; 1.0.0 is a git tag only.

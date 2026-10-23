@@ -36,7 +36,7 @@ export const SallaPush: {
   isInitialized(): Promise<boolean>;
   /** The app id SallaPush runs with; null before it started. */
   getAppId(): Promise<string | null>;
-  /** The native SallaPush SDK version on this platform, for example "1.0.2". */
+  /** The native SallaPush SDK version on this platform, for example "1.1.0". */
   getSdkVersion(): Promise<string>;
   /**
    * Requires consent before any data processing. With the static app id, require consent with the static key
