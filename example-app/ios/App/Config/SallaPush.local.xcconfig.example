@@ -5,7 +5,7 @@
 SALLAPUSH_APP_ID = your_app_id
 // end-snippet
 
-// A bundle id your Apple team can sign, the one the Salla team set up for the app id.
+// A bundle id your Apple team can sign.
 SALLAPUSH_EXAMPLE_BUNDLE_ID = com.example.sallapush
 
 // Your Apple team, to run on a device.
