@@ -10,7 +10,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - The package is available under the MIT License; `package.json` and the podspec declare it.
 - The docs' Podfile lines fetch the SallaPush pods over HTTPS instead of SSH.
 - Android: SallaPush Android now comes from Maven Central. The package no longer adds a GitHub Packages repository to
-  your build, and no GitHub token is needed: remove `gpr.user` and `gpr.key` if you set them for SallaPush, and the
+  your build, and no GitHub token is needed: remove the GitHub Packages credentials you set for SallaPush, and the
   `SallaPushGitHubPackages` repository if your settings declare it.
 - Install the package from npm: `npm install @salla.sa/sallapush-capacitor`, with no git access or `allow-git`
   setting. A release tag still installs from git, over HTTPS, as a fallback:
