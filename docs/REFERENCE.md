@@ -667,11 +667,12 @@ them, never on messages. Most codes exist on both platforms. These exist on one 
   `notif.off_main_thread`, `lifecycle.background_expired`, `nse.attachment_failed`, `nse.expired`,
   `nse.replaced_request`, `nse.received_sent` and `nse.received_deferred`.
 
-No secret or identity token is ever logged. On iOS, the info entries `status.launch` and `status.changed` hold the
-full push token and the customer's id: don't forward info entries to third parties. A log handler at `warn` or quieter
-never receives them, and every other entry shows at most the push token's last 6 characters and no customer
-identifier. A console level of `info` or more, set by the static key, `initialize`'s `logLevel` or `setLogLevel`,
-also writes them to the device log, in release builds too: ship with `warn`, the default.
+No secret or identity token is ever logged. **Privacy:** what SallaPush iOS writes in the info entries `status.launch`
+and `status.changed` is described in its
+[logging guide](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#what-is-never-logged).
+Keep the console level at `warn` in release builds, and don't forward info entries to third parties. A log handler at
+`warn` or quieter never receives them; a console level of `info` or more, set by the static key, `initialize`'s
+`logLevel` or `setLogLevel`, also writes them to the device log, in release builds too.
 
 **One log handler per process on iOS.** Native keeps one handler per process: in an app with two Capacitor bridges
 whose pages both set a log handler, the page that set it last receives the entries, and either bridge's page load or

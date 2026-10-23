@@ -336,9 +336,9 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
   tag `SallaPush`. The static keys `SallaPushLogLevel` and `com.salla.push.LOG_LEVEL` set the level too.
 - **Every entry has a stable `code`,** such as `register.ok`. Match on it, not on the message. Secrets and identity
   tokens are never logged.
-- **Privacy, with SallaPush iOS 1.0.4:** the info entries `status.launch` and `status.changed` hold the full push token
-  and the customer's id. Keep the console level at `warn` in release builds, and don't forward info entries to third
-  parties ([Logging](docs/SETUP.md#logging)).
+- **Privacy:** what SallaPush iOS writes in the info entries `status.launch` and `status.changed` is described in its
+  [logging guide](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#what-is-never-logged).
+  Keep the console level at `warn` in release builds, and don't forward info entries to third parties.
 
 ## Migrating from OneSignal
 
