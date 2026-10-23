@@ -638,8 +638,8 @@ export function customerDidSignOut(): void {
 }
 ```
 
-- **Pass the customer's id and their Salla token,** a customer's JWT or a merchant app's PASETO token, without a
-  `Bearer ` prefix. Salla checks the token, and the device is linked only when the token belongs to that id.
+- **Pass the customer's id and their Salla token,** a JWT, without a `Bearer ` prefix. Salla checks the token, and the
+  device is linked only when the token belongs to that id.
 - **Call `login` again when your app refreshes the token.** A `login` for the customer the device is linked to sends
   nothing.
 - **`logout()` needs no token and works offline.** The device stays registered as a guest. Call it at every sign-out,
