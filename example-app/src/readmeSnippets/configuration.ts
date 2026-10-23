@@ -2,7 +2,7 @@ import { SallaPush } from '@salla.sa/sallapush-capacitor';
 
 // The README's "Consent", and the reference's "Initializing from JavaScript".
 
-export function startWithAppIdFromServer(appId: string): void {
+export function startWithAppIdKnownAtRunTime(appId: string): void {
   // snippet:initialize
   SallaPush.initialize(appId, {
     ios: { appGroupIdentifier: 'group.com.example.shop' },
