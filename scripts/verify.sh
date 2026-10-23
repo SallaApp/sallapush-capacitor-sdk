@@ -178,7 +178,7 @@ step_pins() { "$scripts/bump-native.sh" --check; }
 
 # The files a build, the checks and a release need, the docs, and the scripts CI and the docs run directly.
 readonly REQUIRED_FILES=".gitignore .nvmrc .yarnrc.yml .yarn/releases/yarn-4.11.0.cjs .swiftlint.yml package.json
-yarn.lock README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md docs/SETUP.md docs/REFERENCE.md docs/TROUBLESHOOTING.md
+yarn.lock README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md docs/REFERENCE.md docs/TROUBLESHOOTING.md
 LICENSE Package.swift Salla.saSallapushCapacitor.podspec rollup.config.mjs tsconfig.json tsconfig.build.json
 android/build.gradle android/src/main/AndroidManifest.xml src/index.ts src/internal/native.ts .github/workflows/ci.yml
 .github/workflows/publish.yml api/sallapush-capacitor.api tool/api-parity/native-ios-API.txt

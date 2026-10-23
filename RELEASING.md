@@ -75,14 +75,14 @@ The release commit is on no branch, by design: `master` keeps the sources only. 
 
 In a fresh Capacitor 8 app, install the release from npm, `npm install @salla.sa/sallapush-capacitor@<version>`, run
 `npx cap sync`, and build both platforms. Then install the pushed tag with the setup guide's git dependency line
-([From git](docs/SETUP.md#from-git)):
+([Installation](README.md#installation)):
 
 - once with npm 12, with `allow-git=root` in the app's `.npmrc`;
 - once with Yarn 4.18.1, with the repository in `approvedGitRepositories`;
 - each time, run `npx cap sync`, and build both platforms.
 
 Also update an app that has the previous release, once with CocoaPods and once with Swift Package Manager and the
-Notification Service Extension, as the setup guide's [Updating the package](docs/SETUP.md#updating-the-package) says:
+Notification Service Extension, as the README's [Installation](README.md#installation) says:
 update the package, move the app's SallaPush pins, run `npx cap sync`, and build both platforms.
 
 Record the result in the release's pull request.

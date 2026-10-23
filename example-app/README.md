@@ -23,7 +23,7 @@ notifications, and logs every event. It also hosts the plugin's iOS unit tests, 
 - **Event log:** taps, with their URL and action id, and where they route; foreground decisions; permission, customer
   and subscription changes; login failures; SallaPush's log entries at the chosen level.
 
-The code of the README and of the [setup guide](../docs/SETUP.md) comes from here:
+The code of the README and of the [reference](../docs/REFERENCE.md) comes from here:
 
 - `src/main.ts` makes the start-up calls of `src/start.ts` before it renders: the click listener, and the launch
   identity call (the example's session, `src/session.ts`, lives in memory, so every launch starts signed out).
