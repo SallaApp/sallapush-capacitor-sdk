@@ -328,23 +328,27 @@ import SallaPushExtension
 import UserNotifications
 
 final class NotificationService: UNNotificationServiceExtension {
-    // Reads the App Group from this extension's Info.plist key SallaPushAppGroup.
-    private let sallaPush = SallaPushServiceExtension()
+    private var sallaPushService: SallaPushServiceExtension?
 
     override func didReceive(_ request: UNNotificationRequest,
                              withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
-        if sallaPush.didReceive(request, withContentHandler: contentHandler) { return }
-        // Not a SallaPush notification: hand it to your other SDKs here, or deliver it unchanged.
-        contentHandler(request.content)
+        if SallaPushServiceExtension.isSallaPushNotification(request) {
+            // Reads the App Group from this extension's Info.plist key SallaPushAppGroup.
+            sallaPushService = SallaPushServiceExtension()
+            sallaPushService?.didReceive(request, withContentHandler: contentHandler)
+        } else {
+            // Not a SallaPush notification: hand it to your other SDKs here, or deliver it unchanged.
+            contentHandler(request.content)
+        }
     }
 
     override func serviceExtensionTimeWillExpire() {
-        sallaPush.serviceExtensionTimeWillExpire()
+        sallaPushService?.serviceExtensionTimeWillExpire()
     }
 }
 ```
 
-`didReceive` returns false for notifications that aren't SallaPush's, and never touches them.
+`didReceive` returns false and doesn't handle the notification when it isn't a SallaPush notification.
 
 **4. An App Group,** which badge counting needs, and through which the extension reports `received`. Add the App
 Groups capability, with the same group, to both targets, and this key to both Info.plist files:
