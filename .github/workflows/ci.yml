@@ -1,9 +1,8 @@
 name: CI
 
-# Every pull request and every push to master: the checks that need no private SallaPush artifacts. Native builds,
-# native unit tests, the example smoke tests and the consumer installs need read access to the private SallaPush SDKs
-# and macOS, so scripts/verify.sh runs them locally, and "Native verified" fails until a maintainer attests that run for
-# the head commit.
+# Every pull request and every push to master, on GitHub-hosted runners: the portable steps of scripts/verify.sh, the
+# same ones a contributor runs locally. Native builds, native unit tests, the example smoke tests and the consumer
+# installs run locally, and "Native verified" fails until a maintainer attests that run for the head commit.
 on:
   pull_request:
   push:
@@ -23,8 +22,7 @@ defaults:
 jobs:
   js:
     name: JavaScript, types and unit tests
-    # GitHub-hosted runners fail the organization's IP allow list; RUNS_ON is the organization's Linux runner label.
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,7 +40,7 @@ jobs:
 
   shell-scripts:
     name: Shell scripts
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -51,12 +49,12 @@ jobs:
       - name: bash -n, shellcheck and the tooling self-test
         run: scripts/verify.sh shell
 
-  # CI can't build the native code (no access to the private SDKs, no macOS runner), and Testing Ready counts a skipped
-  # job as a pass. So this job fails until the person who added the label native-verified-locally comments
-  # "native-verified-locally <full sha>" for the pull request's head commit, after running scripts/verify.sh on a Mac.
+  # Testing Ready counts a skipped job as a pass. So this job fails until the person who added the label
+  # native-verified-locally comments "native-verified-locally <full sha>" for the pull request's head commit, after
+  # running scripts/verify.sh on a Mac.
   native-verified:
     name: Native verified
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
@@ -73,15 +71,24 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: scripts/verified-label.sh
 
-  # The organization's required check: it fails unless every job above succeeded or was skipped.
-  testing-result:
+  # The required check: it fails unless every job above succeeded or was skipped.
+  testing-ready:
     name: Testing Ready
     if: always()
     needs: [js, shell-scripts, native-verified]
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: SallaApp/.CI/testing-ready@master
-        with:
-          needs: ${{ toJSON(needs) }}
+      - name: Every job above succeeded or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          for result in $RESULTS; do
+            case "$result" in
+              success | skipped) ;;
+              *) echo "::error::a job this check needs ended with $result"; exit 1 ;;
+            esac
+          done
+          echo "every job succeeded or was skipped: $RESULTS"
