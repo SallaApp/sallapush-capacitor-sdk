@@ -353,7 +353,8 @@ export interface SallaPushNotificationsNamespace {
   forwardApnsToken(apnsToken: string): void;
   /**
    * Removes the delivered SallaPush notifications only. On iOS it also sets the app icon's badge to 0 while
-   * `autoUpdateBadge` is on; on Android the badge drops with the notifications.
+   * `autoUpdateBadge` is on, on iOS 15 only when no other SDK's notification is delivered; on Android the badge drops
+   * with the notifications.
    */
   clearAll(): void;
   /** Android only; does nothing on iOS. */
