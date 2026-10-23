@@ -10,7 +10,7 @@ import java.util.Locale
 
 /**
  * The com.salla.push.* meta-data that only the wrapper reads, from the app's manifest. Null means the key is absent and
- * native's default applies. SallaPush reads its own keys (LOG_LEVEL, API_BASE_URL, the icon and channel keys) itself.
+ * native's default applies. SallaPush reads its own keys (LOG_LEVEL, the icon and channel keys) itself.
  */
 internal data class StaticConfig(
   val appId: String? = null,

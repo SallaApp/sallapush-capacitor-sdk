@@ -53,7 +53,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   fun initialize(call: PluginCall) {
     val appId = call.getString("appId") ?: return
     val options = InitOptions(call.getObject("config") ?: JSObject())
-    if (seams.earlyInit()?.appId == appId && options.apiBaseUrl == null) {
+    if (seams.earlyInit()?.appId == appId) {
       reportIgnoredOptions(options.startOptions)
     }
     seams.native.initWithContext(applicationContext(), appId, options.toSallaPushConfig())
@@ -341,7 +341,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     onPluginThread { notifyListeners(event.jsName, data) }
   }
 
-  /** A second init with the static app id and API host changes nothing natively, its options included. */
+  /** A second init with the static app id changes nothing natively, its options included. */
   private fun reportIgnoredOptions(options: List<Pair<String, String>>) {
     if (options.isEmpty()) return
     val names = options.joinToString(", ") { it.first }
@@ -355,7 +355,6 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
 
 /** The options of a JavaScript initialize call that apply on Android; null means the option was left out. */
 private class InitOptions(config: JSONObject) {
-  val apiBaseUrl = config.stringOrNull("apiBaseUrl")
   val logLevel = config.stringOrNull("logLevel")?.let(::logLevelNamed)
   val appVersion = config.stringOrNull("appVersion")
   val clearTagsOnLogout = config.booleanOrNull("clearTagsOnLogout")
@@ -379,7 +378,6 @@ private class InitOptions(config: JSONObject) {
   /** The native configuration with the options that were given, and native's defaults for the others. */
   fun toSallaPushConfig(): SallaPushConfig {
     val builder = SallaPushConfig.Builder()
-    apiBaseUrl?.let { builder.setApiBaseUrl(it) }
     logLevel?.let { builder.setLogLevel(it) }
     appVersion?.let { builder.setAppVersion(it) }
     clearTagsOnLogout?.let { builder.setClearTagsOnLogout(it) }

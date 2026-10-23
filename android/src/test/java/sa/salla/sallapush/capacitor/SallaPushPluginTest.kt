@@ -101,7 +101,6 @@ class SallaPushPluginTest {
         "initialize",
         "appId" to "st_42_android",
         "config" to json(
-          "apiBaseUrl" to "https://push.example.com/notifications/v1/sallapush",
           "logLevel" to "debug",
           "appVersion" to "2.1.0",
           "clearTagsOnLogout" to false,
@@ -118,7 +117,6 @@ class SallaPushPluginTest {
     assertEquals(listOf("initWithContext(st_42_android)"), native.calls)
     assertSame(context, native.initContexts.single())
     val config = native.initConfigs.single()
-    assertEquals("https://push.example.com/notifications/v1/sallapush", config.apiBaseUrl)
     assertEquals(SallaPushLogLevel.DEBUG, config.logLevel)
     assertEquals("2.1.0", config.appVersion)
     assertFalse(config.clearTagsOnLogout)
@@ -179,7 +177,6 @@ class SallaPushPluginTest {
 
     assertEquals(2, native.initConfigs.size)
     native.initConfigs.forEach { config ->
-      assertNull(config.apiBaseUrl)
       assertNull(config.logLevel)
       assertNull(config.appVersion)
       assertTrue(config.clearTagsOnLogout)
@@ -317,8 +314,9 @@ class SallaPushPluginTest {
     assertTrue(errors().isEmpty())
   }
 
+  // SallaPush always uses its own server, so a server URL is no option: it changes nothing natively and isn't named.
   @Test
-  fun reportsNothingWhenTheCallSetsTheApiHost() {
+  fun reportsTheIgnoredOptionsOfACallThatAlsoGivesAServerUrl() {
     plugin(earlyInit = StaticConfig(appId = "st_42_android")).initialize(
       call(
         "initialize",
@@ -327,7 +325,14 @@ class SallaPushPluginTest {
       )
     )
 
-    assertTrue(errors().isEmpty())
+    assertEquals(
+      listOf(
+        "[SallaPush] initialize ignored logLevel: SallaPush already started with this app id from " +
+          "com.salla.push.APP_ID, so the call changes nothing. Set them with the meta-data com.salla.push.LOG_LEVEL " +
+          "instead."
+      ),
+      errors()
+    )
   }
 
   @Test

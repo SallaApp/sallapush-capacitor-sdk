@@ -194,7 +194,6 @@ class StaticConfigTest {
     assertFalse(config.clearTagsOnLogout)
     assertFalse(config.requiresUserConsent)
     assertNull(config.appVersion)
-    assertNull(config.apiBaseUrl)
     assertNull(config.logLevel)
     assertEquals(defaults.autoClearBadge, config.autoClearBadge)
     assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
