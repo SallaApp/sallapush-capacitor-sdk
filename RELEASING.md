@@ -23,7 +23,7 @@ The package follows [Semantic Versioning](https://semver.org). Its pins of the n
 A release is a git tag on this repository, the version itself without a `v`, such as `1.0.1` or `1.1.0-beta.1`, and
 the same version on npm. Apps install it from npm, or from the tag ([README](README.md#installation)). A pushed tag
 never moves and is never deleted, and npm never takes a version twice: an app's lockfile records what it installed. A
-defect in a release is fixed by the next version. Releases are on npm from 1.0.1 on; 1.0.0 is a git tag only.
+defect in a release is fixed by the next version. Every release after 1.0.0 is on npm; 1.0.0 is a git tag only.
 
 ## Before a release
 
