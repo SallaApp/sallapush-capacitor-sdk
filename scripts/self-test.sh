@@ -670,11 +670,11 @@ test_verify_tree() {
   fresh; printf '%s%s\n' '-----BEGIN PGP ' 'PRIVATE KEY BLOCK-----' >"$case_dir/example-app/key.asc"
   check "a PGP private key fails" fails run tree
   says "it names the file" "example-app/key.asc: holds a private key"
-  fresh; printf 'url = https://%s%s@github.com\n' 'x-access-token' ':abc' >"$case_dir/notes.txt"
+  fresh; printf 'url = https://%s%s@github.com\n' 'x-access' '-token:abc' >"$case_dir/notes.txt"
   check "a token in a git URL fails" fails run tree
   says "it names the file" "notes.txt: holds a token in a git URL"
-  fresh; printf 'git config url."https://%s%s{TOKEN}@github.com/".insteadOf\n' 'x-access-token' ':$' >"$case_dir/notes.txt"
-  check "the documented rewrite with a variable passes" ok run tree
+  fresh; printf 'url = https://%s%s{TOKEN}@github.com\n' 'x-access' '-token:$' >"$case_dir/notes.txt"
+  check "a git URL with a variable in place of the token passes" ok run tree
   fresh; printf 'NODE_BINARY = %s%s/someone/node\n' '/Us' 'ers' >"$case_dir/example-app/ios/App/Config/Node.xcconfig"
   check "a personal home path fails" fails run tree
   says "it names the file" "example-app/ios/App/Config/Node.xcconfig: holds a personal home path"

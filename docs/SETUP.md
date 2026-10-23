@@ -1,7 +1,7 @@
 # SallaPush Capacitor SDK: setup guide
 
-Everything about adding SallaPush to a Capacitor app, in full: access, every install path, the iOS and Android setup,
-the start-up code, events, consent, logging, coexistence with other push plugins, the move from OneSignal, checking an
+Everything about adding SallaPush to a Capacitor app, in full: every install path, the iOS and Android setup, the
+start-up code, events, consent, logging, coexistence with other push plugins, the move from OneSignal, checking an
 integration and updating it. The [README](../README.md) has the short version.
 
 Other docs: [Reference](REFERENCE.md), [Troubleshooting](TROUBLESHOOTING.md)
@@ -37,10 +37,6 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 ## Before you start
 
-- **Read access to two private repositories,** for every developer and CI machine that builds the app: this one, and
-  `SallaApp/sallapush-ios-sdk`, which serves the iOS Swift package and pods. Ask the repositories' admins for access.
-- **A network that the SallaApp organization allows,** CI machines included: the organization accepts git and package
-  fetches from its private repositories only from allowed networks, and GitHub-hosted runners aren't among them.
 - **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
   The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
   Until then devices register, but no notification arrives
@@ -66,13 +62,12 @@ or as a pod in a CocoaPods app, and to the Android build. **A CocoaPods app adds
 [Podfile lines](#swift-package-manager-or-cocoapods) first:** until they're in, `npx cap sync ios` fails with "Unable to
 find a specification for SallaPush".
 
-The native SDKs come from their private repositories, as in native apps:
+The native SDKs come from the same public sources as in native apps, with no GitHub account or token:
 
 - **iOS with Swift Package Manager,** Capacitor 8's default: Xcode fetches `SallaApp/sallapush-ios-sdk` when it builds
-  the app, and `npx cap sync` fetches nothing. Sign in to Xcode with a GitHub account that can read it (**Xcode →
-  Settings → Accounts**).
+  the app, and `npx cap sync` fetches nothing.
 - **iOS with CocoaPods:** the [Podfile lines](#swift-package-manager-or-cocoapods) fetch the SallaPush pods from
-  `SallaApp/sallapush-ios-sdk` with your own git, over HTTPS, so `pod install` needs git credentials that can read it.
+  `SallaApp/sallapush-ios-sdk` with your own git, over HTTPS.
 - **Android:** Gradle downloads SallaPush Android, `com.salla.push:sallapush`, from Maven Central, which Capacitor's
   template already declares: there is no repository or token to add.
 
@@ -99,26 +94,6 @@ nodeLinker: node-modules
 approvedGitRepositories:
   - "https://github.com/SallaApp/sallapush-capacitor-sdk.git"
 ```
-
-### CI machines
-
-Xcode and CocoaPods fetch the iOS SDK from its HTTPS URL, `https://github.com/SallaApp/sallapush-ios-sdk.git`. A
-machine with only a token rewrites that URL with the token, in the environment of the job that installs and builds the
-app, where every git that CocoaPods and Xcode start reads it (git 2.31 or later), never with `git config --global`: on
-a machine that stays, such as a self-hosted runner, the token would stay in `~/.gitconfig` for every later job, and
-after a rotation git would keep sending the first token written there. A Swift Package Manager app builds on CI with
-`xcodebuild … -scmProvider system`, so that Xcode uses the machine's git (`npx cap build ios` doesn't pass it: call
-`xcodebuild` yourself)
-([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#private-repository-access)):
-
-```bash
-export GIT_CONFIG_COUNT=1
-export GIT_CONFIG_KEY_0="url.https://x-access-token:${SALLAPUSH_SDK_TOKEN}@github.com/SallaApp/sallapush-ios-sdk.git.insteadOf" GIT_CONFIG_VALUE_0="https://github.com/SallaApp/sallapush-ios-sdk.git"
-```
-
-`SALLAPUSH_SDK_TOKEN` comes from the machine's secrets: a token that can read the repository's contents. This isn't
-verified on CI yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)). Until it is, use a CI Mac whose Xcode is
-signed in to an account with access, or CocoaPods, whose pods come through the machine's git.
 
 ### Updating the package
 
@@ -292,7 +267,7 @@ such an app,** not even to a Podfile you keep for other SDKs: SallaPush would be
 and two SDK instances.
 
 With CocoaPods (an app created with `npx cap add ios --packagemanager cocoapods`), the SallaPush pods come from
-SallaPush's private repository, so your Podfile names them. In `ios/App/Podfile`, inside `target 'App' do`, after
+SallaPush iOS's git repository, so your Podfile names them. In `ios/App/Podfile`, inside `target 'App' do`, after
 `capacitor_pods`:
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->

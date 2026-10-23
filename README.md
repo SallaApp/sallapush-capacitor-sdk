@@ -6,8 +6,6 @@ so most calls will look familiar.
 
 - **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
   [CHANGELOG.md](CHANGELOG.md).
-- **Private:** this package and the native SDKs it wraps live in private repositories of the SallaApp organization
-  ([Access to the private repositories](#access-to-the-private-repositories)).
 
 ## Features
 
@@ -34,7 +32,6 @@ so most calls will look familiar.
 - **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
   The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
   Until then devices register, but no notification arrives.
-- **Read access to the private repositories** ([below](#access-to-the-private-repositories)).
 - **Check the Capacitor version yourself before you upgrade Capacitor:** some tools only warn about Capacitor 9
   ([Versions](docs/SETUP.md#versions)).
 
@@ -63,13 +60,6 @@ Then run `npx cap sync`, which adds the plugin to both native projects:
 pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
-
-### Access to the private repositories
-
-This repository and `SallaApp/sallapush-ios-sdk` are private: every developer and CI machine that builds the app needs
-read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in to a GitHub account that can read it
-(**Xcode → Settings → Accounts**). The pods use your git, over HTTPS. CI machines:
-[CI machines](docs/SETUP.md#ci-machines).
 
 ### Updating the package
 
@@ -360,7 +350,6 @@ code for each.
 | Problem | Fix |
 |---|---|
 | `npx cap sync ios` or `pod install`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. |
-| Xcode can't resolve `sallapush-ios-sdk` | Sign in to Xcode with an account that can read `SallaApp/sallapush-ios-sdk`; on CI, see [CI machines](docs/SETUP.md#ci-machines). |
 | Gradle: `Could not find com.salla.push:sallapush` | Add `mavenCentral()` to your build's repositories, or to the settings' when they set `RepositoriesMode.PREFER_SETTINGS` ([Builds that refuse project repositories](docs/SETUP.md#builds-that-refuse-project-repositories)). |
 | No notification on Android, or `token.firebase_missing` | Add the right project's `google-services.json`, and with another FCM plugin, the [forwarding service](docs/SETUP.md#another-fcm-plugin). |
 | The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first in `didFinishLaunchingWithOptions`, and add the click listener in your entry module ([Initialize](#initialize)). |
@@ -369,10 +358,9 @@ code for each.
 
 ## More documentation
 
-- [docs/SETUP.md](docs/SETUP.md): the full setup guide: access and CI machines, every install path and package
-  manager, the whole iOS and Android setup, the start-up code, events, consent, logging, initializing from JavaScript,
-  coexistence with other push plugins, migrating from OneSignal, checking your integration and updating the native
-  SDKs.
+- [docs/SETUP.md](docs/SETUP.md): the full setup guide: every install path and package manager, the whole iOS and
+  Android setup, the start-up code, events, consent, logging, initializing from JavaScript, coexistence with other push
+  plugins, migrating from OneSignal, checking your integration and updating the native SDKs.
 - [docs/REFERENCE.md](docs/REFERENCE.md): how the package works, the static configuration, the full API, events,
   foreground display, errors, data mapping, coexistence, logging and compatibility.
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): every known problem and its fix.

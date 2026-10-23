@@ -31,7 +31,7 @@ request to `master`. For releases, see [RELEASING.md](RELEASING.md).
 - **CocoaPods 1.16**, for the CocoaPods consumer app, and for the `xcodeproj` gem that `scripts/add-nse-target.rb`
   uses.
 - **SwiftLint 0.63.2**, and **shellcheck 0.11.0**, or Docker, which runs shellcheck's pinned image.
-- **`gh`**, logged in with an account that can read both native repositories, for `scripts/bump-native.sh`.
+- **`gh`**, logged in, for `scripts/bump-native.sh`, which reads the native SDKs' API files through it.
 - **`python3`, `ruby` and `git`**, which the scripts use.
 - **`applesimutils`**, optional: `smoke` grants the iOS example the notification permission with it before the launch.
 
@@ -40,16 +40,9 @@ says how to configure and run it.
 
 ## Credentials
 
-- **Swift Package Manager:** an account in Xcode that can read `SallaApp/sallapush-ios-sdk`, or, for
-  `scripts/verify.sh`, a clean clone of it in `VERIFY_IOS_SDK_CHECKOUT` ([Commands](#commands)).
-- **CocoaPods:** git credentials that can read `SallaApp/sallapush-ios-sdk` over HTTPS.
-- **The example's own values,** such as its app id and `google-services.json`, go in the files that git ignores
-  ([example-app/README.md](example-app/README.md#configure-it)).
-
-Every machine also needs a network that the SallaApp organization allows: elsewhere, it refuses git and package fetches
-from its private repositories.
-
-Gradle needs no credentials: SallaPush Android comes from Maven Central.
+The checks need no account or token: the native SDKs come from their public repositories and from Maven Central. The
+example's own values, such as its app id and `google-services.json`, go in the files that git ignores
+([example-app/README.md](example-app/README.md#configure-it)).
 
 Never commit a credential. The `tree` step of `scripts/verify.sh` refuses credential files, tokens, private keys,
 personal paths and Apple team ids in what a commit takes.
@@ -103,18 +96,18 @@ From the repository's root:
 | `smoke` | The example's self-test on a simulator and a running emulator: a test push in the foreground, a page reload, and a second test push that the reloaded page's listener gets once. It builds the example with its own bundle id and application id, `sa.salla.sallapush.example`, whatever your local settings name. |
 | `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README and the setup guide show, and build: the package as npm would publish it, with Swift Package Manager on Capacitor 8.5.3 and with CocoaPods and `@capacitor/push-notifications`; the git fallback with npm, in the oldest Capacitor 8 with the storyboard template; and the git fallback with Yarn. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
 
-The first eleven steps need no private access, and CI runs them. The others need macOS, the native SDKs and devices. A
-full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and longer the
-first time. A run that starts on a clean working tree fails when a step leaves a file behind that no ignore file
-covers. Environment variables:
+The first eleven steps run anywhere with Node, and CI runs them. The others need macOS, the native toolchains and
+devices. A full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and
+longer the first time. A run that starts on a clean working tree fails when a step leaves a file behind that no ignore
+file covers. Environment variables:
 
 - `VERIFY_LOG_DIR`: a log per step and `summary.tsv`, which names the commit. Use a folder for each commit, outside the
   repository, such as `"$TMPDIR/sallapush-verify/$(git rev-parse --short HEAD)"`: runs of another commit are refused.
 - `VERIFY_SIMULATOR_UDID`, else a booted iPhone simulator, else the newest one; `VERIFY_EMULATOR_SERIAL`, else the one
   running emulator.
 - `VERIFY_IOS_SDK_CHECKOUT`: optional, a clean clone of `SallaApp/sallapush-ios-sdk` at the pinned tag, in a folder
-  named `sallapush-ios-sdk`. Every Swift Package Manager build then uses it in place of the remote package, for a Mac
-  whose Xcode has no account that can read the repository, and the summary of each such step says so.
+  named `sallapush-ios-sdk`. Every Swift Package Manager build then uses it in place of the remote package, and the
+  summary of each such step says so.
 - `YARN`, `SHELLCHECK`, `SWIFTLINT`, `ANDROID_HOME` and `SALLAPUSH_JAVA_HOME`.
 
 The scripts never shut down or erase a simulator or an emulator; `smoke` boots the simulator it uses when it isn't

@@ -56,7 +56,7 @@ targets in Xcode, and keep that change local: the committed entitlements have no
 device signing.
 
 The project uses Swift Package Manager: Xcode resolves `SallaApp/sallapush-ios-sdk`, for the plugin and for the
-extension's `SallaPushExtension`, when it builds, so the Xcode account that builds needs read access to it.
+extension's `SallaPushExtension`, when it builds.
 
 ### Android
 

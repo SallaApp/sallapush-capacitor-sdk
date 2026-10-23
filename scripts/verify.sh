@@ -4,8 +4,8 @@
 #
 #   scripts/verify.sh [step...]    run from anywhere; without steps, every step in order, stopping at the first failure
 #
-# CI runs the portable steps (PORTABLE_STEPS) on Linux. The others need read access to the private SallaPush SDKs, and
-# macOS with Xcode 26, JDK 21 and the Android SDK:
+# CI runs the portable steps (PORTABLE_STEPS) on Linux. The others need macOS with Xcode 26, JDK 21 and the Android
+# SDK:
 #   swiftlint   SwiftLint 0.63.2, strict
 #   android     the plugin's unit tests and lint, a minified release build of the example, and its merged manifest
 #   ios         the example's release build with its Notification Service Extension, then its XCTest suite
@@ -23,8 +23,7 @@
 # for a tree with changes; a folder for each commit, as runs of another commit are refused), VERIFY_SIMULATOR_UDID,
 # VERIFY_EMULATOR_SERIAL, VERIFY_IOS_SDK_CHECKOUT (optional: a clean clone of SallaApp/sallapush-ios-sdk at the pinned
 # tag, in a folder named sallapush-ios-sdk; every Swift Package Manager build then uses it instead of the remote
-# package, for Macs whose Xcode has no account that can read it, and the summary of each such step says so), YARN,
-# SHELLCHECK, SWIFTLINT, ANDROID_HOME, SALLAPUSH_JAVA_HOME.
+# package, and the summary of each such step says so), YARN, SHELLCHECK, SWIFTLINT, ANDROID_HOME, SALLAPUSH_JAVA_HOME.
 set -euo pipefail
 
 readonly STEPS="lint typecheck test build pack api parity snippets pins tree shell swiftlint android ios smoke consumer"
@@ -228,7 +227,7 @@ secrets = (
     (re.compile(rb"-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----"), "a private key", revoke),
     (re.compile(rb"---- BEGIN SSH2 ENCRYPTED " + rb"PRIVATE KEY ----"), "a private key", revoke),
     (re.compile(rb"PuTTY-User-Key-File-[0-9]+: "), "a private key", revoke),
-    (re.compile(rb"x-access-token" + rb":[^$]"), "a token in a git URL", revoke),
+    (re.compile(rb"x-access" + rb"-token:[^$]"), "a token in a git URL", revoke),
     (re.compile(rb"/Us" + rb"ers/"), "a personal home path", "use $HOME"),
 )
 texts = (
