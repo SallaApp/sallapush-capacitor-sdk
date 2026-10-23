@@ -342,8 +342,8 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
 
 ## Migrating from OneSignal
 
-**Keep the OneSignal SDK in your app until the Salla team confirms you can remove it.** Add SallaPush next to it,
-keep OneSignal initialized, and keep `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as
+**Keep the OneSignal SDK in your app until every notification you send goes through SallaPush.** Add SallaPush next to
+it, keep OneSignal initialized, and keep `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as
 OneSignal's Capacitor setup asks.
 
 | `@onesignal/capacitor-plugin` 1.2 | SallaPush |

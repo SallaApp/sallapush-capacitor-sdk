@@ -798,7 +798,7 @@ function route(notification: SallaPushNotification): void {
 ```
 
 SallaPush sends two payload formats: the native one carries every data value as a string (`"id": "42"`), and the
-OneSignal-compatible one, which store apps receive today, keeps JSON types (`"id": 42`). `getString`, `getInt` and
+OneSignal-compatible one, for apps moving from OneSignal, keeps JSON types (`"id": 42`). `getString`, `getInt` and
 `getBool`, and `getNumber` on iOS, read both: they return native's own conversion of a top-level `additionalData`
 value, or `null`. The keys are your own data, chosen by whoever sends the notification, and so is the launch URL
 that `router.open` gets here: check it first ([Taps](#taps)).
@@ -1012,8 +1012,8 @@ working:
 
 ## Migrating from OneSignal
 
-**Keep the OneSignal SDK in your app until the Salla team confirms you can remove it.** Add SallaPush next to it,
-and keep OneSignal initialized
+**Keep the OneSignal SDK in your app until every notification you send goes through SallaPush.** Add SallaPush next to
+it, and keep OneSignal initialized
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal),
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal-5)). Keep
 `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as OneSignal's Capacitor setup asks.
@@ -1091,7 +1091,7 @@ On iOS, both SDKs answer for the same compatible notification, and a SallaPush l
 copy ([Foreground notifications](#foreground-notifications)). So until a device test shows a single banner, add no
 SallaPush `foregroundWillDisplay` listener on iOS while OneSignal is in the app, as above.
 
-**Opt in and out on both SDKs, and ask for the permission once.** Salla's backend reaches the device through both, so
+**Opt in and out on both SDKs, and ask for the permission once.** Notifications can reach the device through both, so
 an opt-out in one SDK alone leaves the other's notifications coming. Each SDK's `optIn()` asks for the permission while
 it is missing, and on Android 13 a second request shows the prompt again after a denial:
 

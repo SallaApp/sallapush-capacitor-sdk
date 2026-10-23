@@ -645,9 +645,8 @@ and was completed without a handler.` Whether iOS ever hands such a tap over tha
 
 ## Migrating from OneSignal
 
-Keep the OneSignal SDK in every release until the Salla team confirms Phase 2 for your app: until then, Salla's
-backend reaches customers through OneSignal too. Add SallaPush next to it, then follow the setup guide's steps
-([Migrating from OneSignal](SETUP.md#migrating-from-onesignal)) and the native guides
+Keep the OneSignal SDK in your app until every notification you send goes through SallaPush. Add SallaPush next to it,
+then follow the setup guide's steps ([Migrating from OneSignal](SETUP.md#migrating-from-onesignal)) and the native guides
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#migrating-from-onesignal),
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#migrating-from-onesignal)).
 
