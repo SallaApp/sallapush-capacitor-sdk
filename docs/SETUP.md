@@ -49,35 +49,17 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 ## Install
 
-Add the package to your app's `package.json`, with the release tag:
+Install the package from npm:
 
-<!-- unchecked: a dependency line of an app's package.json; scripts/verify.sh consumer installs a release commit the same way -->
-```json
-"@salla.sa/sallapush-capacitor": "git+ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git#1.0.0"
+```sh
+npm install @salla.sa/sallapush-capacitor
 ```
 
-- **The tag is a release commit** that holds the built library, so nothing builds at install time.
-- **Keep this `git+ssh` form:** Yarn turns the `github:` shorthand into an HTTPS URL and never tries SSH.
-- **Keep the package name as the dependency key.** Capacitor's CLI names the plugin's pod and Swift package after the
-  key, not after the installed package, so an alias points your app at a pod and a package that don't exist.
-
-Recent package managers fetch git dependencies only when the app allows them:
-
-- **npm 12:** add `allow-git=root` to the app's `.npmrc`. npm 11 only warns.
-- **Yarn 4.14 and later:** approve the repository in `.yarnrc.yml`, and keep Yarn's `node_modules` folder, where
-  Capacitor's CLI looks for plugins:
-
-<!-- unchecked: settings of an app's .yarnrc.yml; scripts/verify.sh consumer proves them with a local git server -->
-```yaml
-nodeLinker: node-modules
-approvedGitRepositories:
-  - "ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git"
-```
-
-- **pnpm:** the release runs no install script, so pnpm has nothing to approve. pnpm isn't part of the release checks
-  yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)).
-- **Yarn 1 (classic) and Bun:** neither has an approval setting for git dependencies, and the release runs no install
-  script. Neither is part of the release checks yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)).
+- **The package holds the built library,** so nothing builds at install time, and it runs no install script.
+- **Yarn 4:** run `yarn add @salla.sa/sallapush-capacitor`, and keep Yarn's `node_modules` folder, where Capacitor's
+  CLI looks for plugins: `nodeLinker: node-modules` in the app's `.yarnrc.yml`.
+- **pnpm, Yarn 1 (classic) and Bun:** the package runs no install script, so there is nothing to approve. They aren't
+  part of the release checks yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)).
 
 Then run `npx cap sync`. It finds the plugin and adds it to both native projects: to the iOS project as a Swift package,
 or as a pod in a CocoaPods app, and to the Android build. **A CocoaPods app adds the
@@ -94,44 +76,57 @@ The native SDKs come from their private repositories, as in native apps:
 - **Android:** Gradle downloads SallaPush Android, `com.salla.push:sallapush`, from Maven Central, which Capacitor's
   template already declares: there is no repository or token to add.
 
+### From git
+
+Each release is also a git tag of this repository, the version without a `v`, such as `1.0.0`. The tag names a
+release commit that holds the built library, so nothing builds at install time either. To install a release from git
+instead of npm, add the package to your app's `package.json` with the tag:
+
+<!-- unchecked: a dependency line of an app's package.json; scripts/verify.sh consumer installs a release commit the same way -->
+```json
+"@salla.sa/sallapush-capacitor": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git#1.0.0"
+```
+
+- **Keep the package name as the dependency key.** Capacitor's CLI names the plugin's pod and Swift package after the
+  key, not after the installed package, so an alias points your app at a pod and a package that don't exist.
+- **npm 12** fetches git dependencies only when the app allows them: add `allow-git=root` to the app's `.npmrc`. npm 11
+  only warns.
+- **Yarn 4.14 and later** fetch only the git repositories the app approves, in `.yarnrc.yml`:
+
+<!-- unchecked: settings of an app's .yarnrc.yml; scripts/verify.sh consumer proves them with a local git server -->
+```yaml
+nodeLinker: node-modules
+approvedGitRepositories:
+  - "https://github.com/SallaApp/sallapush-capacitor-sdk.git"
+```
+
 ### CI machines
 
-A machine that has only a token, not an SSH key, rewrites the SSH URLs of SallaApp's repositories to HTTPS with that
-token. It covers this package. Set the rewrites in the environment of the job that installs and
-builds the app, where every git that npm, Yarn and CocoaPods start reads them (git 2.31 or later), never with
-`git config --global`: on a machine that stays, such as a self-hosted runner, the token would stay in `~/.gitconfig`
-for every later job, and after a rotation git would keep sending the first token written there.
+Xcode and CocoaPods fetch the iOS SDK from its HTTPS URL, `https://github.com/SallaApp/sallapush-ios-sdk.git`. A
+machine with only a token rewrites that URL with the token, in the environment of the job that installs and builds the
+app, where every git that CocoaPods and Xcode start reads it (git 2.31 or later), never with `git config --global`: on
+a machine that stays, such as a self-hosted runner, the token would stay in `~/.gitconfig` for every later job, and
+after a rotation git would keep sending the first token written there. A Swift Package Manager app builds on CI with
+`xcodebuild … -scmProvider system`, so that Xcode uses the machine's git (`npx cap build ios` doesn't pass it: call
+`xcodebuild` yourself)
+([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#private-repository-access)):
 
 ```bash
-export GIT_CONFIG_COUNT=2
-export GIT_CONFIG_KEY_0="url.https://x-access-token:${TOKEN}@github.com/SallaApp/.insteadOf" GIT_CONFIG_VALUE_0="git@github.com:SallaApp/"
-export GIT_CONFIG_KEY_1="url.https://x-access-token:${TOKEN}@github.com/SallaApp/.insteadOf" GIT_CONFIG_VALUE_1="ssh://git@github.com/SallaApp/"
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0="url.https://x-access-token:${SALLAPUSH_SDK_TOKEN}@github.com/SallaApp/sallapush-ios-sdk.git.insteadOf" GIT_CONFIG_VALUE_0="https://github.com/SallaApp/sallapush-ios-sdk.git"
 ```
 
-`TOKEN` comes from the machine's secrets: a token that can read the contents of this repository and of
-`SallaApp/sallapush-ios-sdk`.
-
-These rewrites never reach the iOS SDK's HTTPS URL, `https://github.com/SallaApp/sallapush-ios-sdk.git`, which the
-Swift package and the pods use. A Swift Package Manager app builds on CI with `xcodebuild … -scmProvider system`, so
-that Xcode uses the machine's git (`npx cap build ios` doesn't pass it: call `xcodebuild` yourself), and with native's
-rewrite of that URL
-([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#private-repository-access)).
-With a token that can read the repository's contents, add it as a third rewrite in the same environment, which the pods'
-fetches use too:
-
-```bash
-export GIT_CONFIG_COUNT=3
-export GIT_CONFIG_KEY_2="url.https://x-access-token:${SALLAPUSH_SDK_TOKEN}@github.com/SallaApp/sallapush-ios-sdk.git.insteadOf" GIT_CONFIG_VALUE_2="https://github.com/SallaApp/sallapush-ios-sdk.git"
-```
-
-This isn't verified on CI yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)). Until it is, use a CI Mac
-whose Xcode is signed in to an account with access, or CocoaPods, whose pods come through the machine's git.
+`SALLAPUSH_SDK_TOKEN` comes from the machine's secrets: a token that can read the repository's contents. This isn't
+verified on CI yet ([Not verified yet](TROUBLESHOOTING.md#not-verified-yet)). Until it is, use a CI Mac whose Xcode is
+signed in to an account with access, or CocoaPods, whose pods come through the machine's git.
 
 ### Updating the package
 
-Change the tag in your app's dependency line, and install. When the new release's row of the
-[versions table](../README.md#requirements) names another SallaPush iOS version, set the SallaPush pins your app
-holds itself to that version too, since `npx cap sync` never changes them:
+Run `npm update @salla.sa/sallapush-capacitor` for the newest release your version range allows, or
+`npm install @salla.sa/sallapush-capacitor@<version>` for another; from git, change the tag of the dependency line and
+install. When the new release's row of the [versions table](../README.md#requirements) names another SallaPush iOS
+version, set the SallaPush pins your app holds itself to that version too, before you run `npx cap sync`, which never
+changes them:
 
 - **CocoaPods:** every SallaPush `:tag =>` of the Podfile, in `target 'App'` and in the extension's target.
 - **Swift Package Manager:** the rule of the extension's SallaPush package, **Exact Version**, in the project's

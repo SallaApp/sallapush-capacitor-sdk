@@ -716,6 +716,7 @@ with `console.error`, and prints one console error per method and page for a cal
 - **JavaScript.** The package's code is ES2017, as Capacitor's own, so it runs on the oldest Android System WebView
   that Capacitor accepts (version 60) without your bundler transpiling it. On the web the package loads, and its calls
   fail as [Errors](#errors) says.
-- **Package managers:** npm 12 and Yarn 4, with the opt-ins of the [setup guide](SETUP.md#install); the release
-  checks install with npm 12.2.0 and Yarn 4.18.1. npm 11 installs git dependencies with a warning. pnpm, Yarn 1 and
-  Bun aren't verified yet.
+- **Package managers:** npm and Yarn 4 install the package from npm; a release tag installs from git with the opt-ins
+  of the [setup guide](SETUP.md#from-git). The release checks install the package as npm would publish it with
+  npm 12.2.0, and from git with npm 12.2.0 and Yarn 4.18.1. npm 11 installs git dependencies with a warning. pnpm,
+  Yarn 1 and Bun aren't verified yet.

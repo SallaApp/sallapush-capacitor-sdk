@@ -59,7 +59,8 @@ The release commit is on no branch, by design: `master` keeps the sources only. 
 
 ## After the release
 
-In a fresh Capacitor 8 app, install the pushed tag with the README's exact dependency line:
+In a fresh Capacitor 8 app, install the pushed tag with the setup guide's dependency line
+([From git](docs/SETUP.md#from-git)):
 
 - once with npm 12, with `allow-git=root` in the app's `.npmrc`;
 - once with Yarn 4.18.1, with the repository in `approvedGitRepositories`;

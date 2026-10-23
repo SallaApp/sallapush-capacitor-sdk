@@ -40,16 +40,15 @@ so most calls will look familiar.
 
 ## Installation
 
-Add the package to your app's `package.json`, with the release tag:
+Install the package from npm:
 
-<!-- unchecked: a dependency line of an app's package.json; scripts/verify.sh consumer installs a release commit the same way -->
-```json
-"@salla.sa/sallapush-capacitor": "git+ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git#1.0.0"
+```sh
+npm install @salla.sa/sallapush-capacitor
 ```
 
-Keep this `git+ssh` form, and the package name as the dependency key. npm 12 fetches git dependencies only when the
-app allows them: add `allow-git=root` to the app's `.npmrc`. Yarn 4.14 and later approve the repository in
-`.yarnrc.yml`, and pnpm, Yarn 1 and Bun aren't verified yet ([Install](docs/SETUP.md#install)).
+With Yarn, run `yarn add @salla.sa/sallapush-capacitor`, and keep Yarn's `node_modules` folder
+(`nodeLinker: node-modules`), where Capacitor's CLI looks for plugins. pnpm, Yarn 1 and Bun aren't verified yet. Each
+release is also a git tag of this repository, which installs over HTTPS ([Install](docs/SETUP.md#install)).
 
 Then run `npx cap sync`, which adds the plugin to both native projects:
 
@@ -69,15 +68,15 @@ pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :t
 
 This repository and `SallaApp/sallapush-ios-sdk` are private: every developer and CI machine that builds the app needs
 read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in to a GitHub account that can read it
-(**Xcode → Settings → Accounts**). The package install uses your git, over SSH, and the pods your git, over HTTPS. CI
-machines: [CI machines](docs/SETUP.md#ci-machines).
+(**Xcode → Settings → Accounts**). The pods use your git, over HTTPS. CI machines:
+[CI machines](docs/SETUP.md#ci-machines).
 
 ### Updating the package
 
-Change the tag in your app's dependency line, install, and run `npx cap sync`. When the new release names another
-SallaPush iOS version, also move the SallaPush pins your app holds itself: every SallaPush `:tag =>` of the Podfile,
-or the rule of the extension's SallaPush package
-([Updating the package](docs/SETUP.md#updating-the-package)).
+Run `npm update @salla.sa/sallapush-capacitor`, or `npm install @salla.sa/sallapush-capacitor@<version>`. When the new
+release names another SallaPush iOS version, move the SallaPush pins your app holds itself before you run
+`npx cap sync`: every SallaPush `:tag =>` of the Podfile, or the rule of the extension's SallaPush package. Then run
+`npx cap sync` ([Updating the package](docs/SETUP.md#updating-the-package)).
 
 ## Setup
 

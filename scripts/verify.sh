@@ -11,9 +11,10 @@
 #   ios         the example's release build with its Notification Service Extension, then its XCTest suite
 #   smoke       the example's self-test on a booted iOS simulator and a running Android emulator: a test push, a page
 #               reload, and a second test push that the reloaded page's listener gets once
-#   consumer    fresh Capacitor apps that install a dry-run dist commit with only what the README shows: Swift Package
-#               Manager, CocoaPods with @capacitor/push-notifications, the oldest Capacitor 8 with the storyboard
-#               template, and a Yarn install
+#   consumer    fresh Capacitor apps that install a dry run of the release with only what the README and the setup
+#               guide show: the package as npm would publish it, with Swift Package Manager and with CocoaPods and
+#               @capacitor/push-notifications; from git, the oldest Capacitor 8 with the storyboard template with npm,
+#               and a Yarn install
 #
 # A run that starts on a clean tree must end on one: the runner fails, naming the paths, when a step leaves a file that
 # the ignore files don't cover.
@@ -790,8 +791,8 @@ ruby_with_xcodeproj() {
 }
 
 # consumer_new <name> <capacitor version> [<package>@<version>...]: a fresh Capacitor app in $work/<name> without
-# SallaPush: package.json (exact versions), a page, capacitor.config.json (webDir dist), npm 12's allow-git=root, the
-# install and the web build, then both native platforms; with $pods, iOS with CocoaPods.
+# SallaPush: package.json (exact versions), a page, capacitor.config.json (webDir dist), the install and the web build,
+# then both native platforms; with $pods, iOS with CocoaPods.
 consumer_new() {
   local name="$1" capacitor="$2" app="$work/$1"
   shift 2
@@ -812,7 +813,6 @@ for file, value in (("package.json", package), ("capacitor.config.json", config)
         json.dump(value, handle, indent=2)
         handle.write("\n")
 PY
-  printf 'allow-git=root\n' >"$app/.npmrc"
   printf '<!doctype html>\n<html>\n  <head><meta charset="utf-8" /><title>%s</title></head>\n  <body>\n    <script type="module" src="/src/main.ts"></script>\n  </body>\n</html>\n' \
     "$name" >"$app/index.html"
   printf "document.body.textContent = '%s';\n" "$name" >"$app/src/main.ts"
@@ -827,10 +827,17 @@ PY
   echo "$name: a Capacitor $capacitor app with both platforms, without SallaPush"
 }
 
-# consumer_install <app>: the README's dependency line, at the dry-run dist commit; then the app imports SallaPush.
+# consumer_install <app> [git]: the README's install, of the package as npm would publish it ($dist_tarball); with git,
+# the setup guide's git fallback instead, at the dry-run dist commit, with npm 12's allow-git=root. Then the app imports
+# SallaPush.
 consumer_install() {
-  local app="$1"
-  python3 -I - "$app/package.json" "git+file://$dist_repo#$dist_commit" <<'PY'
+  local app="$1" dependency="file:$dist_tarball" from="the package as npm would publish it"
+  if [ "${2:-}" = git ]; then
+    dependency="git+file://$dist_repo#$dist_commit"
+    from="git, at the dist commit"
+    printf 'allow-git=root\n' >"$app/.npmrc"
+  fi
+  python3 -I - "$app/package.json" "$dependency" <<'PY'
 import json, sys
 
 path, dependency = sys.argv[1], sys.argv[2]
@@ -843,7 +850,7 @@ with open(path, "w", encoding="utf-8") as handle:
 PY
   (cd "$app" && npm install --no-audit --no-fund --loglevel=error)
   [ -f "$app/node_modules/@salla.sa/sallapush-capacitor/dist/plugin.cjs.js" ] ||
-    fail "${app##*/}: the git install lacks the built dist/"
+    fail "${app##*/}: the install lacks the built dist/"
   cat >"$app/src/main.ts" <<'EOF'
 import { SallaPush } from '@salla.sa/sallapush-capacitor';
 
@@ -852,7 +859,7 @@ void SallaPush.getSdkVersion().then((version) => {
 });
 EOF
   (cd "$app" && node_modules/.bin/vite build --logLevel error)
-  echo "${app##*/}: installed @salla.sa/sallapush-capacitor from the dist commit; the page imports it"
+  echo "${app##*/}: installed @salla.sa/sallapush-capacitor from $from; the page imports it"
 }
 
 # consumer_app_delegate <app>: the README's AppDelegate regions in the template's own AppDelegate.swift: imports after
@@ -1136,13 +1143,14 @@ PY
   rm -rf "$app"
 }
 
-# consumer-min: the oldest Capacitor 8 the plugin supports, whose template is a storyboard app without scenes: the
-# README's regions go into its AppDelegate, which keeps its ApplicationDelegateProxy methods.
+# consumer-min: the oldest Capacitor 8 the plugin supports, whose template is a storyboard app without scenes, with the
+# package from git, as the setup guide's fallback installs it with npm: the README's regions go into its AppDelegate,
+# which keeps its ApplicationDelegateProxy methods.
 consumer_min() {
   local app="$work/consumer-min"
-  echo "== consumer-min: Capacitor $SP_CAPACITOR_MIN, Swift Package Manager, the storyboard template"
+  echo "== consumer-min: Capacitor $SP_CAPACITOR_MIN, Swift Package Manager, the storyboard template, from git"
   consumer_new consumer-min "$SP_CAPACITOR_MIN"
-  consumer_install "$app"
+  consumer_install "$app" git
   consumer_app_delegate "$app"
   consumer_info_plist "$app" http://localhost:9/notifications/v1/sallapush
   consumer_android "$app"
@@ -1260,9 +1268,18 @@ step_consumer() {
   dist_repo="$(sed -n 's/^dist_repo=//p' "$work/dist.out")"
   dist_commit="$(sed -n 's/^dist_commit=//p' "$work/dist.out")"
   [ -n "$dist_repo" ] && [ -n "$dist_commit" ] || fail "release-dist.sh --dry-run printed no dist commit"
+  # What npm publishes: the dist commit's tree, packed. Its package.json has no scripts, so packing builds nothing.
+  mkdir -p "$work/dist-tree" "$work/tarball"
+  git -C "$dist_repo" archive "$dist_commit" | tar -x -C "$work/dist-tree"
+  (cd "$work/dist-tree" && npm pack --json --pack-destination "$work/tarball") >"$work/tarball.json" ||
+    fail "npm pack of the dist commit failed"
+  dist_tarball="$work/tarball/$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[0]["filename"].split("/")[-1])' \
+    "$work/tarball.json")"
+  [ -f "$dist_tarball" ] || fail "npm pack of the dist commit made no tarball"
+  echo "the package as npm would publish it: ${dist_tarball##*/}"
   npm install --prefix "$work/npm" --no-audit --no-fund --loglevel=error "$CONSUMER_NPM" >/dev/null
   npm_bin="$work/npm/node_modules/.bin"
-  echo "consumer apps install with npm $("$npm_bin/npm" --version) and allow-git=root"
+  echo "consumer apps install with npm $("$npm_bin/npm" --version)"
   PATH="$npm_bin:$PATH" consumer_spm
   PATH="$npm_bin:$PATH" consumer_pods
   PATH="$npm_bin:$PATH" consumer_min

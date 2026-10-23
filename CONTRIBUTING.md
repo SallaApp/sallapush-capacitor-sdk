@@ -101,7 +101,7 @@ From the repository's root:
 | `android` | The plugin's JUnit tests and lint, a minified release build of the example, and the provider order and service priority of its merged manifest |
 | `ios` | The example's release build, with its Notification Service Extension, then its XCTest suite, which must run at least one test |
 | `smoke` | The example's self-test on a simulator and a running emulator: a test push in the foreground, a page reload, and a second test push that the reloaded page's listener gets once. It builds the example with its own bundle id and application id, `sa.salla.sallapush.example`, whatever your local settings name. |
-| `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README shows, and build: Swift Package Manager on Capacitor 8.5.3, CocoaPods with `@capacitor/push-notifications`, the oldest Capacitor 8 with the storyboard template, and a Yarn install. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
+| `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README and the setup guide show, and build: the package as npm would publish it, with Swift Package Manager on Capacitor 8.5.3 and with CocoaPods and `@capacitor/push-notifications`; the git fallback with npm, in the oldest Capacitor 8 with the storyboard template; and the git fallback with Yarn. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
 
 The first eleven steps need no private access, and CI runs them. The others need macOS, the native SDKs and devices. A
 full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and longer the
