@@ -1,5 +1,6 @@
 name: Bug report
 description: Something in the SDK doesn't work as its docs say.
+title: "[Bug]: "
 labels: [bug]
 body:
   - type: markdown
@@ -22,11 +23,21 @@ body:
       description: Such as iOS 18.6 on an iPhone 15, or Android 15 on a Pixel 8.
     validations:
       required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How your app's iOS project gets SallaPush
+      options:
+        - Swift Package Manager (ios/App/CapApp-SPM)
+        - CocoaPods (ios/App/Podfile)
+        - The problem is on Android only
+    validations:
+      required: true
   - type: input
     id: tools
     attributes:
       label: Tools and frameworks
-      description: Your Xcode, Android Gradle plugin, Flutter, React Native, Expo or Capacitor versions, and how you installed the SDK.
+      description: Your Capacitor, Xcode, Android Gradle plugin and Node versions, npm or Yarn, whether you installed the package from npm or git, and the other push plugins in your app, such as @capacitor/push-notifications or OneSignal.
   - type: textarea
     id: what-happened
     attributes:
@@ -50,5 +61,7 @@ body:
     attributes:
       label: Before you submit
       options:
+        - label: I searched the existing issues, and this problem isn't reported yet.
+          required: true
         - label: This report holds no push tokens, identity tokens, device secrets, keys, Firebase files or customer data.
           required: true
