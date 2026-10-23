@@ -710,8 +710,10 @@ SallaPush.User.removeTags(['total_cart_amount', 'cart_items']);
 
 - **Keys** are trimmed and lowercased, then must be 1 to 64 characters of `a-z`, `0-9` and `_`. **Values** are cut at
   255 characters, and an empty value removes the tag. A device holds at most 100 tags.
-- **Set tags after the launch `login` or `logout` call,** so they belong to the right customer. By default
-  (`clearTagsOnLogout`), a logout and an account switch delete the device's tags.
+- **Set tags after the launch `login` or `logout` call,** so they belong to the right customer. By default, a logout
+  and an account switch delete the device's tags; `SallaPushClearTagsOnLogout` (Info.plist) and
+  `com.salla.push.CLEAR_TAGS_ON_LOGOUT` (manifest), or `clearTagsOnLogout` in `initialize`'s config, set to `false`
+  keep them.
 - **`getTags()`** has your latest changes at once, but right after a cold start, not yet the tags of earlier launches:
   don't use it at launch to decide whether to set a tag.
 

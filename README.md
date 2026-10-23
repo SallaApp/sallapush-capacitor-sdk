@@ -252,8 +252,10 @@ before your navigation is ready: keep the destination, and open it once your nav
 
 - **Route with the typed getters,** such as `notification.getString('type')` and `notification.getInt('id')`, never
   with raw payload keys: they read both payload formats ([Routing](docs/SETUP.md#routing-with-the-typed-getters)).
-- **Launch URLs:** SallaPush opens https launch URLs itself only with the open-launch-URLs option. A launch URL is
-  whatever the sender set: check its scheme and host before you open it ([Taps](docs/SETUP.md#taps)).
+- **Launch URLs:** SallaPush opens https launch URLs itself only when `SallaPushOpenLaunchURLs` (Info.plist),
+  `com.salla.push.OPEN_LAUNCH_URLS` (manifest) or `openLaunchUrls` in `initialize`'s config is on. Your click listener
+  still gets the tap then: don't open `result.url` again. A launch URL is whatever the sender set: check its scheme and
+  host before you open it ([Taps](docs/SETUP.md#taps)).
 
 ### Foreground notifications
 
@@ -300,7 +302,9 @@ SallaPush.User.addTags({
 
 - `removeTag` and `removeTags` remove tags, and `getTags()` resolves them. Keys are lowercased, at most 64 characters
   of `a-z`, `0-9` and `_`; values are cut at 255 characters; a device holds at most 100 tags.
-- Set tags after the launch `login` or `logout` call: a logout and an account switch delete them (`clearTagsOnLogout`).
+- Set tags after the launch `login` or `logout` call: a logout and an account switch delete them, unless
+  `SallaPushClearTagsOnLogout` (Info.plist) and `com.salla.push.CLEAR_TAGS_ON_LOGOUT` (manifest), or
+  `clearTagsOnLogout` in `initialize`'s config, are `false`.
 - `SallaPush.User.setLanguage(code)` sets the customer's language, such as `ar`; `null` means the device language.
 
 ### Push subscription
