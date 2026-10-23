@@ -4,7 +4,7 @@ import SallaPushCapacitorPlugin
 // end-snippet
 import UIKit
 
-@UIApplicationMain
+@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
