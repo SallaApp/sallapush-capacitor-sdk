@@ -22,7 +22,7 @@ of these ways:
 
 Please include:
 
-- the SDK and its version, such as "SallaPush iOS SDK 1.0.5", and the platform and OS version;
+- the SDK and its version, such as "SallaPush iOS SDK 1.1.0", and the platform and OS version;
 - what the problem is, and what an attacker could do with it;
 - the steps to reproduce it, ideally with a small sample project;
 - the SallaPush log codes you saw, if any.

@@ -12,7 +12,7 @@ body:
     id: sdk-version
     attributes:
       label: SDK version
-      description: The SallaPush SDK version you use, such as 1.0.5.
+      description: The SallaPush SDK version you use, such as 1.1.0.
     validations:
       required: true
   - type: input
