@@ -77,7 +77,6 @@ SallaPush | swift.property | SallaPushClickEvent.notification | @objc let notifi
 SallaPush | swift.property | SallaPushClickEvent.result | @objc let result: SallaPushClickResult
 SallaPush | swift.property | SallaPushClickResult.actionId | @objc let actionId: String?
 SallaPush | swift.property | SallaPushClickResult.url | @objc let url: String?
-SallaPush | swift.property | SallaPushConfiguration.apiBaseURL | @objc var apiBaseURL: URL?
 SallaPush | swift.property | SallaPushConfiguration.apnsEnvironment | @objc var apnsEnvironment: SallaPushAPNsEnvironment
 SallaPush | swift.property | SallaPushConfiguration.appGroupIdentifier | @objc var appGroupIdentifier: String?
 SallaPush | swift.property | SallaPushConfiguration.appVersion | @objc var appVersion: String?

@@ -31,7 +31,6 @@ public final class com/salla/push/SallaPushClickResult {
 
 public final class com/salla/push/SallaPushConfig {
 	public synthetic fun <init> (Lcom/salla/push/SallaPushConfig$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getApiBaseUrl ()Ljava/lang/String;
 	public final fun getAppVersion ()Ljava/lang/String;
 	public final fun getAutoClearBadge ()Z
 	public final fun getAutoUpdateBadge ()Z
@@ -44,7 +43,6 @@ public final class com/salla/push/SallaPushConfig {
 public final class com/salla/push/SallaPushConfig$Builder {
 	public fun <init> ()V
 	public final fun build ()Lcom/salla/push/SallaPushConfig;
-	public final fun setApiBaseUrl (Ljava/lang/String;)Lcom/salla/push/SallaPushConfig$Builder;
 	public final fun setAppVersion (Ljava/lang/String;)Lcom/salla/push/SallaPushConfig$Builder;
 	public final fun setAutoClearBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;
 	public final fun setAutoUpdateBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;

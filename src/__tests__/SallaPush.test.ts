@@ -46,7 +46,6 @@ afterEach(() => {
 describe('SallaPush.initialize', () => {
   it('passes the app id and every option', () => {
     SallaPush.initialize('st_42_capacitor', {
-      apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
       logLevel: SallaPushLogLevel.Debug,
       appVersion: '2.1.0',
       clearTagsOnLogout: false,
@@ -66,7 +65,6 @@ describe('SallaPush.initialize', () => {
     expect(plugin.initialize).toHaveBeenCalledWith({
       appId: 'st_42_capacitor',
       config: {
-        apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
         logLevel: 'debug',
         appVersion: '2.1.0',
         clearTagsOnLogout: false,
@@ -142,6 +140,19 @@ describe('SallaPush.initialize', () => {
       config: { openLaunchUrls: true, iosApnsEnvironment: 'production' },
     });
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  // SallaPush always uses its own server: a server URL from JavaScript that ignores the types never reaches native.
+  it('leaves out a server URL', () => {
+    SallaPush.initialize('st_42_capacitor', {
+      apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
+      logLevel: SallaPushLogLevel.Debug,
+    } as unknown as SallaPushConfig);
+
+    expect(plugin.initialize.mock.calls[0]?.[0]).toStrictEqual({
+      appId: 'st_42_capacitor',
+      config: { logLevel: 'debug' },
+    });
   });
 
   it('passes the app id unchanged, for native to validate', () => {

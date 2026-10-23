@@ -65,7 +65,6 @@ interface SallaPushClickResult
 SallaPushClickResult.actionId: string | null [readonly]
 SallaPushClickResult.url: string | null [readonly]
 interface SallaPushConfig
-SallaPushConfig.apiBaseUrl?: string
 SallaPushConfig.appVersion?: string
 SallaPushConfig.autoClearBadge?: boolean
 SallaPushConfig.autoUpdateBadge?: boolean

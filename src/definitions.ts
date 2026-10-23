@@ -200,12 +200,6 @@ export interface SallaPushEventSubscription {
 
 /** Options for `SallaPush.initialize`. An option that is left out keeps native's default. */
 export interface SallaPushConfig {
-  /**
-   * The SallaPush server's URL, ending in `/notifications/v1/sallapush`. Default: the native key
-   * (SallaPushAPIBaseURL / com.salla.push.API_BASE_URL), else SallaPush's production URL. https only; http only for
-   * local development hosts.
-   */
-  apiBaseUrl?: string;
   /** The console log level. Default: the native key (SallaPushLogLevel / com.salla.push.LOG_LEVEL), else `warn`. */
   logLevel?: SallaPushLogLevel;
   /** The app version sent to SallaPush. Default: CFBundleShortVersionString on iOS, versionName on Android. */

@@ -1,7 +1,6 @@
 import { registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 export type ConfigSpec = {
-  apiBaseUrl?: string;
   logLevel?: string;
   appVersion?: string;
   clearTagsOnLogout?: boolean;

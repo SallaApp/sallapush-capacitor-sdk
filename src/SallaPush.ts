@@ -28,8 +28,8 @@ import type {
 export const SallaPush: {
   /**
    * Starts SallaPush when the app id is known only at run time. Apps that set the static app id (SallaPushAppId /
-   * com.salla.push.APP_ID) never need it: SallaPush has already started natively, and a call with the same app id and
-   * API URL changes nothing, its config included.
+   * com.salla.push.APP_ID) never need it: SallaPush has already started natively, and a call with the same app id
+   * changes nothing, its config included.
    */
   initialize(appId: string, config?: SallaPushConfig): void;
   /** Whether SallaPush is running. */
@@ -128,7 +128,6 @@ export const SallaPush: {
 function configSpec(config: SallaPushConfig): ConfigSpec | null {
   if (
     !valid('SallaPush.initialize', {
-      'config.apiBaseUrl': [config.apiBaseUrl, optional(string)],
       'config.logLevel': [config.logLevel, optional(logLevel)],
       'config.appVersion': [config.appVersion, optional(string)],
       'config.clearTagsOnLogout': [config.clearTagsOnLogout, optional(boolean)],
@@ -165,7 +164,6 @@ function configSpec(config: SallaPushConfig): ConfigSpec | null {
     return null;
   }
   return setFields({
-    apiBaseUrl: config.apiBaseUrl,
     logLevel: config.logLevel,
     appVersion: config.appVersion,
     clearTagsOnLogout: config.clearTagsOnLogout,
