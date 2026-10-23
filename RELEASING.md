@@ -156,8 +156,9 @@ made as `scripts/verify.sh consumer` makes its apps. Turn on verbose logs.
     notification: the tap reaches the new page's click listener once.
 13. **Badges.** On iOS, with the extension and the App Group, three pushes while the app is in the background show 3
     on the app icon, and opening the app shows 0; with `autoClearBadge` off, a tap lowers the badge by 1. On Android,
-    opening the app removes SallaPush's notifications from the shade, and unlocking the phone with the app on screen
-    removes none.
+    by default, opening the app keeps SallaPush's notifications in the shade. With `com.salla.push.AUTO_CLEAR_BADGE`
+    set to `true` in the example's manifest, opening the app removes them, and unlocking the phone with the app on
+    screen removes none.
 
 Each item that passes for the first time leaves
 [Not verified yet](docs/TROUBLESHOOTING.md#not-verified-yet).

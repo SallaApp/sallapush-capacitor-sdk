@@ -13,12 +13,9 @@ export async function askForPermission(): Promise<void> {
   settingsScreen.showPermission(granted);
 }
 
-export function startWithoutBadgeChanges(appId: string): void {
+export function startClearingTheBadgeOnBothPlatforms(appId: string): void {
   // snippet:badges
-  SallaPush.initialize(appId, {
-    autoClearBadge: false,
-    autoUpdateBadge: false,
-  });
+  SallaPush.initialize(appId, { autoClearBadge: true });
   // end-snippet
 }
 

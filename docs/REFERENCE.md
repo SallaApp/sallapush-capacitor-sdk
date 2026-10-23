@@ -93,7 +93,7 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md
 | Open https launch URLs on tap | `SallaPushOpenLaunchURLs` (Boolean) | `com.salla.push.OPEN_LAUNCH_URLS` | this package, with the app id | `false` |
 | Delete the device's tags on logout and account switch | `SallaPushClearTagsOnLogout` (Boolean) | `com.salla.push.CLEAR_TAGS_ON_LOGOUT` | this package, with the app id | `true` |
 | The app version on the server | `SallaPushAppVersion` (String) | `com.salla.push.APP_VERSION` | this package, with the app id | `CFBundleShortVersionString`; `versionName` |
-| Clear the badge when the app opens ([Badges](#badges)); on iOS 15 that can also remove delivered notifications ([Removing delivered notifications](#removing-delivered-notifications)) | `SallaPushAutoClearBadge` (Boolean) | `com.salla.push.AUTO_CLEAR_BADGE` | this package, with the app id | `true` |
+| Clear the badge when the app opens ([Badges](#badges)); on iOS 15 that can also remove delivered notifications ([Removing delivered notifications](#removing-delivered-notifications)) | `SallaPushAutoClearBadge` (Boolean) | `com.salla.push.AUTO_CLEAR_BADGE` | this package, with the app id | `true` on iOS, `false` on Android |
 | Count SallaPush notifications on the badge ([Badges](#badges)) | `SallaPushAutoUpdateBadge` (Boolean) | `com.salla.push.AUTO_UPDATE_BADGE` | this package, with the app id | `true` |
 | Register for remote notifications at start | `SallaPushRegisterForRemoteNotificationsOnInit` (Boolean) | – | this package, with the app id | `true` |
 | The APNs environment | `SallaPushAPNsEnvironment` (String: `automatic`, `sandbox` or `production`) | – | this package, with the app id | `automatic` |
@@ -181,7 +181,7 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `clearTagsOnLogout?: boolean` | `clearTagsOnLogout`; `setClearTagsOnLogout` | `true` |
 | `requiresUserConsent?: boolean` | `requiresUserConsent`; `setRequiresUserConsent` | `false` |
 | `openLaunchUrls?: boolean` | `openLaunchURLs`; `setOpenLaunchUrls` | `false`. With it on, the click listener still gets the tap, with `result.url`: it must not open that URL again. |
-| `autoClearBadge?: boolean` | `autoClearBadge`; `setAutoClearBadge` | `true`: the badge is cleared when the app opens ([Badges](#badges)). On iOS 15, clearing the badge can also remove the app's delivered notifications, other SDKs' included ([Removing delivered notifications](#removing-delivered-notifications)). |
+| `autoClearBadge?: boolean` | `autoClearBadge`; `setAutoClearBadge` | Left out, each platform's default: `true` on iOS, `false` on Android; given, it applies to both platforms. With it on, the badge is cleared when the app opens ([Badges](#badges)). On iOS 15, clearing the badge can also remove the app's delivered notifications, other SDKs' included ([Removing delivered notifications](#removing-delivered-notifications)). |
 | `autoUpdateBadge?: boolean` | `autoUpdateBadge`; `setAutoUpdateBadge` | `true`: SallaPush raises and lowers the badge for its notifications ([Badges](#badges)). |
 | `ios?.appGroupIdentifier?: string` | `appGroupIdentifier` | `SallaPushAppGroup` |
 | `ios?.apnsEnvironment?: SallaPushAPNsEnvironment` | `apnsEnvironment` | `automatic`: from the provisioning profile |
@@ -389,16 +389,17 @@ More rules:
 
 ## Badges
 
-Native SallaPush keeps the app icon's badge; the package passes on its two settings, both on by default: the static
-keys `SallaPushAutoClearBadge` and `SallaPushAutoUpdateBadge` in the Info.plist, and `com.salla.push.AUTO_CLEAR_BADGE`
-and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest ([Static configuration](#static-configuration)), or
-`autoClearBadge` and `autoUpdateBadge` in `initialize`'s config ([SallaPush](#sallapush)).
+Native SallaPush keeps the app icon's badge; the package passes on its two settings: the static keys
+`SallaPushAutoClearBadge` and `SallaPushAutoUpdateBadge` in the Info.plist, and `com.salla.push.AUTO_CLEAR_BADGE` and
+`com.salla.push.AUTO_UPDATE_BADGE` in the manifest ([Static configuration](#static-configuration)), or `autoClearBadge`
+and `autoUpdateBadge` in `initialize`'s config ([SallaPush](#sallapush)). A setting given in `initialize`'s config
+applies to both platforms; one left out keeps each platform's default.
 
 | | iOS | Android |
 |---|---|---|
 | How it counts | The Notification Service Extension adds 1 for each SallaPush notification, in place of a `badge` the push carries; one that replaces an earlier notification with the same collapse id adds nothing while the earlier one is still counted. It needs the extension and the same App Group in the app and the extension, and starts once the app has run with consent. iOS doesn't run the extension when the user turned the app's alerts off. | The launcher counts the app's notifications in the shade: each SallaPush notification adds one, and opening or swiping it away takes it off. Pixel shows a dot, with the count on touch and hold; Samsung and Xiaomi show the number when the user picks numbers; Android 6 to 7.1 shows none. |
-| `autoClearBadge`, default `true` | Every time the app becomes active, the badge and SallaPush's count go to 0, and a SallaPush notification shown while the app is open doesn't change the badge. `false` keeps the badge: it then counts the SallaPush notifications still in Notification Center. | When the app comes to the foreground, SallaPush removes its notifications that show on the badge from the shade (Android 8.0 and later), which records no `dismissed`. Not when the phone was unlocked with the app on screen, nor at the first opening after an unlock into another app, and never other notifications. `false` keeps them. |
-| `autoUpdateBadge`, default `true` | `false` turns counting off: SallaPush sets no number, except `autoClearBadge`'s 0, and a push's own `badge` applies. | `false` creates SallaPush's notification channels without badges, so its notifications add nothing, and the clear on open leaves them. A channel that already exists with badges, such as one your app created, keeps them: `badge.channel_badges_on` says so. |
+| `autoClearBadge`, default `true` on iOS, `false` on Android | On by default: every time the app becomes active, the badge and SallaPush's count go to 0, and a SallaPush notification shown while the app is open doesn't change the badge. `false` keeps the badge: it then counts the SallaPush notifications still in Notification Center. | Off by default: the badge follows SallaPush's notifications in the shade, until they are opened, swiped away or removed with `clearAll()`. On: when the app comes to the foreground, SallaPush removes its notifications that show on the badge from the shade (Android 8.0 and later), which records no `dismissed`. Not when the phone was unlocked with the app on screen, nor at the first opening after an unlock into another app, and never other notifications. |
+| `autoUpdateBadge`, default `true` | `false` turns counting off: SallaPush sets no number, except `autoClearBadge`'s 0, and a push's own `badge` applies. | `false` creates SallaPush's notification channels without badges, so its notifications add nothing, and `autoClearBadge` leaves them in the shade. A channel that already exists with badges, such as one your app created, keeps them: `badge.channel_badges_on` says so. |
 | `clearAll()` | Removes SallaPush's delivered notifications, and sets the badge to 0 while `autoUpdateBadge` is on | Removes SallaPush's notifications, which lowers the badge |
 | Consent required and not given | SallaPush neither counts nor clears | SallaPush clears nothing |
 

@@ -220,10 +220,12 @@ export interface SallaPushConfig {
   /** SallaPush opens https launch URLs on tap. The click listener still gets the tap: it must not open the URL again. */
   openLaunchUrls?: boolean;
   /**
-   * Clears the app icon's badge when the app opens. Default `true`. On iOS, SallaPush sets the badge, and its count of
-   * SallaPush notifications, to 0 every time the app becomes active; on iOS 15 that can also remove the app's delivered
+   * Clears the app icon's badge when the app opens. Left out: each platform's default, on for iOS and off for Android;
+   * a value set here applies to both platforms. On iOS, SallaPush sets the badge, and its count of SallaPush
+   * notifications, to 0 every time the app becomes active; on iOS 15 that can also remove the app's delivered
    * notifications. On Android, SallaPush removes its notifications that show on the badge from the shade when the app
-   * comes to the foreground (Android 8.0 and later), but not when the phone was unlocked with the app on screen.
+   * comes to the foreground (Android 8.0 and later), but not when the phone was unlocked with the app on screen; off,
+   * the badge follows SallaPush's notifications in the shade.
    */
   autoClearBadge?: boolean;
   /**

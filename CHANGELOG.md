@@ -7,18 +7,21 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- `autoClearBadge` and `autoUpdateBadge` in `SallaPush.initialize`'s config, for both platforms, both on by default:
-  SallaPush clears the app icon's badge when the app opens, and raises and lowers it for its notifications. Their
-  static keys are `SallaPushAutoClearBadge` (as before) and the new `SallaPushAutoUpdateBadge` in the Info.plist, and
-  the new meta-data `com.salla.push.AUTO_CLEAR_BADGE` and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest
-  ([Badges](README.md#badges)).
+- `autoClearBadge` and `autoUpdateBadge` in `SallaPush.initialize`'s config, for both platforms: a setting given
+  applies to both, and one left out keeps each platform's default. `autoClearBadge`, on by default on iOS and off on
+  Android, clears the app icon's badge when the app opens; `autoUpdateBadge`, on by default on both, raises and lowers
+  it for SallaPush's notifications. Their static keys are `SallaPushAutoClearBadge` (as before) and the new
+  `SallaPushAutoUpdateBadge` in the Info.plist, and the new meta-data `com.salla.push.AUTO_CLEAR_BADGE` and
+  `com.salla.push.AUTO_UPDATE_BADGE` in the manifest ([Badges](README.md#badges)).
 
 ### Changed
 
 - By default, SallaPush counts its notifications on the iOS app icon's badge, with the Notification Service Extension
   and the same App Group in the app and the extension, and a SallaPush notification shown while the app is open no
-  longer changes the iOS badge. On Android, SallaPush removes its notifications that show on the badge from the shade
-  when the app comes to the foreground. `autoUpdateBadge` and `autoClearBadge` turn each part off.
+  longer changes the iOS badge; on iOS, `clearAll()` also sets the badge to 0. On Android, the launcher's badge
+  follows SallaPush's notifications in the shade, and `autoClearBadge`, off by default there, removes them when the
+  app comes to the foreground. `autoUpdateBadge: false` turns the count off, and `autoClearBadge: false` keeps the iOS
+  badge when the app opens.
 - The package is available under the MIT License; `package.json` and the podspec declare it.
 - The docs' Podfile lines fetch the SallaPush pods over HTTPS instead of SSH.
 - Android: SallaPush Android now comes from Maven Central. The package no longer adds a GitHub Packages repository to

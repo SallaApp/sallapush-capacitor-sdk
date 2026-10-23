@@ -15,7 +15,8 @@ so most calls will look familiar.
 - Links the signed-in customer to the device. Salla checks the customer's token first.
 - Keeps tags, the language and the opt-in state on the server.
 - Reports `received`, `displayed` and `opened` events on its own, and `dismissed` on Android.
-- Keeps the app icon's badge: counts SallaPush notifications on iOS, and clears the badge when the app opens.
+- Counts SallaPush notifications on the app icon's badge on iOS, and clears it when the app opens. On Android, the
+  launcher counts them.
 - Hands taps, foreground notifications, permission, customer and subscription changes, and log entries to JavaScript
   listeners.
 - Capacitor 8, on iOS with Swift Package Manager or CocoaPods, and on Android.
@@ -281,36 +282,35 @@ SallaPush.Notifications.addEventListener('click', (event) => {
 On iOS, SallaPush counts its notifications on the app icon's badge. On Android, the launcher shows them: a dot on
 Pixel, and a number on Samsung and Xiaomi only when the user picks numbers.
 
-- **iOS:** each SallaPush notification adds 1, and the badge goes back to 0 when the app opens. Counting needs the
-  Notification Service Extension and the same App Group in the app and the extension
+- **iOS:** each SallaPush notification adds 1, and the badge goes back to 0 when the app opens.
+  `SallaPush.Notifications.clearAll()` sets it to 0 too. Counting needs the Notification Service Extension and the
+  same App Group in the app and the extension
   ([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
-- **Android:** when the app comes to the foreground, SallaPush removes its notifications that show on the badge, which
-  clears it. Unlocking the phone with the app already open doesn't count.
+- **Android:** the badge follows SallaPush's notifications in the shade. It drops when they are opened or swiped away,
+  or removed with `SallaPush.Notifications.clearAll()`. By default, opening the app removes nothing.
 
 With the defaults, a notification that arrives while the app is open doesn't change the iOS badge. On Android it stays
-in the shade, and counts, until it is opened or swiped away, or until the app next comes to the foreground.
+in the shade, and counts, until it is opened or swiped away.
 
 Two settings change this. Set them with the static keys, next to the app id in `ios/App/App/Info.plist` and
-`android/app/src/main/AndroidManifest.xml`, or in `initialize`'s config when your app starts SallaPush from JavaScript:
+`android/app/src/main/AndroidManifest.xml`, or in `initialize`'s config when your app starts SallaPush from JavaScript.
+A setting given in `initialize`'s config applies to both platforms; one left out keeps each platform's default:
 
 | Setting | Info.plist | Manifest meta-data | Default |
 |---|---|---|---|
-| Clear when the app opens | `SallaPushAutoClearBadge` | `com.salla.push.AUTO_CLEAR_BADGE` | `true` |
+| Clear when the app opens | `SallaPushAutoClearBadge` | `com.salla.push.AUTO_CLEAR_BADGE` | `true` on iOS, `false` on Android |
 | Count SallaPush notifications | `SallaPushAutoUpdateBadge` | `com.salla.push.AUTO_UPDATE_BADGE` | `true` |
 
 <!-- snippet:example-app/src/readmeSnippets/notifications.ts#badges -->
 ```ts
-SallaPush.initialize(appId, {
-  autoClearBadge: false,
-  autoUpdateBadge: false,
-});
+SallaPush.initialize(appId, { autoClearBadge: true });
 ```
 
-On Android, `autoClearBadge: false` keeps SallaPush notifications in the shade when the app opens, and
-`autoUpdateBadge: false` creates SallaPush's notification channel without badges (Android fixes that when the channel
-is created), so the clear on open then leaves them too. On iOS, `SallaPush.Notifications.clearAll()` also sets the
-badge to 0. The full rules are in the
-[iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badges) and
+With `autoClearBadge` on, SallaPush removes its notifications that show on the badge from the Android shade when the
+app comes to the foreground, though not after an unlock with the app already on screen. `autoUpdateBadge: false` stops
+the count: on iOS, SallaPush sets no number but `autoClearBadge`'s 0, and a push's own badge applies; on Android, it
+creates its notification channel without badges (Android fixes that when the channel is created). The full rules are
+in the [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badges) and
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#badges) references, and
 [REFERENCE.md](docs/REFERENCE.md#badges) sums them up.
 
