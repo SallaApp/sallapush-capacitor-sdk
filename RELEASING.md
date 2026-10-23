@@ -89,7 +89,7 @@ On an iPhone and on an Android 13 or later phone, with a real app id, the exampl
    works.
 8. **Consent:** with the consent key on, nothing registers until `setConsentGiven(true)`.
 9. **Permission:** the prompt, and `requestPermission(true)` after a permanent denial on Android 13 or later.
-10. **Another push plugin:** in a test app with Capacitor's push plugin, that plugin's notifications and taps reach its
+10. **Another push plugin:** in a test app with another push plugin, that plugin's notifications and taps reach its
     own listeners, SallaPush's reach only SallaPush's, and on Android nothing shows twice. A tap on that plugin's
     notification that launches the app reaches it as it does without SallaPush, in both iOS app shapes.
 11. **A page reload:** after `location.reload()`, a tap reaches the new page's click listener once.
