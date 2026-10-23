@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Tests of this repository's shell tooling, on throwaway copies in a temporary directory, with stand-ins for every
 # network or build tool: Yarn's resolution, the JDK selection and the VERIFY_IOS_SDK_CHECKOUT check in common.sh,
-# verified-label.sh, bump-native.sh, release-dist.sh, and the tree and pack steps, the summary and the clean-run check
-# of verify.sh. It needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never
-# signed, and nothing is pushed.
+# bump-native.sh, release-dist.sh, and the tree and pack steps, the summary and the clean-run check of verify.sh. It
+# needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never signed, and nothing
+# is pushed.
 #
 #   scripts/self-test.sh
 set -euo pipefail
@@ -220,99 +220,6 @@ EOF
   says "it says why" "VERIFY_IOS_SDK_CHECKOUT must be a folder named sallapush-ios-sdk"
   check "a folder that does not exist is refused" fails checkout_of "$clone"
   says "it names it" "VERIFY_IOS_SDK_CHECKOUT=$clone does not exist"
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# verified-label.sh
-
-test_verified_label() {
-  local bin="$work/bin-api" api="$work/github-api" head=1111111111111111111111111111111111111111
-  local newer=2222222222222222222222222222222222222222 older=3333333333333333333333333333333333333333 label
-  section "verified-label.sh (ci.yml, job Native verified)"
-  mkdir -p "$api"
-  # Stands in for curl against GitHub's REST API: serves $FAKE_API/<path>.json, with / ? & = in the path turned into
-  # _; a missing file is a 404, which --fail turns into exit 22. Every call's arguments are recorded.
-  stand_in "$bin/curl" <<'EOF'
-printf "%s\n" "$*" >>"$FAKE_RECORD"
-cat >/dev/null
-for url; do :; done
-path="${url#*://*/}"
-file="$FAKE_API/$(printf "%s" "$path" | tr "/?&=" "____").json"
-[ -f "$file" ] || { echo "curl: (22) The requested URL returned error: 404" >&2; exit 22; }
-cat "$file"
-EOF
-  gate() {
-    env PATH="$bin:$PATH" FAKE_API="$api" FAKE_RECORD="$work/api-curl.args" GITHUB_API_URL=https://api.example.invalid \
-      GITHUB_REPOSITORY=o/r GH_TOKEN=api-token-value PR_NUMBER="$1" HEAD_SHA="$2" "$scripts/verified-label.sh"
-  }
-  # fixture <live head> <labels JSON> <events JSON> <comments JSON>: one page of each.
-  fixture() {
-    rm -f "${api:?}"/*.json
-    printf '{"head": {"sha": "%s"}, "labels": [%s]}\n' "$1" "$2" >"$api/repos_o_r_pulls_5.json"
-    printf '%s\n' "$3" >"$api/repos_o_r_issues_5_events_per_page_100_page_1.json"
-    printf '%s\n' "$4" >"$api/repos_o_r_issues_5_comments_per_page_100_page_1.json"
-  }
-  labeled() { printf '{"id": 1, "event": "labeled", "actor": {"login": "%s"}, "label": {"name": "native-verified-locally"}, "created_at": "%s"}' "$1" "$2"; }
-  unlabeled() { printf '{"id": 2, "event": "unlabeled", "actor": {"login": "%s"}, "label": {"name": "native-verified-locally"}, "created_at": "%s"}' "$1" "$2"; }
-  comment() {
-    python3 -c 'import json, sys; print(json.dumps({"id": 9, "user": {"login": sys.argv[1]}, "created_at": sys.argv[2], "updated_at": sys.argv[4] or sys.argv[2], "body": sys.argv[3], "html_url": "https://github.example.invalid/o/r/pull/5#issuecomment-9"}))' \
-      "$1" "$2" "$3" "${4:-}"
-  }
-  label='{"name": "native-verified-locally"}'
-
-  check "a push without a pull request passes with a warning" ok gate "" "$head"
-  says "it warns" "::warning::"
-  fixture "$head" "" "[]" "[]"
-  check "a pull request without the label fails" fails gate 5 "$head"
-  says "it says what to do" "Add the label native-verified-locally"
-  says "  ... and which comment attests the head" "comment 'native-verified-locally $head'"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "$(printf 'native-verified-locally %s\nstep\tresult\nlint\tpassed' "$head")")]"
-  check "the labeler's comment that names the head, with the run's summary, passes" ok gate 5 "$head"
-  says "it names the commit and the person" "The SDK at $head was verified locally: @alice"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-01T10:00:00Z)]" \
-    "[$(comment alice 2026-10-01T10:05:00Z "native-verified-locally $older"), $(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "after a push, a new comment that names the new head passes, the label untouched" ok gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $older")]"
-  check "a comment that names another commit fails" fails gate 5 "$head"
-  says "it names both commits" "names 333333333333, not this run's head 111111111111"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head"), $(comment alice 2026-10-03T10:06:00Z "native-verified-locally $older")]"
-  check "only the latest attestation counts" fails gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[]"
-  check "a label without an attestation fails" fails gate 5 "$head"
-  says "it says who must say which commit" "@alice added the label native-verified-locally but has not said which commit they verified"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment bob 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "someone else's comment does not attest for the person who added the label" fails gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T09:00:00Z), $(unlabeled alice 2026-10-03T09:30:00Z), $(labeled bob 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "once someone else adds the label again, they attest" fails gate 5 "$head"
-  says "it names them" "@bob added the label"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head" 2026-10-03T11:00:00Z)]"
-  check "an edited or hidden attestation fails" fails gate 5 "$head"
-  says "it says why" "was changed after it was posted (edited or hidden), so it attests nothing"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $(printf '%s' "$head" | cut -c1-12)")]"
-  check "an abbreviated commit id does not count" fails gate 5 "$head"
-  says "it says what the comment must read" "does not read 'native-verified-locally <the full 40-character commit id>'"
-  fixture "$newer" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "a run of a commit that is no longer the head fails" fails gate 5 "$head"
-  says "it names the newer head" "the pull request's head is now 222222222222"
-  fixture "$head" "$label" "[]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "a label without a labeled event fails" fails gate 5 "$head"
-  # More than 100 events and comments: the second pages are read.
-  fixture "$head" "$label" \
-    "[$(python3 -c 'import json; print(", ".join(json.dumps({"id": n, "event": "referenced", "created_at": "2026-10-03T09:%02d:00Z" % (n % 60)}) for n in range(100)))')]" \
-    "[$(python3 -c 'import json; print(", ".join(json.dumps({"id": n, "user": {"login": "carol"}, "created_at": "2026-10-03T09:00:00Z", "updated_at": "2026-10-03T09:00:00Z", "body": "LGTM"}) for n in range(100)))')]"
-  printf '[%s]\n' "$(labeled alice 2026-10-03T10:00:00Z)" >"$api/repos_o_r_issues_5_events_per_page_100_page_2.json"
-  printf '[%s]\n' "$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")" >"$api/repos_o_r_issues_5_comments_per_page_100_page_2.json"
-  check "a label and an attestation on second pages pass" ok gate 5 "$head"
-  rm "${api:?}/repos_o_r_issues_5_comments_per_page_100_page_2.json"
-  check "a page GitHub does not serve fails the gate" fails gate 5 "$head"
-  says "it says why" "404"
-  check "the token never reaches curl's command line" fails grep -q api-token-value "$work/api-curl.args"
-  check "no redirect is followed with the token" fails grep -qE -- '(^| )(--location|-L)( |$)' "$work/api-curl.args"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -772,8 +679,7 @@ PY
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# verify.sh summary.tsv, the evidence an attestation quotes, and the clean run: in a copy that is committed, as a run's
-# would be.
+# verify.sh summary.tsv, the record of a run, and the clean run: in a copy that is committed, as a run's would be.
 
 test_verify_summary() {
   local logs="$work/summary-logs" head next bin="$work/bin-leftover"
@@ -819,7 +725,6 @@ test_yarn_resolution
 test_xctest_results
 test_java_home
 test_ios_sdk_checkout
-test_verified_label
 make_pristine
 test_bump_native
 test_release_dist

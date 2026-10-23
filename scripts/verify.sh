@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# The full verification of the SallaPush Capacitor SDK. A pull request's Native verified check waits for a person's
-# attestation of a full run at its head commit (scripts/verified-label.sh).
+# The full verification of the SallaPush Capacitor SDK, the checks of every pull request and release.
 #
 #   scripts/verify.sh [step...]    run from anywhere; without steps, every step in order, stopping at the first failure
 #
@@ -190,8 +189,7 @@ docs/snippets/CapacitorPushAppDelegate.swift docs/snippets/SallaPushMessagingSer
 docs/snippets/AndroidManifest-forwarding.xml docs/snippets/app-build.gradle scripts/common.sh scripts/dump-api.mjs
 scripts/check-api-parity.mjs scripts/check-plugin-methods.mjs scripts/check-readme-snippets.mjs
 scripts/add-nse-target.rb"
-readonly EXECUTABLE_FILES="scripts/verify.sh scripts/bump-native.sh scripts/release-dist.sh scripts/verified-label.sh
-scripts/self-test.sh"
+readonly EXECUTABLE_FILES="scripts/verify.sh scripts/bump-native.sh scripts/release-dist.sh scripts/self-test.sh"
 
 # What a commit takes, tracked or untracked and not ignored: no credential file, no secret, personal path, Apple team id or
 # ticket key in any file, every workflow action pinned to a commit, every required file present, every script executable,
@@ -1304,7 +1302,7 @@ logs="${VERIFY_LOG_DIR:-$work/logs}"
 mkdir -p "$logs"
 summary="$logs/summary.tsv"
 # The commit this run verifies, +dirty when the tree has changes. summary.tsv holds the runs of one commit, named in its
-# first line and in every row, so an attestation can't quote another commit's results.
+# first line and in every row, so no summary mixes the results of two commits.
 commit="$(git -C "$root" rev-parse -q --verify HEAD 2>/dev/null)" || commit=none
 state=clean
 [ "$commit" != none ] && [ -z "$(git -C "$root" status --porcelain 2>/dev/null)" ] || state=dirty

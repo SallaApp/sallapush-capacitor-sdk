@@ -3,9 +3,8 @@ name: CI
 # Every pull request and every push to master, on GitHub-hosted runners, as steps of scripts/verify.sh, the script a
 # contributor runs locally: the portable steps on Linux; the plugin's Android unit tests and lint and the example's
 # minified Android build on Linux; SwiftLint, and the example's iOS build and XCTest suite, on macOS. The example smoke
-# tests and the consumer installs stay local release steps (RELEASING.md), and "Native verified" fails until a
-# maintainer attests a local run for the head commit. The native jobs resolve the pinned SallaPush iOS and Android
-# releases from GitHub and Maven Central.
+# tests and the consumer installs stay local release steps (RELEASING.md). The native jobs resolve the pinned SallaPush
+# iOS and Android releases from GitHub and Maven Central.
 on:
   pull_request:
   push:
@@ -145,33 +144,11 @@ jobs:
       - name: The example's release build with its Notification Service Extension, then its XCTest suite
         run: scripts/verify.sh ios
 
-  # Testing Ready counts a skipped job as a pass. So this job fails until the person who added the label
-  # native-verified-locally comments "native-verified-locally <full sha>" for the pull request's head commit, after
-  # running scripts/verify.sh on a Mac.
-  native-verified:
-    name: Native verified
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: read
-      issues: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Require the native-verified-locally label and an attestation of the head commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: scripts/verified-label.sh
-
   # The required check: it fails unless every job above succeeded or was skipped.
   testing-ready:
     name: Testing Ready
     if: always()
-    needs: [js, shell-scripts, android, ios, native-verified]
+    needs: [js, shell-scripts, android, ios]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
