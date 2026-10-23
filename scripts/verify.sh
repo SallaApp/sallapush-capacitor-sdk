@@ -825,7 +825,7 @@ PY
 }
 
 # consumer_install <app> [git]: the README's install, of the package as npm would publish it ($dist_tarball); with git,
-# the setup guide's git fallback instead, at the dry-run dist commit, with npm 12's allow-git=root. Then the app imports
+# the README's git fallback instead, at the dry-run dist commit, with npm 12's allow-git=root. Then the app imports
 # SallaPush.
 consumer_install() {
   local app="$1" dependency="file:$dist_tarball" from="the package as npm would publish it"
@@ -1138,7 +1138,7 @@ PY
 }
 
 # consumer-min: the oldest Capacitor 8 the plugin supports, whose template is a storyboard app without scenes, with the
-# package from git, as the setup guide's fallback installs it with npm: the README's regions go into its AppDelegate,
+# package from git, as the README's fallback installs it with npm: the README's regions go into its AppDelegate,
 # which keeps its ApplicationDelegateProxy methods.
 consumer_min() {
   local app="$work/consumer-min"
