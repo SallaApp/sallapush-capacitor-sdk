@@ -286,8 +286,9 @@ pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :t
 
 ### Notification Service Extension
 
-Optional, and recommended: the extension shows the images of SallaPush notifications, and reports `received` for the
-notifications it handles.
+Optional, and recommended: the extension shows the images of SallaPush notifications, reports `received` for the
+notifications it handles, and, with an App Group (step 4), counts SallaPush notifications on the app icon's badge
+([Badges](../README.md#badges)).
 
 **1. Add the target.** Open `ios/App/App.xcodeproj`, or `ios/App/App.xcworkspace` in a CocoaPods app, and choose
 **File → New → Target → Notification Service Extension**, in Swift, named `SallaPushNotificationService`, with a
@@ -345,8 +346,9 @@ final class NotificationService: UNNotificationServiceExtension {
 
 `didReceive` returns false for notifications that aren't SallaPush's, and never touches them.
 
-**4. Optional: an App Group.** Add the App Groups capability, with the same group, to both targets, and this key to
-both Info.plist files, with `SALLAPUSH_APP_GROUP` defined like `SALLAPUSH_APP_ID`:
+**4. An App Group,** which badge counting needs, and through which the extension reports `received`. Add the App
+Groups capability, with the same group, to both targets, and this key to both Info.plist files, with
+`SALLAPUSH_APP_GROUP` defined like `SALLAPUSH_APP_ID`:
 
 <!-- snippet:example-app/ios/App/App/Info.plist#app-group -->
 ```xml
@@ -1002,7 +1004,10 @@ working:
   theirs.
 - **On iOS 15, SallaPush's `autoClearBadge`,** on by default, clears the badge when the app becomes active, which can
   also remove the app's delivered notifications, the other plugins' included. To keep them, set
-  `SallaPushAutoClearBadge` to `NO`, or `ios.autoClearBadge` to `false` in `initialize`'s config.
+  `SallaPushAutoClearBadge` to `NO`, or `autoClearBadge` to `false` in `initialize`'s config.
+- **One badge per app.** On iOS the app icon shows the last number written, SallaPush's count or another SDK's, such
+  as OneSignal's, which sets 0 when the app comes to the foreground; on Android the launcher adds up all of the app's
+  notifications ([Badges](REFERENCE.md#badges)).
 - **Their `unregister()` and `deleteToken()` reach SallaPush too:** on Android they delete the app's FCM token, and on
   iOS `unregister()` unregisters the app from APNs ([Another FCM plugin](#another-fcm-plugin)). Avoid them.
 - **Another notification-center delegate on iOS:** set it before `SallaPushCapacitor.start()`, or forward from it to

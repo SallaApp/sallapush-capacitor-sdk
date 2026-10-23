@@ -10,7 +10,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `autoClearBadge` and `autoUpdateBadge` in `SallaPush.initialize`'s config, for both platforms, both on by default:
   SallaPush clears the app icon's badge when the app opens, and raises and lowers it for its notifications. Their
   static keys are `SallaPushAutoClearBadge` (as before) and the new `SallaPushAutoUpdateBadge` in the Info.plist, and
-  the new meta-data `com.salla.push.AUTO_CLEAR_BADGE` and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest.
+  the new meta-data `com.salla.push.AUTO_CLEAR_BADGE` and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest
+  ([Badges](README.md#badges)).
 
 ### Changed
 

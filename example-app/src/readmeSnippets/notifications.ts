@@ -4,13 +4,22 @@ import {
 } from '@salla.sa/sallapush-capacitor';
 import { settingsScreen } from './standIns';
 
-// README "Notifications": the permission, and a screen that decides about foreground notifications.
+// README "Notifications": the permission, the badge settings, and a screen that decides about foreground notifications.
 
 export async function askForPermission(): Promise<void> {
   // snippet:request-permission
   const granted = await SallaPush.Notifications.requestPermission(true);
   // end-snippet
   settingsScreen.showPermission(granted);
+}
+
+export function startWithoutBadgeChanges(appId: string): void {
+  // snippet:badges
+  SallaPush.initialize(appId, {
+    autoClearBadge: false,
+    autoUpdateBadge: false,
+  });
+  // end-snippet
 }
 
 // snippet:will-display

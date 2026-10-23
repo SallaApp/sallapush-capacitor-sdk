@@ -15,6 +15,7 @@ so most calls will look familiar.
 - Links the signed-in customer to the device. Salla checks the customer's token first.
 - Keeps tags, the language and the opt-in state on the server.
 - Reports `received`, `displayed` and `opened` events on its own, and `dismissed` on Android.
+- Counts its notifications on the app icon's badge, and clears the badge when the app opens.
 - Hands taps, foreground notifications, permission, customer and subscription changes, and log entries to JavaScript
   listeners.
 - Capacitor 8, on iOS with Swift Package Manager or CocoaPods, and on Android.
@@ -143,9 +144,10 @@ func application(_ application: UIApplication,
 - **With another push plugin, an Objective-C app delegate, or an app created with Capacitor 8.0 to 8.4:** see
   [AppDelegate](docs/SETUP.md#appdelegate) and [Another push plugin](docs/SETUP.md#another-push-plugin).
 
-**The Notification Service Extension,** optional and recommended, shows the images of SallaPush notifications and
-reports `received`. Add a `SallaPushNotificationService` target with SallaPush's `SallaPushExtension` library and the
-example's `NotificationService.swift`
+**The Notification Service Extension,** optional and recommended, shows the images of SallaPush notifications,
+reports `received`, and counts the app icon's badge. Add a `SallaPushNotificationService` target with SallaPush's
+`SallaPushExtension` library and the example's `NotificationService.swift`, and the same App Group in the app and the
+extension, which counting needs
 ([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
 
 ### Android
@@ -275,6 +277,44 @@ SallaPush.Notifications.addEventListener('click', (event) => {
   otherwise route it yourself. A launch URL is whatever the sender set: check its scheme and host before you open it
   ([Taps](docs/SETUP.md#taps)).
 
+### Badges
+
+On iOS, SallaPush counts its notifications on the app icon's badge. On Android, the launcher shows them: a dot on
+Pixel, and a number on Samsung and Xiaomi only when the user picks numbers.
+
+- **iOS:** each SallaPush notification adds 1, and the badge goes back to 0 when the app opens. Counting needs the
+  Notification Service Extension and the same App Group in the app and the extension
+  ([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
+- **Android:** when the app comes to the foreground, SallaPush removes its notifications that show on the badge, which
+  clears it. Unlocking the phone with the app already open doesn't count.
+
+With the defaults, a notification that arrives while the app is open doesn't change the iOS badge. On Android it stays
+in the shade, and counts, until it is opened or swiped away, or until the app next comes to the foreground.
+
+Two settings change this. Set them with the static keys, next to the app id in `ios/App/App/Info.plist` and
+`android/app/src/main/AndroidManifest.xml`, or in `initialize`'s config when your app starts SallaPush from JavaScript:
+
+| Setting | Info.plist | Manifest meta-data | Default |
+|---|---|---|---|
+| Clear when the app opens | `SallaPushAutoClearBadge` | `com.salla.push.AUTO_CLEAR_BADGE` | `true` |
+| Count SallaPush notifications | `SallaPushAutoUpdateBadge` | `com.salla.push.AUTO_UPDATE_BADGE` | `true` |
+
+<!-- snippet:example-app/src/readmeSnippets/notifications.ts#badges -->
+```ts
+SallaPush.initialize(appId, {
+  autoClearBadge: false,
+  autoUpdateBadge: false,
+});
+```
+
+On Android, `autoClearBadge: false` keeps SallaPush notifications in the shade when the app opens, and
+`autoUpdateBadge: false` creates SallaPush's notification channel without badges (Android fixes that when the channel
+is created), so the clear on open then leaves them too. On iOS, `SallaPush.Notifications.clearAll()` also sets the
+badge to 0. The full rules are in the
+[iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badges) and
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#badges) references, and
+[REFERENCE.md](docs/REFERENCE.md#badges) sums them up.
+
 ### Tags
 
 Tags are string keys and values stored on the server for this device:
@@ -356,7 +396,7 @@ OneSignal's Capacitor setup asks.
 | `OneSignal.User.pushSubscription.optIn`, `optOut`, `addEventListener('change')` | The same names on `SallaPush.User.pushSubscription` |
 | `OneSignal.Notifications.requestPermission(fallbackToSettings)` | `SallaPush.Notifications.requestPermission(fallbackToSettings)` |
 | `OneSignal.Notifications.addEventListener('click')`, `('foregroundWillDisplay')`, `('permissionChange')` | The same events on `SallaPush.Notifications` |
-| `OneSignal.Notifications.clearAll()` | `SallaPush.Notifications.clearAll()`, which removes SallaPush notifications only |
+| `OneSignal.Notifications.clearAll()` | `SallaPush.Notifications.clearAll()`, which removes SallaPush notifications only, and on iOS sets the badge to 0 |
 | `OneSignal.Debug.setLogLevel(level)` | `SallaPush.Debug.setLogLevel(level)` |
 | `OneSignal.setConsentRequired(required)`, `setConsentGiven(given)` | The same names on `SallaPush` |
 

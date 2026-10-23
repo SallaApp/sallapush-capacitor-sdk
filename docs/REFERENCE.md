@@ -1,7 +1,7 @@
 # SallaPush Capacitor SDK: reference
 
-How the package works, its static configuration, every API member, events, foreground display, errors, data mapping,
-coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md), and
+How the package works, its static configuration, every API member, events, foreground display, badges, errors, data
+mapping, coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md), and
 for the full setup, the [setup guide](SETUP.md).
 
 Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
@@ -13,12 +13,13 @@ Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
 3. [API reference](#api-reference)
 4. [Events](#events)
 5. [Foreground display](#foreground-display)
-6. [Errors](#errors)
-7. [Data mapping](#data-mapping)
-8. [Coexistence with other SDKs](#coexistence-with-other-sdks)
-9. [Migrating from OneSignal](#migrating-from-onesignal)
-10. [Logging](#logging)
-11. [Compatibility](#compatibility)
+6. [Badges](#badges)
+7. [Errors](#errors)
+8. [Data mapping](#data-mapping)
+9. [Coexistence with other SDKs](#coexistence-with-other-sdks)
+10. [Migrating from OneSignal](#migrating-from-onesignal)
+11. [Logging](#logging)
+12. [Compatibility](#compatibility)
 
 ## How the package works
 
@@ -92,7 +93,8 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md
 | Open https launch URLs on tap | `SallaPushOpenLaunchURLs` (Boolean) | `com.salla.push.OPEN_LAUNCH_URLS` | this package, with the app id | `false` |
 | Delete the device's tags on logout and account switch | `SallaPushClearTagsOnLogout` (Boolean) | `com.salla.push.CLEAR_TAGS_ON_LOGOUT` | this package, with the app id | `true` |
 | The app version on the server | `SallaPushAppVersion` (String) | `com.salla.push.APP_VERSION` | this package, with the app id | `CFBundleShortVersionString`; `versionName` |
-| Clear the badge when the app becomes active; on iOS 15 that can also remove delivered notifications ([Removing delivered notifications](#removing-delivered-notifications)) | `SallaPushAutoClearBadge` (Boolean) | – | this package, with the app id | `true` |
+| Clear the badge when the app opens ([Badges](#badges)); on iOS 15 that can also remove delivered notifications ([Removing delivered notifications](#removing-delivered-notifications)) | `SallaPushAutoClearBadge` (Boolean) | `com.salla.push.AUTO_CLEAR_BADGE` | this package, with the app id | `true` |
+| Count SallaPush notifications on the badge ([Badges](#badges)) | `SallaPushAutoUpdateBadge` (Boolean) | `com.salla.push.AUTO_UPDATE_BADGE` | this package, with the app id | `true` |
 | Register for remote notifications at start | `SallaPushRegisterForRemoteNotificationsOnInit` (Boolean) | – | this package, with the app id | `true` |
 | The APNs environment | `SallaPushAPNsEnvironment` (String: `automatic`, `sandbox` or `production`) | – | this package, with the app id | `automatic` |
 | Show OneSignal-format notifications | – | `com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS` | this package, with or without an app id | `true` |
@@ -178,9 +180,11 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `clearTagsOnLogout?: boolean` | `clearTagsOnLogout`; `setClearTagsOnLogout` | `true` |
 | `requiresUserConsent?: boolean` | `requiresUserConsent`; `setRequiresUserConsent` | `false` |
 | `openLaunchUrls?: boolean` | `openLaunchURLs`; `setOpenLaunchUrls` | `false`. With it on, the click listener still gets the tap, with `result.url`: it must not open that URL again. |
+| `autoClearBadge?: boolean` | `autoClearBadge`; `setAutoClearBadge` | `true`: the badge is cleared when the app opens ([Badges](#badges)). On iOS 15, clearing the badge can also remove the app's delivered notifications, other SDKs' included ([Removing delivered notifications](#removing-delivered-notifications)). |
+| `autoUpdateBadge?: boolean` | `autoUpdateBadge`; `setAutoUpdateBadge` | `true`: SallaPush raises and lowers the badge for its notifications ([Badges](#badges)). |
 | `ios?.appGroupIdentifier?: string` | `appGroupIdentifier` | `SallaPushAppGroup` |
 | `ios?.apnsEnvironment?: SallaPushAPNsEnvironment` | `apnsEnvironment` | `automatic`: from the provisioning profile |
-| `ios?.autoClearBadge?: boolean` | `autoClearBadge` | `true`. On iOS 15, clearing the badge can also remove the app's delivered notifications, other SDKs' included ([Removing delivered notifications](#removing-delivered-notifications)). |
+| `ios?.autoClearBadge?: boolean` | `autoClearBadge` | Deprecated: use `autoClearBadge`, which applies on both platforms and wins over it. It still applies on iOS when `autoClearBadge` is left out. |
 | `ios?.registerForRemoteNotificationsOnInit?: boolean` | `registerForRemoteNotificationsOnInit` | `true`. Set it to `false` only if the app registers at every launch itself. |
 
 The `ios` options are ignored on Android. The native configurations are described in full in the native docs
@@ -234,7 +238,7 @@ background, after a pending login or logout, and are retried until the server co
 | `refreshPermission(): void` | `refreshPermission()` | Reads the permission again, after the app asked for it itself |
 | `registerForRemoteNotifications(): void` | `registerForRemoteNotifications()` (iOS) | Needed only with `registerForRemoteNotificationsOnInit` set to `false`. Does nothing on Android. |
 | `forwardApnsToken(apnsToken: string): void` | `didRegisterForRemoteNotifications(deviceToken:)` (iOS) | Forwards the APNs token another SDK holds, as hexadecimal text of even length, in either case, such as the `token` of `@capacitor-firebase/messaging`'s `apnsTokenReceived` event. Other text is ignored with one console error. Does nothing on Android. |
-| `clearAll(): void` | `clearAll()`; `clearAllNotifications()` | Removes the delivered SallaPush notifications; other notifications stay |
+| `clearAll(): void` | `clearAll()`; `clearAllNotifications()` | Removes the delivered SallaPush notifications; other notifications stay. On iOS it also sets the badge to 0 while `autoUpdateBadge` is on ([Badges](#badges)). |
 | `removeNotification(androidNotificationId: number): void` | `removeNotification(Int)` (Android) | Removes one SallaPush notification, by `notification.androidNotificationId`, a 32-bit integer. Does nothing on iOS. |
 | `isSallaPushNotification(payload: Record<string, unknown>): Promise<boolean>` | `isSallaPushNotification(_:)`; `isSallaPushMessage(Map)` | Whether a payload another SDK received, an FCM data map or an APNs `userInfo`, is SallaPush's ([Data mapping](#data-mapping)) |
 | `trackOpened(additionalData: Record<string, unknown> \| null): Promise<boolean>` | `trackOpened(JSONObject)` (Android) | Records `opened` for a SallaPush notification that OneSignal showed, from OneSignal's `additionalData`; `false` for any other. `false` on iOS, where those taps reach SallaPush through its delegate. |
@@ -381,6 +385,33 @@ More rules:
 - **`display()` before `event.preventDefault()`** does nothing, as native refuses it: a later listener may still
   prevent the notification. A console warning says so, once.
 - **`display()` on any other notification,** such as a click event's, does nothing; a console warning says so, once.
+
+## Badges
+
+Native SallaPush keeps the app icon's badge; the package passes on its two settings, both on by default: the static
+keys `SallaPushAutoClearBadge` and `SallaPushAutoUpdateBadge` in the Info.plist, and `com.salla.push.AUTO_CLEAR_BADGE`
+and `com.salla.push.AUTO_UPDATE_BADGE` in the manifest ([Static configuration](#static-configuration)), or
+`autoClearBadge` and `autoUpdateBadge` in `initialize`'s config ([SallaPush](#sallapush)).
+
+| | iOS | Android |
+|---|---|---|
+| How it counts | The Notification Service Extension adds 1 for each SallaPush notification, in place of a `badge` the push carries; one that replaces an earlier notification with the same collapse id adds nothing while the earlier one is still counted. It needs the extension and the same App Group in the app and the extension, and starts once the app has run with consent. iOS doesn't run the extension when the user turned the app's alerts off. | The launcher counts the app's notifications in the shade: each SallaPush notification adds one, and opening or swiping it away takes it off. Pixel shows a dot, with the count on touch and hold; Samsung and Xiaomi show the number when the user picks numbers; Android 6 to 7.1 shows none. |
+| `autoClearBadge`, default `true` | Every time the app becomes active, the badge and SallaPush's count go to 0, and a SallaPush notification shown while the app is open doesn't change the badge. `false` keeps the badge: it then counts the SallaPush notifications still in Notification Center. | When the app comes to the foreground, SallaPush removes its notifications that show on the badge from the shade (Android 8.0 and later), which records no `dismissed`. Not when the phone was unlocked with the app on screen, and never other notifications. `false` keeps them. |
+| `autoUpdateBadge`, default `true` | `false` turns counting off: SallaPush sets no number, except `autoClearBadge`'s 0, and a push's own `badge` applies. | `false` creates SallaPush's notification channels without badges, so its notifications add nothing, and the clear on open leaves them. A channel that already exists keeps its badges: `badge.channel_badges_on` says so. |
+| `clearAll()` | Removes SallaPush's delivered notifications, and sets the badge to 0 while `autoUpdateBadge` is on | Removes SallaPush's notifications, which lowers the badge |
+| Consent required and not given | SallaPush neither counts nor clears | SallaPush clears nothing |
+
+- **One badge per app.** On iOS the icon shows the last number written: SallaPush's, another SDK's, a push's own
+  `badge`, or your app's. On Android the launcher adds up all of the app's notifications, SallaPush's and others'.
+- **iOS 15.** Setting the badge to 0 also removes the app's delivered notifications, other SDKs' and plugins' included,
+  and while SallaPush counts, the badge is above 0 after any SallaPush notification
+  ([Removing delivered notifications](#removing-delivered-notifications)).
+- **The deprecated `ios.autoClearBadge`** still applies on iOS when `autoClearBadge` is left out; `autoClearBadge`
+  wins over it.
+
+The native references have every rule
+([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badges),
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#badges)).
 
 ## Errors
 
@@ -612,9 +643,10 @@ Android. Use `SallaPush.Notifications.clearAll()`, which removes SallaPush's onl
 the other plugins' `removeDeliveredNotifications(…)` for theirs.
 
 On iOS 15, `autoClearBadge`, on by default, sets the app's badge to 0 whenever the app becomes active with a badge,
-and iOS 15 can remove the app's delivered notifications with it, other SDKs' and plugins' included. To keep them, set
-`SallaPushAutoClearBadge` to `NO` in the Info.plist, or `ios.autoClearBadge` to `false` in `initialize`'s config
-([native badge and clearing](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badge-and-clearing)).
+and iOS 15 removes the app's delivered notifications with it, other SDKs' and plugins' included. While SallaPush counts
+its notifications, the badge is above 0 after any of them, so that happens at almost every activation. To keep them,
+set `SallaPushAutoClearBadge` to `NO` in the Info.plist, or `autoClearBadge` to `false` in `initialize`'s config
+([native badges](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#badges)).
 
 ### Other notification-center delegates
 
@@ -659,12 +691,13 @@ them, never on messages. Most codes exist on both platforms. These exist on one 
 
 - **Android only:** `init.not_main_process`, `api.null_argument`, `api.callback_threw`, `token.firebase_missing`,
   `token.auto_init_disabled`, `token.fetch_failed`, `permission.prompt_deferred`, `net.monitor_unavailable`,
-  `storage.crypto_reset`, `notif.image_unusable`, `display.default_icon`, `fcm.forwarding_hint`, `work.unavailable` and
-  `internal.error`.
+  `storage.crypto_reset`, `notif.image_unusable`, `display.default_icon`, `badge.channel_badges_on`,
+  `fcm.forwarding_hint`, `work.unavailable` and `internal.error`.
 - **iOS only:** `init.no_delegate`, `config.no_app_group`, `status.launch`, `status.changed`, `api.callback_repeated`,
   `token.registration_failed`, `inbox.ingested`, `inbox.invalid_file`, `storage.keychain_locked`,
-  `notif.off_main_thread`, `lifecycle.background_expired`, `nse.attachment_failed`, `nse.expired`,
-  `nse.replaced_request`, `nse.received_sent` and `nse.received_deferred`.
+  `notif.off_main_thread`, `badge.set`, `badge.zero_skipped`, `lifecycle.background_expired`, `nse.attachment_failed`,
+  `nse.expired`, `nse.replaced_request`, `nse.received_sent`, `nse.received_deferred`, `nse.badge_set` and
+  `nse.badge_skipped`.
 
 No secret or identity token is ever logged. **Privacy:** what SallaPush iOS writes in the info entries `status.launch`
 and `status.changed` is described in its
