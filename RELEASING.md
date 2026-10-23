@@ -35,8 +35,9 @@ In a pull request, and merged to `master`:
   when the versions table and `package.json` disagree.
 - **The CHANGELOG entry.** Rename `## [Unreleased]` to the version, with the release date, such as
   `## [1.0.0] - 2026-10-20`, and start a new, empty `## [Unreleased]` above it.
-- **The checks.** On the merged commit, in a clean checkout, on a Mac, run `scripts/verify.sh` with no step names. Every
-  step must pass, `consumer` included, which installs a dry run of the release in fresh Capacitor apps.
+- **The checks.** CI passed on the merged commit. Also, in a clean checkout of it, on a Mac, run `scripts/verify.sh`
+  with no step names: every step must pass, `smoke` and `consumer` included, which CI doesn't run; `consumer` installs a
+  dry run of the release in fresh Capacitor apps.
 - **The devices.** A release that changes the native pins or the plugin's native code also passes the
   [device checklist](#the-device-checklist). Record the result of each item in the release's pull request.
 
@@ -54,10 +55,18 @@ commit's files. `scripts/release-dist.sh` makes the commit:
    version. It refuses a package that would ship a file that isn't committed, such as one `.gitignore` hides in
    `android/`: release from a fresh clone.
 3. Push the tag, and only the tag: `git push origin <version>`. The script never pushes, and prints that command.
-4. Publish the tag to npm, from a clean checkout of it: `git checkout <version>`, then `npm publish`. The tag's
-   `package.json` has no scripts and publishes with public access, so npm uploads exactly the tag's files, as
-   `npm publish --dry-run` lists them first. A maintainer with publish rights on the `@salla.sa` scope does this, with
-   two-factor authentication.
+4. The tag's push runs [.github/workflows/publish.yml](.github/workflows/publish.yml), from the tag's own commit,
+   where `release-dist.sh` put it. It checks that the tag is the dist commit of a `master` commit, at the version of
+   its `package.json` and CHANGELOG. Then, in the protected `release` environment, which a maintainer approves, it
+   publishes the tag's tree to npm with trusted publishing (no npm token; npm adds provenance), and creates the GitHub
+   Release from the version's CHANGELOG entry. A pre-release (`-alpha`, `-beta`, `-rc`) goes to npm's `next` tag and is
+   marked as a pre-release.
+
+The first version of a new package can't use trusted publishing yet. Before step 3, a maintainer with publish rights on
+the `@salla.sa` scope publishes it by hand, with two-factor authentication, from a clean checkout of the tag
+(`git checkout <version>`, then `npm publish`, which uploads exactly the tag's files, as `npm publish --dry-run` lists
+them), and sets up trusted publishing on npmjs.com for this repository, `publish.yml` and the `release` environment.
+The tag's workflow then finds the version on npm, publishes nothing, and creates the GitHub Release; so does a re-run.
 
 The release commit is on no branch, by design: `master` keeps the sources only. `scripts/release-dist.sh <version>
 --dry-run` makes the same commit in a temporary clone, from any commit, and changes nothing here.

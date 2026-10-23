@@ -116,9 +116,12 @@ From the repository's root:
 | `smoke` | The example's self-test on a simulator and a running emulator: a test push in the foreground, a page reload, and a second test push that the reloaded page's listener gets once. It builds the example with its own bundle id and application id, `sa.salla.sallapush.example`, whatever your local settings name. |
 | `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README and the setup guide show, and build: the package as npm would publish it, with Swift Package Manager on Capacitor 8.5.3 and with CocoaPods and `@capacitor/push-notifications`; the git fallback with npm, in the oldest Capacitor 8 with the storyboard template; and the git fallback with Yarn. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
 
-The first eleven steps run anywhere with Node, and CI runs them. The others need macOS, the native toolchains and
-devices. A full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and
-longer the first time. A run that starts on a clean working tree fails when a step leaves a file behind that no ignore
+The first eleven steps run anywhere with Node; the others need macOS, the native toolchains and devices. CI
+([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs on GitHub-hosted runners for every pull request and every
+push to `master`: the first eleven steps and `android` on Linux, and `swiftlint` and `ios` on macOS. Its `Testing Ready`
+check passes when all of them did. `smoke` and `consumer` stay local steps of a release ([RELEASING.md](RELEASING.md)).
+A full run takes about 10 minutes on a recent Mac once Gradle, Xcode and npm have filled their caches, and longer the
+first time. A run that starts on a clean working tree fails when a step leaves a file behind that no ignore
 file covers. Environment variables:
 
 - `VERIFY_LOG_DIR`: a log per step and `summary.tsv`, which names the commit. Use a folder for each commit, outside the
