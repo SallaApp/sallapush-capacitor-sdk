@@ -4,20 +4,14 @@ import {
 } from '@salla.sa/sallapush-capacitor';
 import { settingsScreen } from './standIns';
 
-// The README's "Quick start", "Foreground notifications" and "Badges", and the setup guide: the permission, a screen
-// that decides about foreground notifications, and the badge settings.
+// The README's "Quick start" and "Foreground notifications": the permission, and a screen that decides about foreground
+// notifications.
 
 export async function askForPermission(): Promise<void> {
   // snippet:request-permission
   const granted = await SallaPush.Notifications.requestPermission(true);
   // end-snippet
   settingsScreen.showPermission(granted);
-}
-
-export function startClearingTheBadgeOnBothPlatforms(appId: string): void {
-  // snippet:badges
-  SallaPush.initialize(appId, { autoClearBadge: true });
-  // end-snippet
 }
 
 // While a chat screen shows its messages, SallaPush doesn't show that chat's notifications. The screen removes the

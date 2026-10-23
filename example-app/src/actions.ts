@@ -1,7 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { SallaPush, SallaPushLogLevel } from '@salla.sa/sallapush-capacitor';
 import { eventLog, followLogs } from './eventLog';
-import { customerDidSignIn, customerDidSignOut } from './session';
 import { button, note, row, section, select, textInput, toggle } from './ui';
 
 const LEVELS = Object.values(SallaPushLogLevel);
@@ -33,13 +32,10 @@ function customer(): HTMLElement {
     row(
       button('Log in', () =>
         call(`login('${externalId.value}', …)`, () =>
-          customerDidSignIn({
-            externalId: externalId.value,
-            identityToken: identityToken.value,
-          })
+          SallaPush.login(externalId.value, identityToken.value)
         )
       ),
-      button('Log out', () => call('logout()', () => customerDidSignOut()))
+      button('Log out', () => call('logout()', () => SallaPush.logout()))
     )
   );
 }

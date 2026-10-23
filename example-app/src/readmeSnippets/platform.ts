@@ -4,11 +4,10 @@ import { SallaPush } from '@salla.sa/sallapush-capacitor';
 // end-snippet
 import { settingsScreen } from './standIns';
 
-// The README's "Quick start" (the import) and the setup guide's "On the web": SallaPush runs on iOS and Android
-// only, where its requests never reject. In a browser they reject, and its other calls print one console error each.
+// The README's "Quick start" (the import). SallaPush runs on iOS and Android only, where its requests never reject. In
+// a browser they reject, and its other calls print one console error each.
 
 export async function showPushSettings(): Promise<void> {
-  // snippet:native-only
   if (Capacitor.isNativePlatform()) {
     settingsScreen.showPermission(
       await SallaPush.Notifications.getPermission()
@@ -16,5 +15,4 @@ export async function showPushSettings(): Promise<void> {
   } else {
     settingsScreen.hidePushSettings();
   }
-  // end-snippet
 }
