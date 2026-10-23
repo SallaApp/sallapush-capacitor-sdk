@@ -380,9 +380,10 @@ The app icon's badge shows SallaPush's notifications, and each platform counts t
 - **Android:** the launcher counts the notifications in the shade, so the badge drops when SallaPush's notifications
   are opened, swiped away or removed with `clearAll()`. Opening the app removes nothing by default.
 
-Two settings change this, with the static keys next to the app id, or in `initialize`'s config when your app starts
-SallaPush from JavaScript. A setting given in the config applies to both platforms; one left out keeps each platform's
-default:
+Two settings change this. With the static app id, set their keys next to it, such as
+`<meta-data android:name="com.salla.push.AUTO_CLEAR_BADGE" android:value="true" />` to clear the Android badge when
+the app opens. An app that starts SallaPush from JavaScript passes them to `initialize` instead: a setting given there
+applies to both platforms, and one left out keeps each platform's default:
 
 | Setting | Info.plist | Manifest meta-data | Default |
 |---|---|---|---|
