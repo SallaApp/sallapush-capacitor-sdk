@@ -145,8 +145,9 @@ nor reports `received`, and says so only at info level.
 `android/app`, and leave Firebase's auto-init on. Build with JDK 21 ([Firebase](docs/SETUP.md#firebase)).
 
 **2. The app id and the notification icon,** inside `<application>` in `android/app/src/main/AndroidManifest.xml`,
-and the app id's placeholder in `defaultConfig` of `android/app/build.gradle`. The icon must be white on transparent:
-use your own ([App id and notification icon](docs/SETUP.md#app-id-and-notification-icon)).
+and the app id's placeholder in `defaultConfig` of `android/app/build.gradle`. The icon must be white on transparent.
+`ic_stat_sallapush` is the example's drawable: add your own to `android/app/src/main/res/drawable` and put its name
+in the snippet ([App id and notification icon](docs/SETUP.md#app-id-and-notification-icon)).
 
 <!-- snippet:example-app/android/app/src/main/AndroidManifest.xml#meta-data -->
 ```xml
