@@ -173,9 +173,9 @@ export interface SallaPushUserChangedState {
 }
 
 /**
- * One SallaPush log entry. Its fields are redacted by native: no secret or identity token. On iOS, the info entries
- * `status.launch` and `status.changed` hold the full push token and the customer's id: don't forward info entries to
- * third parties.
+ * One SallaPush log entry. Native leaves out secrets and identity tokens. Don't forward info entries to third parties:
+ * on iOS, the info entries `status.launch` and `status.changed` describe the push token and the customer's link, with
+ * the full token and the customer's id when a debug build sets the Info.plist key SallaPushLogFullIdentifiers.
  */
 export interface SallaPushLogEntry {
   /** The entry's level. */

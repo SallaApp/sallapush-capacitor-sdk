@@ -99,6 +99,7 @@ instead, after `setConsentRequired(true)` to require consent ([Consent](SETUP.md
 | The APNs environment | `SallaPushAPNsEnvironment` (String: `automatic`, `sandbox` or `production`) | – | this package, with the app id | `automatic` |
 | Show OneSignal-format notifications | – | `com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS` | this package, with or without an app id | `true` |
 | The log level | `SallaPushLogLevel` | `com.salla.push.LOG_LEVEL` | native | `warn` |
+| Show the full push token and customer id in the iOS status lines; debug builds only, and honoured only in the APNs sandbox | `SallaPushLogFullIdentifiers` (Boolean) | – | native | `false` |
 | The SallaPush server's URL | `SallaPushAPIBaseURL` | `com.salla.push.API_BASE_URL` | native | `https://api.salla.dev/notifications/v1/sallapush` |
 | The App Group, in the app and the extension | `SallaPushAppGroup` | – | native | None |
 | The small icon (required) | – | `com.salla.push.default_notification_icon` (`android:resource`) | native | Firebase's `com.google.firebase.messaging.default_notification_icon`, else SallaPush's bell, with `display.default_icon` |
@@ -704,7 +705,9 @@ and `status.changed` is described in its
 [logging guide](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#what-is-never-logged).
 Keep the console level at `warn` in release builds, and don't forward info entries to third parties. A log handler at
 `warn` or quieter never receives them; a console level of `info` or more, set by the static key, `initialize`'s
-`logLevel` or `setLogLevel`, also writes them to the device log, in release builds too.
+`logLevel` or `setLogLevel`, also writes them to the device log, in release builds too. Set
+`SallaPushLogFullIdentifiers` only in debug builds: with it on, these lines hold the full push token and the
+customer's id, which then reach the device log and your log handler.
 
 **One log handler per process on iOS.** Native keeps one handler per process: in an app with two Capacitor bridges
 whose pages both set a log handler, the page that set it last receives the entries, and either bridge's page load or

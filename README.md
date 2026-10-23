@@ -378,7 +378,9 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
   tokens are never logged.
 - **Privacy:** what SallaPush iOS writes in the info entries `status.launch` and `status.changed` is described in its
   [logging guide](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#what-is-never-logged).
-  Keep the console level at `warn` in release builds, and don't forward info entries to third parties.
+  Keep the console level at `warn` in release builds, and don't forward info entries to third parties. Set
+  `SallaPushLogFullIdentifiers` only in debug builds: with it on, these lines hold the full push token and the
+  customer's id, which then reach the device log and your log handler.
 
 ## Migrating from OneSignal
 

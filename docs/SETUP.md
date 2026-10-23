@@ -947,7 +947,8 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
 - **Privacy:** what SallaPush iOS writes in the info entries `status.launch` and `status.changed` is described in its
   [logging guide](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#what-is-never-logged).
   Keep the console level at `warn` in release builds, and don't forward info entries to third parties. A handler at
-  `warn` or quieter never receives them.
+  `warn` or quieter never receives them. Set `SallaPushLogFullIdentifiers` only in debug builds: with it on, these
+  lines hold the full push token and the customer's id, which then reach the device log and your log handler.
 - **Ship with the console level at `warn`,** the default. At `info` or more, set by the static key, `initialize`'s
   `logLevel` or `SallaPush.Debug.setLogLevel`, iOS also writes `status.launch` and `status.changed` to the device log,
   in release builds too.
