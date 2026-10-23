@@ -1034,7 +1034,7 @@ it, and keep OneSignal initialized
 | `OneSignal.User.pushSubscription.optIn`, `optOut`, `addEventListener('change')` | The same names on `SallaPush.User.pushSubscription` |
 | `OneSignal.Notifications.requestPermission(fallbackToSettings)` | `SallaPush.Notifications.requestPermission(fallbackToSettings)` |
 | `OneSignal.Notifications.addEventListener('click')`, `('foregroundWillDisplay')`, `('permissionChange')` | The same events on `SallaPush.Notifications` |
-| `OneSignal.Notifications.clearAll()` | `SallaPush.Notifications.clearAll()`, which removes SallaPush notifications only |
+| `OneSignal.Notifications.clearAll()` | `SallaPush.Notifications.clearAll()`, which removes SallaPush notifications only, and on iOS sets the badge to 0 |
 | `OneSignal.Debug.setLogLevel(level)` | `SallaPush.Debug.setLogLevel(level)` |
 | `OneSignal.setConsentRequired(required)`, `setConsentGiven(given)` | The same names on `SallaPush` |
 
@@ -1126,20 +1126,27 @@ if (isOn) {
 Before you ship, check on a device, with a real app id:
 
 1. **Turn on verbose logs** in the static configuration (`SallaPushLogLevel`, `com.salla.push.LOG_LEVEL`), so the
-   entries of the launch show too, and watch the [consoles](#logging).
+   entries of the launch show too, and watch the [consoles](#logging). Allow notifications when the app asks.
 2. **Launch the app.** On iOS, 2 seconds after the app first becomes active, the package logs at info level:
    `[SallaPush] SallaPush's notification-center delegate is the current one; it hands other notifications to
    Capacitor's notification router.` (subsystem `com.salla.push`, category `wrapper`; in Console.app, with info
    messages shown). This line, with no `[SallaPush]` error before it, shows that `SallaPushCapacitor.start()` ran
    before Capacitor's bridge and that the plugin took the delegate back. Otherwise an error names the problem
    ([Capacitor setup](TROUBLESHOOTING.md#capacitor-setup)).
-3. **Watch the registration.** `init.started` names the app id and the API URL, and `register.ok` follows once the
-   device is registered. `SallaPush.User.pushSubscription.getId()` then resolves the device id, which the Salla team
-   can look up. Check this in a build of every configuration you ship, Release included: SallaPush doesn't start
-   in a build without the app id, and nothing logs it ([Identity](TROUBLESHOOTING.md#identity)).
-4. **Ask the Salla team to send a test notification** to that device, with the app in the foreground, then in the
+3. **Watch the registration.** `init.started` names the app id and the API URL; `token.received` and `register.ok`
+   follow once the device is registered, and `register.ok` names the device id.
+   `SallaPush.User.pushSubscription.getId()` then resolves it, and the Salla team can look it up. Check this in a build
+   of every configuration you ship, Release included: SallaPush doesn't start in a build without the app id, and
+   nothing logs it ([Identity](TROUBLESHOOTING.md#identity)).
+4. **Push a test notification to the iOS simulator,** without a server, before you ask for a real one: on an iOS 16 or
+   later simulator on a Mac with Apple silicon or a T2 chip (an iOS 15 simulator gets no APNs token), run
+   `xcrun simctl push booted <your bundle id> native.apns` with the example's
+   [test payload](../example-app/ios/TestPayloads/native.apns). The simulator never runs the Notification Service
+   Extension: check images on a device.
+5. **Ask the Salla team to send a test notification** to that device, with the app in the foreground, then in the
    background, and tap it: the click listener gets the tap.
-5. **Sign in:** no `'loginFailure'` event follows.
+6. **Sign in:** `login.ok` follows, and no `'loginFailure'` event. A later launch with the same customer logs
+   `login.skipped_same`, and one while signed out `logout.skipped`.
 
 The native guides list the codes to expect at each launch
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/RELEASING.md#verify-your-integration),
