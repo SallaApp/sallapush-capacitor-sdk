@@ -1,8 +1,8 @@
 # SallaPush Capacitor SDK: reference
 
 How the package works, its static configuration, every API member, events, foreground display, badges, errors, data
-mapping, coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md), and
-for the full setup, the [setup guide](SETUP.md).
+mapping, coexistence with other SDKs, logging and compatibility. For the short guide, see the [README](../README.md),
+and for the full setup, the [setup guide](SETUP.md).
 
 Other docs: [Setup guide](SETUP.md), [Troubleshooting](TROUBLESHOOTING.md)
 
