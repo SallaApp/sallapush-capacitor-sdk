@@ -163,7 +163,7 @@ manifestPlaceholders += [sallaPushAppId: "your_app_id"]
 
 **3. Another push plugin.** Android hands each push message to one service. When another plugin in your app declares
 one, it takes every message, and SallaPush shows nothing: add the
-[forwarding service](docs/SETUP.md#another-fcm-plugin), which hands each message to SallaPush first.
+[forwarding service](docs/REFERENCE.md#another-push-plugin-on-android), which hands each message to SallaPush first.
 
 ## Quick start
 
