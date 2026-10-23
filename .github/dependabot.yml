@@ -1,0 +1,8 @@
+# Keeps the workflows' actions current: once a month, Dependabot proposes the newer releases, pinned to their commits
+# with the version in a comment, as the tree step of scripts/verify.sh requires.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
