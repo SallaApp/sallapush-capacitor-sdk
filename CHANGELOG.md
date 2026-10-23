@@ -40,6 +40,12 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `ios.autoClearBadge` in `SallaPush.initialize`'s config. Use the top-level `autoClearBadge`, which applies on both
   platforms; `ios.autoClearBadge` still applies on iOS when `autoClearBadge` is left out.
 
+### Removed
+
+- The server URL is no longer configurable: `SallaPush.initialize`'s `apiBaseUrl` option, the Info.plist key
+  `SallaPushAPIBaseURL` and the meta-data `com.salla.push.API_BASE_URL` are removed, and SallaPush always uses its
+  built-in URL.
+
 ## [1.0.0] - 2026-10-19
 
 ### Added
