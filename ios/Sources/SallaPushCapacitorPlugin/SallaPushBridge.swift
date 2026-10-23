@@ -28,7 +28,7 @@ final class SallaPushBridge {
     /// Initializes SallaPush with the `ConfigSpec` fields that JavaScript set, keyed by name.
     func initialize(appId: String, options: [String: Any]) {
         let options = InitOptions(options)
-        if let earlyInit = earlyInit(), earlyInit.appId == appId, options.apiBaseUrl == nil {
+        if let earlyInit = earlyInit(), earlyInit.appId == appId {
             reportIgnoredOptions(options.startOptions)
         }
         native.initialize(appId, configuration: options.configuration())
@@ -219,7 +219,7 @@ final class SallaPushBridge {
 
     // MARK: - Console
 
-    /// A second initialize with the static app id and API host changes nothing natively, its options included.
+    /// A second initialize with the static app id changes nothing natively, its options included.
     private func reportIgnoredOptions(_ options: [(option: String, key: String)]) {
         guard !options.isEmpty else { return }
         let names = options.map(\.option).joined(separator: ", ")
@@ -231,7 +231,6 @@ final class SallaPushBridge {
 
 /// The options of a JavaScript `initialize` call; nil means the option was left out.
 struct InitOptions {
-    var apiBaseUrl: String?
     var logLevel: SallaPushLogLevel?
     var appVersion: String?
     var clearTagsOnLogout: Bool?
@@ -249,7 +248,6 @@ struct InitOptions {
 extension InitOptions {
     init(_ options: [String: Any]) {
         self.init(
-            apiBaseUrl: options["apiBaseUrl"] as? String,
             logLevel: (options["logLevel"] as? String).flatMap(SallaPushLogLevel.init(name:)),
             appVersion: options["appVersion"] as? String,
             clearTagsOnLogout: options["clearTagsOnLogout"] as? Bool,
@@ -267,12 +265,6 @@ extension InitOptions {
     /// The native configuration with the options that were given, and native's defaults for the others.
     func configuration() -> SallaPushConfiguration {
         let configuration = SallaPushConfiguration()
-        if let apiBaseUrl {
-            // Text that isn't a URL reaches native as an invalid URL, so native logs config.invalid_base_url and uses
-            // production, as on Android; nil would mean the Info.plist URL.
-            let text = apiBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
-            configuration.apiBaseURL = URL(string: text) ?? URL(fileURLWithPath: "/")
-        }
         if let logLevel { configuration.logLevel = logLevel }
         if let appVersion { configuration.appVersion = appVersion }
         if let clearTagsOnLogout { configuration.clearTagsOnLogout = clearTagsOnLogout }

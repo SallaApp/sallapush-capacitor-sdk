@@ -50,16 +50,4 @@ final class InitOptionsTests: XCTestCase {
         XCTAssertNil(unknown.logLevel)
         XCTAssertNil(unknown.apnsEnvironment)
     }
-
-    // As on Android, where native trims the URL, then logs config.invalid_base_url and uses production for text that
-    // isn't one; nil would make native fall back to the Info.plist URL without a word.
-    func testTrimsTheAPIURLAndPassesTextThatIsNoURLAsAnInvalidOne() {
-        let padded = InitOptions(["apiBaseUrl": " https://staging.example.com/notifications/v1/sallapush \n"])
-        XCTAssertEqual(padded.configuration().apiBaseURL, URL(string: "https://staging.example.com/notifications/v1/sallapush"))
-        for text in ["", "  "] {
-            let url = InitOptions(["apiBaseUrl": text]).configuration().apiBaseURL
-            XCTAssertNotNil(url, "'\(text)'")
-            XCTAssertNotEqual(url?.scheme, "https", "'\(text)'")
-        }
-    }
 }

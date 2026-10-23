@@ -147,7 +147,6 @@ final class StaticConfigTests: XCTestCase {
         XCTAssertEqual(configuration.apnsEnvironment, defaults.apnsEnvironment)
         XCTAssertEqual(configuration.logLevel, defaults.logLevel)
         XCTAssertNil(configuration.appVersion)
-        XCTAssertNil(configuration.apiBaseURL)
         XCTAssertNil(configuration.appGroupIdentifier)
     }
 

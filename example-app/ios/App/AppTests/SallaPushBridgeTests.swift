@@ -12,7 +12,6 @@ final class SallaPushBridgeTests: XCTestCase {
 
     func testInitializesWithTheAppIdAndEveryOption() throws {
         makeBridge().initialize(appId: "st_42_ios", options: [
-            "apiBaseUrl": "https://push.example.com/notifications/v1/sallapush",
             "logLevel": "debug",
             "appVersion": "2.1.0",
             "clearTagsOnLogout": false,
@@ -28,7 +27,6 @@ final class SallaPushBridgeTests: XCTestCase {
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])
         let configuration = try XCTUnwrap(native.configurations.first)
-        XCTAssertEqual(configuration.apiBaseURL, URL(string: "https://push.example.com/notifications/v1/sallapush"))
         XCTAssertEqual(configuration.logLevel, .debug)
         XCTAssertEqual(configuration.appVersion, "2.1.0")
         XCTAssertFalse(configuration.clearTagsOnLogout)
@@ -47,7 +45,6 @@ final class SallaPushBridgeTests: XCTestCase {
 
         let configuration = try XCTUnwrap(native.configurations.first)
         let defaults = SallaPushConfiguration()
-        XCTAssertNil(configuration.apiBaseURL)
         XCTAssertEqual(configuration.logLevel, defaults.logLevel)
         XCTAssertNil(configuration.appVersion)
         XCTAssertEqual(configuration.clearTagsOnLogout, defaults.clearTagsOnLogout)
@@ -119,12 +116,16 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertEqual(console.errors, [])
     }
 
-    func testReportsNothingWhenTheCallSetsTheAPIHost() {
+    // SallaPush always uses its own server, so a server URL is no option: it changes nothing natively and isn't named.
+    func testReportsTheIgnoredOptionsOfACallThatAlsoGivesAServerURL() {
         let bridge = makeBridge(earlyInit: StaticConfig(appId: "st_42_ios"))
 
         bridge.initialize(appId: "st_42_ios", options: ["apiBaseUrl": "http://localhost:9/v1", "logLevel": "debug"])
 
-        XCTAssertEqual(console.errors, [])
+        XCTAssertEqual(console.errors, [
+            "initialize ignored logLevel: SallaPush already started with this app id from SallaPushAppId, so the call "
+                + "changes nothing. Set them with the Info.plist keys SallaPushLogLevel instead."
+        ])
     }
 
     func testReportsNothingWithoutEarlyInit() {

@@ -2,7 +2,7 @@ import Foundation
 import SallaPush
 
 /// The SallaPush… Info.plist keys that only the wrapper reads. Nil means the key is absent and native's default applies.
-/// SallaPush reads its own keys (SallaPushLogLevel, SallaPushAPIBaseURL, SallaPushAppGroup) itself.
+/// SallaPush reads its own keys (SallaPushLogLevel, SallaPushAppGroup) itself.
 struct StaticConfig: Equatable {
     var appId: String?
     var openLaunchURLs: Bool?
