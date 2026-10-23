@@ -7,7 +7,7 @@ const LEVELS = Object.values(SallaPushLogLevel);
 
 /** Every SallaPush call the example can make; each one is written to the event log. */
 export function renderActions(): HTMLElement[] {
-  const sections = [
+  return [
     customer(),
     tags(),
     subscription(),
@@ -16,10 +16,6 @@ export function renderActions(): HTMLElement[] {
     consent(),
     logs(),
   ];
-  if (Capacitor.getPlatform() === 'android') {
-    sections.push(migration());
-  }
-  return sections;
 }
 
 function customer(): HTMLElement {
@@ -182,17 +178,6 @@ function logs(): HTMLElement {
     'Log level',
     level,
     note("Sets SallaPush's console level and the event log's level.")
-  );
-}
-
-function migration(): HTMLElement {
-  return section(
-    'OneSignal migration',
-    toggle('Show OneSignal-format payloads', true, (value) =>
-      call(`Migration.setDisplayOneSignalCompatPayloads(${value})`, () =>
-        SallaPush.Migration.setDisplayOneSignalCompatPayloads(value)
-      )
-    )
   );
 }
 
