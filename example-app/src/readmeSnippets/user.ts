@@ -54,7 +54,7 @@ export function watchLoginFailures(): void {
   // snippet:login-failures
   SallaPush.User.addEventListener('loginFailure', (failure) => {
     // tokenRejected: log in again once the app has a current token, never from here.
-    // invalidRequest: push-service refused the request as invalid; tell the SallaPush team.
+    // invalidRequest: push-service refused the request as invalid; tell the Salla team.
     telemetry.report('sallapush', `login_${failure}`, 'Login refused', {});
   });
   // end-snippet

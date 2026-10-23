@@ -29,11 +29,30 @@ so most calls will look familiar.
 |---|---|---|---|---|---|---|
 | Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (8.0 or later; Capacitor 9 isn't supported yet) | 15.0, Xcode 26 | minSdk 24 (SallaPush itself needs 23), compileSdk 36, JDK 21 | 22 or later, for Capacitor 8's CLI |
 
-- **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
-  The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
-  Until then devices register, but no notification arrives.
+- **A SallaPush app id from the Salla team:** see [Get started](#get-started).
 - **Check the Capacitor version yourself before you upgrade Capacitor:** some tools only warn about Capacitor 9
   ([Versions](docs/SETUP.md#versions)).
+
+## Get started
+
+SallaPush is for the mobile apps of Salla stores.
+
+1. **Get an app id for iOS and one for Android.** Contact the Salla team for your app id.
+2. **Set up the push credentials with the Salla team.** On iOS, the Salla team adds your APNs key (the `.p8` key, its
+   key id and your Apple team id) and your bundle id to your iOS app id. On Android, it sets up your Android app id
+   with a Firebase project: use that project's `google-services.json`. Until then, devices register, but no
+   notification arrives. Never share keys or Firebase files in an issue or a pull request.
+3. **Sign customers in with their Salla token.** `SallaPush.login(externalId, identityToken)` takes the customer's id
+   and the customer token your app received when the customer signed in. Salla checks the token, and links the device
+   only when the token belongs to that customer.
+4. **Send a test notification.** Ask the Salla team to send one to your device id,
+   `await SallaPush.User.pushSubscription.getId()`.
+
+Report SDK bugs in [GitHub issues](https://github.com/SallaApp/sallapush-capacitor-sdk/issues), and security problems as
+[SECURITY.md](SECURITY.md) explains. What SallaPush collects, for your app's privacy details in App Store Connect and
+its Data safety form in Google Play Console, is listed in the native SDKs' docs:
+[iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/BEHAVIOUR.md#what-sallapush-sends) and
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/BEHAVIOUR.md#what-sallapush-sends).
 
 ## Installation
 
@@ -134,7 +153,7 @@ example's `NotificationService.swift`
 **Maven Central and JDK 21.** Gradle downloads SallaPush Android from Maven Central, which Capacitor's template
 already declares: there is no repository or token to add. Build with a JDK 21 ([JDK 21](docs/SETUP.md#jdk-21)).
 
-**Firebase.** Put the `google-services.json` of the Firebase project that the SallaPush team set up for your app id in
+**Firebase.** Put the `google-services.json` of the Firebase project that the Salla team set up for your app id in
 `android/app`, and leave Firebase's auto-init on. With another project's file, no notification arrives
 ([Firebase](docs/SETUP.md#firebase)).
 
@@ -323,7 +342,7 @@ SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
 
 ## Migrating from OneSignal
 
-**Keep the OneSignal SDK in your app until the SallaPush team confirms you can remove it.** Add SallaPush next to it,
+**Keep the OneSignal SDK in your app until the Salla team confirms you can remove it.** Add SallaPush next to it,
 keep OneSignal initialized, and keep `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as
 OneSignal's Capacitor setup asks.
 

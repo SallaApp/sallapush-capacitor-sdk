@@ -91,7 +91,7 @@ SallaPush iOS has no release 1.0.1: that tag was pushed by mistake, and `bump-na
 
 ## The device checklist
 
-Run it on an iPhone and on an Android 13 or later phone, with a real app id that the SallaPush team set up with your
+Run it on an iPhone and on an Android 13 or later phone, with a real app id that the Salla team set up with your
 APNs key and bundle id, and your Firebase project. Use the example app with your values
 ([example-app/README.md](example-app/README.md)), and for the storyboard app of item 3 and items 10 and 11, test apps
 made as `scripts/verify.sh consumer` makes its apps. Turn on verbose logs.

@@ -37,10 +37,10 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 ## Before you start
 
-- **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
-  The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
-  Until then devices register, but no notification arrives
-  ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start),
+- **An app id for each platform.** Contact the Salla team for your app id. The Salla team sets up the iOS app id with
+  your bundle id and APNs key, and the Android one with a Firebase project, whose `google-services.json` your app uses.
+  Until then devices register, but no notification arrives ([Get started](../README.md#get-started);
+  [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start),
   [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start)).
 
 ## Install
@@ -137,7 +137,7 @@ Define the build setting in an xcconfig file:
 
 <!-- snippet:example-app/ios/App/Config/SallaPush.local.xcconfig.example#app-id -->
 ```xcconfig
-// The SallaPush app id for iOS, from the SallaPush team.
+// The SallaPush app id for iOS, from the Salla team.
 SALLAPUSH_APP_ID = your_app_id
 ```
 
@@ -414,7 +414,7 @@ FirebaseMessaging.addListener('apnsTokenReceived', ({ token }) =>
 
 ### Firebase
 
-Put the `google-services.json` of the Firebase project that the SallaPush team set up for your app id in
+Put the `google-services.json` of the Firebase project that the Salla team set up for your app id in
 `android/app`. Capacitor's template applies the Google services Gradle plugin whenever that file exists.
 
 SallaPush uses the default Firebase app, which that file configures: with another project's file, no notification
@@ -651,7 +651,7 @@ Watch for login failures:
 ```ts
 SallaPush.User.addEventListener('loginFailure', (failure) => {
   // tokenRejected: log in again once the app has a current token, never from here.
-  // invalidRequest: push-service refused the request as invalid; tell the SallaPush team.
+  // invalidRequest: push-service refused the request as invalid; tell the Salla team.
   telemetry.report('sallapush', `login_${failure}`, 'Login refused', {});
 });
 ```
@@ -1011,7 +1011,7 @@ working:
 
 ## Migrating from OneSignal
 
-**Keep the OneSignal SDK in your app until the SallaPush team confirms you can remove it.** Add SallaPush next to it,
+**Keep the OneSignal SDK in your app until the Salla team confirms you can remove it.** Add SallaPush next to it,
 and keep OneSignal initialized
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal),
 [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#onesignal-5)). Keep
@@ -1127,10 +1127,10 @@ Before you ship, check on a device, with a real app id:
    before Capacitor's bridge and that the plugin took the delegate back. Otherwise an error names the problem
    ([Capacitor setup](TROUBLESHOOTING.md#capacitor-setup)).
 3. **Watch the registration.** `init.started` names the app id and the API URL, and `register.ok` follows once the
-   device is registered. `SallaPush.User.pushSubscription.getId()` then resolves the device id, which the SallaPush
-   team can look up. Check this in a build of every configuration you ship, Release included: SallaPush doesn't start
+   device is registered. `SallaPush.User.pushSubscription.getId()` then resolves the device id, which the Salla team
+   can look up. Check this in a build of every configuration you ship, Release included: SallaPush doesn't start
    in a build without the app id, and nothing logs it ([Identity](TROUBLESHOOTING.md#identity)).
-4. **Have the SallaPush team send a notification** to that device, with the app in the foreground, then in the
+4. **Ask the Salla team to send a test notification** to that device, with the app in the foreground, then in the
    background, and tap it: the click listener gets the tap.
 5. **Sign in:** no `'loginFailure'` event follows.
 

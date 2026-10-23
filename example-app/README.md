@@ -35,9 +35,9 @@ The code of the README and of the [setup guide](../docs/SETUP.md) comes from her
 
 ## Configure it
 
-SallaPush starts natively at launch, from the app id in the app's static configuration. Ask the SallaPush team for an
-app id for each platform; they set it up with your iOS bundle id and APNs key, and your Android application id and
-Firebase project. Every file below is ignored by git.
+SallaPush starts natively at launch, from the app id in the app's static configuration. Contact the Salla team for
+your app id, one for each platform: the Salla team sets them up with your iOS bundle id and APNs key, and your Android
+application id and a Firebase project. Every file below is ignored by git.
 
 ### iOS
 
@@ -46,7 +46,7 @@ Copy `ios/App/Config/SallaPush.local.xcconfig.example` to `ios/App/Config/SallaP
 | Setting | Value |
 |---|---|
 | `SALLAPUSH_APP_ID` | your iOS app id |
-| `SALLAPUSH_EXAMPLE_BUNDLE_ID` | the bundle id the SallaPush team set up; the Notification Service Extension's is `<bundle id>.SallaPushNotificationService` |
+| `SALLAPUSH_EXAMPLE_BUNDLE_ID` | the bundle id the Salla team set up; the Notification Service Extension's is `<bundle id>.SallaPushNotificationService` |
 | `DEVELOPMENT_TEAM` | your Apple team, to run on a device |
 | `SALLAPUSH_APP_GROUP` | optional: an App Group for the app and the extension |
 | `SALLAPUSH_API_BASE_URL` | optional: push-service's URL (default: SallaPush's production URL) |
@@ -66,7 +66,7 @@ Set these Gradle properties in `android/sallapush.properties`, or in `~/.gradle/
 | Property | Value |
 |---|---|
 | `sallapushAppId` | your Android app id |
-| `sallapushApplicationId` | the application id the SallaPush team set up (default `sa.salla.sallapush.example`) |
+| `sallapushApplicationId` | the application id the Salla team set up (default `sa.salla.sallapush.example`) |
 | `sallapushApiBaseUrl` | optional: push-service's URL (default: SallaPush's production URL) |
 
 Put your Firebase project's `google-services.json` in `android/app/`. Without it the app still builds, and SallaPush
