@@ -1,18 +1,38 @@
 # Contributing to the SallaPush Capacitor SDK
 
-This repository is where `@salla.sa/sallapush-capacitor` is developed and released. Every change goes through a pull
-request to `master`. For releases, see [RELEASING.md](RELEASING.md).
+Thank you for helping improve the SallaPush Capacitor SDK.
 
-## Contents
+## Issues
 
-1. [Prerequisites](#prerequisites)
-2. [Credentials](#credentials)
-3. [Layout](#layout)
-4. [Commands](#commands)
-5. [Adding or changing API](#adding-or-changing-api)
-6. [What needs care](#what-needs-care)
-7. [Commits](#commits)
-8. [Pull requests](#pull-requests)
+- **Bugs and feature requests:** open an issue at https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose. Say which
+  SDK version, platform and OS version you use, what you expected and what happened, and include the SallaPush log
+  codes you saw.
+- **Never paste** push tokens, identity tokens, device secrets, APNs keys, Firebase files or customer data. Log codes
+  are enough, and SallaPush never logs secrets.
+- **Security problems:** don't open an issue. Report them privately, as [SECURITY.md](SECURITY.md) explains.
+- **App ids and push credentials:** contact the Salla team. Issues can't help with them.
+
+## Pull requests
+
+Pull requests are welcome.
+
+- For a large change, open an issue first, so that we can agree on the approach before you write the code.
+- Keep each pull request to one change. Update its tests and docs, and add a line under `## [Unreleased]` in
+  [CHANGELOG.md](CHANGELOG.md).
+- Run the checks below before you push.
+- A maintainer reviews your pull request. A maintainer may land it as a commit of their own that credits you as a
+  co-author (`Co-authored-by`), and then close the pull request with a link to that commit.
+- By contributing, you agree that your contribution is licensed under this repository's [MIT License](LICENSE). No
+  contributor license agreement or sign-off is needed.
+
+Everyone taking part in this project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Working on the package
+
+This repository is where `@salla.sa/sallapush-capacitor` is developed and released; [RELEASING.md](RELEASING.md)
+describes releases. The sections below cover the [prerequisites](#prerequisites), [credentials](#credentials), the
+[layout](#layout), the [commands and checks](#commands), [adding or changing API](#adding-or-changing-api),
+[what needs care](#what-needs-care) and [commits](#commits).
 
 ## Prerequisites
 
@@ -57,7 +77,7 @@ personal paths and Apple team ids in what a commit takes.
 | `Package.swift`, `Salla.saSallapushCapacitor.podspec` | The plugin's Swift package and its pod. Capacitor's CLI names both after the npm package, and apps import the module `SallaPushCapacitorPlugin` with either |
 | `example-app/` | The example app: its web app (`src/`), the README's snippets (`src/readmeSnippets/`), and its native projects, with the iOS tests in the `AppTests` target (`ios/App/AppTests/`) and the Notification Service Extension |
 | `docs/` | The setup guide, the reference and the troubleshooting guide; `docs/snippets/` holds the docs' code for app shapes the example doesn't have, which `scripts/verify.sh consumer` builds |
-| `scripts/` | `verify.sh`, `bump-native.sh`, `release-dist.sh`, `verified-label.sh`, `add-nse-target.rb`, the checkers and `self-test.sh` |
+| `scripts/` | `verify.sh`, `bump-native.sh`, `release-dist.sh`, `add-nse-target.rb`, the checkers and `self-test.sh` |
 | `api/sallapush-capacitor.api` | The public TypeScript API, as `scripts/dump-api.mjs` prints it |
 | `tool/api-parity/` | The native API files at the pinned versions, and `mapping.json`, which maps every native symbol |
 
@@ -180,22 +200,3 @@ events: Capacitor itself would only fail a missing method at run time, with "not
 
 - One short lowercase line: `feat: …`, `fix: …`, `docs: …`, `test: …` or `ci: …`.
 - Small commits, each of which builds and passes its checks, with the tests of a change in the same commit.
-- Signed: the organization accepts only commits with a verified signature.
-
-## Pull requests
-
-- **Branch names:** `feature/<TICKET>-<description>`, or `bugfix/`, `hotfix/` or `test/` in place of `feature/`.
-- **Titles:** `<type>(<scope>): <subject>`, with a scope, such as the ticket key.
-- **Checks:** the organization requires `Validate PR title`, `Validate branch name`, `Greptile Review` and
-  `Testing Ready`. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `JavaScript, types and unit tests`
-  (the first ten steps), `Shell scripts` (the `shell` step) and `Native verified`; `Testing Ready` passes only when
-  all three did.
-- **`Native verified`.** CI can't build the native code: the native SDKs are private, and no macOS runner exists. So
-  after each push, run `scripts/verify.sh` with no step names on a Mac, at the pull request's head commit, with
-  `VERIFY_LOG_DIR` set. Add the label `native-verified-locally`, and, as the person who added it, comment in the pull
-  request's conversation. The comment's first line is exactly `native-verified-locally <the head commit's full id>`, and
-  the rest is that run's `summary.tsv` as it is. Its first line and every row name the commit: each must be the head
-  commit, without `+dirty`, which marks a run of a tree with changes. Every push needs a new comment, and a comment
-  edited after it was posted counts for nothing ([scripts/verified-label.sh](scripts/verified-label.sh)). Neither the
-  label nor the comment starts a CI run: then re-run the failed jobs of the head commit's run, with **Re-run failed
-  jobs** on its page or `gh run rerun <run id> --failed`, so that `Native verified` and `Testing Ready` pass.

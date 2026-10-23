@@ -20,56 +20,61 @@ The package follows [Semantic Versioning](https://semver.org). Its pins of the n
 - **A minor** wraps new native API, or adds API of its own that changes nothing for existing apps.
 - **A major** changes the package's API in a way that apps must follow.
 
-A release is a git tag on this repository: the version itself, without a `v`, such as `1.0.0` or `1.1.0-beta.1`.
-Apps install that tag ([README](README.md#installation)). A pushed tag never moves and is never deleted: an app's
-lockfile records its commit. A defect in a release is fixed by the next version.
+A release is a git tag on this repository, the version itself without a `v`, such as `1.0.1` or `1.1.0-beta.1`, and
+the same version on npm. Apps install it from npm, or from the tag ([README](README.md#installation)). A pushed tag
+never moves and is never deleted, and npm never takes a version twice: an app's lockfile records what it installed. A
+defect in a release is fixed by the next version. Releases are on npm from 1.0.1 on; 1.0.0 is a git tag only.
 
 ## Before a release
 
 In a pull request, and merged to `master`:
 
-- **The version.** Set `version` in `package.json`. In the README, set the version line, without "not released yet",
-  the Capacitor row of the versions table and the tag of the install line. `git grep -nF <previous version>` lists
-  every place; earlier CHANGELOG entries keep theirs. The `snippets` step fails when the versions table and
-  `package.json` disagree.
+- **The version.** Set `version` in `package.json`. In the README, set the version line, without "not released yet", and
+  the Capacitor row of the versions table, and in the setup guide the tag of the git dependency line.
+  `git grep -nF <previous version>` lists every place; earlier CHANGELOG entries keep theirs. The `snippets` step fails
+  when the versions table and `package.json` disagree.
 - **The CHANGELOG entry.** Rename `## [Unreleased]` to the version, with the release date, such as
   `## [1.0.0] - 2026-10-20`, and start a new, empty `## [Unreleased]` above it.
-- **The checks.** On the merged commit, in a clean checkout, on a Mac with access to the native SDKs, run
-  `scripts/verify.sh` with no step names. Every step must pass, `consumer` included, which installs a dry run of the
-  release in fresh Capacitor apps.
+- **The checks.** On the merged commit, in a clean checkout, on a Mac, run `scripts/verify.sh` with no step names. Every
+  step must pass, `consumer` included, which installs a dry run of the release in fresh Capacitor apps.
 - **The devices.** A release that changes the native pins or the plugin's native code also passes the
   [device checklist](#the-device-checklist). Record the result of each item in the release's pull request.
 
 ## Making the release
 
-An app installs the package from git, and nothing builds at install time: the tag names a release commit that holds
-the built `dist/`. `scripts/release-dist.sh` makes it:
+Nothing builds at install time: the tag names a release commit that holds the built `dist/`, and npm publishes that
+commit's files. `scripts/release-dist.sh` makes the commit:
 
 1. Check out the merged commit, with a clean working tree.
 2. Run `scripts/release-dist.sh <version>`. It checks that `package.json` declares the version, that the CHANGELOG has
    its entry, that the tag doesn't exist yet, and that `master` on `origin` has the commit, which it fetches to check.
-   Then it builds the package afresh, packs it as npm does, keeps in `package.json` only what an install needs (the
-   `capacitor` key included, without which Capacitor's CLI doesn't see the plugin), and commits that tree as a child of
-   the merged commit, signed with your git signing key. It tags that commit with the version. It refuses a package that
-   would ship a file that isn't committed, such as one `.gitignore` hides in `android/`: release from a fresh clone.
+   Then it builds the package afresh, packs it as npm does, keeps in `package.json` only what an install and npm need
+   (the `capacitor` key included, without which Capacitor's CLI doesn't see the plugin, and `publishConfig`), and
+   commits that tree as a child of the merged commit, signed with your git signing key. It tags that commit with the
+   version. It refuses a package that would ship a file that isn't committed, such as one `.gitignore` hides in
+   `android/`: release from a fresh clone.
 3. Push the tag, and only the tag: `git push origin <version>`. The script never pushes, and prints that command.
+4. Publish the tag to npm, from a clean checkout of it: `git checkout <version>`, then `npm publish`. The tag's
+   `package.json` has no scripts and publishes with public access, so npm uploads exactly the tag's files, as
+   `npm publish --dry-run` lists them first. A maintainer with publish rights on the `@salla.sa` scope does this, with
+   two-factor authentication.
 
 The release commit is on no branch, by design: `master` keeps the sources only. `scripts/release-dist.sh <version>
 --dry-run` makes the same commit in a temporary clone, from any commit, and changes nothing here.
 
 ## After the release
 
-In a fresh Capacitor 8 app, install the pushed tag with the setup guide's dependency line
+In a fresh Capacitor 8 app, install the release from npm, `npm install @salla.sa/sallapush-capacitor@<version>`, run
+`npx cap sync`, and build both platforms. Then install the pushed tag with the setup guide's git dependency line
 ([From git](docs/SETUP.md#from-git)):
 
 - once with npm 12, with `allow-git=root` in the app's `.npmrc`;
 - once with Yarn 4.18.1, with the repository in `approvedGitRepositories`;
 - each time, run `npx cap sync`, and build both platforms.
 
-From the second release on, also update an app that has the previous release, once with CocoaPods and once with Swift
-Package Manager and the Notification Service Extension, as the setup guide's
-[Updating the package](docs/SETUP.md#updating-the-package) says: move the tag and the app's SallaPush pins, run
-`npx cap sync`, and build both platforms.
+Also update an app that has the previous release, once with CocoaPods and once with Swift Package Manager and the
+Notification Service Extension, as the setup guide's [Updating the package](docs/SETUP.md#updating-the-package) says:
+update the package, move the app's SallaPush pins, run `npx cap sync`, and build both platforms.
 
 Record the result in the release's pull request.
 
@@ -87,7 +92,7 @@ Record the result in the release's pull request.
 5. Open the pull request, and release as above. When the native API didn't change, the parity check passes at once,
    and the release is a patch.
 
-SallaPush iOS has no release 1.0.1: that tag was pushed by mistake, and `bump-native.sh` refuses it.
+SallaPush iOS has no release 1.0.1, and `bump-native.sh` refuses it.
 
 ## The device checklist
 
