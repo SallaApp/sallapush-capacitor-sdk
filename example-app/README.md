@@ -36,8 +36,8 @@ The code of the README and of the [setup guide](../docs/SETUP.md) comes from her
 ## Configure it
 
 SallaPush starts natively at launch, from the app id in the app's static configuration. Contact the Salla team for
-your app id, one for each platform: the Salla team sets them up with your iOS bundle id and APNs key, and your Android
-application id and a Firebase project. Every file below is ignored by git.
+your app id. You need one for each platform: the Salla team sets them up with your iOS bundle id and APNs key, and your
+Android application id and a Firebase project. Every file below is ignored by git.
 
 ### iOS
 
