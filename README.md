@@ -166,7 +166,12 @@ nothing: add [the forwarding service](docs/SETUP.md#another-fcm-plugin), which h
 ## Quick start
 
 In your app's entry module, before your framework renders its first screen (Angular's `src/main.ts`, React's
-`src/main.tsx`, Vue's `src/main.ts`), import `SallaPush` from `@salla.sa/sallapush-capacitor`, then:
+`src/main.tsx`, Vue's `src/main.ts`), import SallaPush, then:
+
+<!-- snippet:example-app/src/readmeSnippets/platform.ts#import -->
+```ts
+import { SallaPush } from '@salla.sa/sallapush-capacitor';
+```
 
 **1. Listen for taps.** Taps made before the first click listener, such as the tap that launched the app, wait and
 arrive once it is added:
@@ -190,7 +195,8 @@ if (customer) {
 }
 ```
 
-**3. Ask for permission** where it fits your app. SallaPush never shows the system prompt on its own.
+**3. Ask for permission** where it fits your app, from an async function such as an onboarding screen's button
+handler, not at the top level of the entry module. SallaPush never shows the system prompt on its own.
 
 <!-- snippet:example-app/src/readmeSnippets/notifications.ts#request-permission -->
 ```ts
@@ -198,8 +204,9 @@ const granted = await SallaPush.Notifications.requestPermission(true);
 ```
 
 `currentCustomer()` stands for your app's session, and `route` for its navigation. In an Angular app with zone.js,
-run listener work that navigates in `NgZone.run`. An app that knows its app id only at run time calls
-`SallaPush.initialize(appId)` instead ([Initializing from JavaScript](docs/SETUP.md#initializing-from-javascript)).
+run listener work that navigates in `NgZone.run`. An app that knows its app id only at run time leaves the static app
+id out and calls `SallaPush.initialize(appId)` first, before these calls: on Android, `requestPermission` resolves
+`false` until SallaPush is initialized ([Initializing from JavaScript](docs/SETUP.md#initializing-from-javascript)).
 
 ## Verify it works
 
