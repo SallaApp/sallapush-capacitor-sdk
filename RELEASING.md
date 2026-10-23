@@ -89,6 +89,10 @@ Record the result in the release's pull request.
    wrapped, with the reason.
 3. Wrap the new API, with its tests ([CONTRIBUTING.md](CONTRIBUTING.md#adding-or-changing-api)).
 4. Update the README and the docs where the native behaviour changed, with links to the native docs at the new tag.
+   The parity check sees only the API, so also read the native CHANGELOG entries since the old pins: add each new
+   Info.plist key or manifest meta-data that native reads to the
+   [Static configuration](docs/REFERENCE.md#static-configuration) table, and update the **Privacy** notes of the README,
+   the setup guide and the reference when what native logs changes.
 5. Open the pull request, and release as above. When the native API didn't change, the parity check passes at once,
    and the release is a patch.
 
