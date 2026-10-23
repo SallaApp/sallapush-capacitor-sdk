@@ -20,13 +20,11 @@ export function startClearingTheBadgeOnBothPlatforms(appId: string): void {
   // end-snippet
 }
 
-// snippet:will-display
-let chatListener: SallaPushEventSubscription | null = null;
-
-// While a chat screen shows its messages, SallaPush doesn't show that chat's notifications.
-export function chatScreenOpened(chatId: string): void {
-  chatListener?.remove();
-  chatListener = SallaPush.Notifications.addEventListener(
+// While a chat screen shows its messages, SallaPush doesn't show that chat's notifications. The screen removes the
+// listener when it closes.
+export function chatScreenOpened(chatId: string): SallaPushEventSubscription {
+  // snippet:will-display
+  const chatListener = SallaPush.Notifications.addEventListener(
     'foregroundWillDisplay',
     (event) => {
       if (event.notification.getString('chat_id') === chatId) {
@@ -34,10 +32,6 @@ export function chatScreenOpened(chatId: string): void {
       }
     }
   );
+  // end-snippet
+  return chatListener;
 }
-
-export function chatScreenClosed(): void {
-  chatListener?.remove();
-  chatListener = null;
-}
-// end-snippet

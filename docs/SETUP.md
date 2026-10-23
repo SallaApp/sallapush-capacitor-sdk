@@ -485,7 +485,7 @@ import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.salla.push.SallaPush;
 
-/** Hands SallaPush its own messages and tokens first; everything else goes to @capacitor/push-notifications. */
+/** Hands SallaPush its own messages and tokens first, and every other one to the push plugin's service it extends. */
 public class SallaPushMessagingService extends MessagingService {
 
     @Override
@@ -822,25 +822,14 @@ hold each one back, such as on a chat screen:
 
 <!-- snippet:example-app/src/readmeSnippets/notifications.ts#will-display -->
 ```ts
-let chatListener: SallaPushEventSubscription | null = null;
-
-// While a chat screen shows its messages, SallaPush doesn't show that chat's notifications.
-export function chatScreenOpened(chatId: string): void {
-  chatListener?.remove();
-  chatListener = SallaPush.Notifications.addEventListener(
-    'foregroundWillDisplay',
-    (event) => {
-      if (event.notification.getString('chat_id') === chatId) {
-        event.preventDefault(); // before any await: it counts only while the listener runs
-      }
+const chatListener = SallaPush.Notifications.addEventListener(
+  'foregroundWillDisplay',
+  (event) => {
+    if (event.notification.getString('chat_id') === chatId) {
+      event.preventDefault(); // before any await: it counts only while the listener runs
     }
-  );
-}
-
-export function chatScreenClosed(): void {
-  chatListener?.remove();
-  chatListener = null;
-}
+  }
+);
 ```
 
 - **While a listener exists, SallaPush holds every foreground notification** and hands it to JavaScript. Once the
