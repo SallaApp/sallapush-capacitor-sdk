@@ -99,11 +99,19 @@ jobs:
             "$version" || { echo "::error::npm $version can't publish with trusted publishing: it needs 11.5.1 or later"; exit 1; }
           echo "npm $version"
       # The dist package.json has no scripts, so npm packs exactly the tag's files; a pre-release goes to the next tag.
+      # A version npm already has, such as a package's first one, which a maintainer publishes by hand, or a re-run, is
+      # not published again.
       - name: Publish the tag's tree
         env:
+          TAG: ${{ github.ref_name }}
           PRERELEASE: ${{ needs.check.outputs.prerelease }}
         run: |
           set -euo pipefail
+          name="$(node -p 'require("./package.json").name')"
+          if [ "$(npm view "$name@$TAG" version 2>/dev/null || true)" = "$TAG" ]; then
+            echo "::notice::npm already has $name@$TAG: nothing to publish"
+            exit 0
+          fi
           dist_tag=latest
           [ "$PRERELEASE" != true ] || dist_tag=next
           npm publish --dry-run --access public --tag "$dist_tag"
