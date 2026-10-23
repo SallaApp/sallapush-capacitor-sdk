@@ -629,10 +629,8 @@ smoke_ios() {
   example_sync ios
   keep_example_project
   local_ios_sdk "$root/example-app/ios/App"
-  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it. The SallaPush
-  # server is a closed port of the Mac, so no request leaves it.
-  example_build smoke Release SALLAPUSH_APP_ID=example_smoke \
-    SALLAPUSH_API_BASE_URL=http://localhost:9/notifications/v1/sallapush SALLAPUSH_EXAMPLE_BUNDLE_ID="$SP_EXAMPLE_ID"
+  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it.
+  example_build smoke Release SALLAPUSH_APP_ID=example_smoke SALLAPUSH_EXAMPLE_BUNDLE_ID="$SP_EXAMPLE_ID"
   app="$work/derived-smoke/Build/Products/Release-iphonesimulator/$SP_EXAMPLE.app"
   xcrun simctl terminate "$udid" "$SP_EXAMPLE_ID" >/dev/null 2>&1 || true
   xcrun simctl uninstall "$udid" "$SP_EXAMPLE_ID" >/dev/null 2>&1 || true
@@ -705,7 +703,6 @@ smoke_android() {
   # The example's own application id, whatever sallapush.properties sets: every call below names it. Google services
   # stay out: a google-services.json for another application id has no client for this one.
   (cd "$root/example-app/android" && ORG_GRADLE_PROJECT_sallapushAppId=example_smoke \
-    ORG_GRADLE_PROJECT_sallapushApiBaseUrl=http://10.0.2.2:9/notifications/v1/sallapush \
     ORG_GRADLE_PROJECT_sallapushApplicationId="$SP_EXAMPLE_ID" \
     ORG_GRADLE_PROJECT_sallapushSkipGoogleServices=true ./gradlew --quiet assembleRelease)
   apk="$root/example-app/android/app/build/outputs/apk/release/app-release.apk"
@@ -901,23 +898,20 @@ PY
   echo "${1##*/}: the README's imports, start and forwarding regions are in the template's AppDelegate.swift"
 }
 
-# consumer_info_plist <app> [<server URL>]: the README's Info.plist key (the app id from the build setting
-# SALLAPUSH_APP_ID), and for a run, the SallaPush server on a closed port of the Mac.
+# consumer_info_plist <app>: the README's Info.plist key (the app id from the build setting SALLAPUSH_APP_ID).
 consumer_info_plist() {
   local app_id
   app_id="$(snippet example-app/ios/App/App/Info.plist#app-id)"
-  python3 -I - "$1/ios/App/App/Info.plist" "$app_id" "${2:-}" <<'PY'
+  python3 -I - "$1/ios/App/App/Info.plist" "$app_id" <<'PY'
 import plistlib, sys
 
-path, region, url = sys.argv[1:4]
+path, region = sys.argv[1:3]
 with open(path, encoding="utf-8") as handle:
     text = handle.read()
 end = text.rfind("</dict>")
 if end < 0:
     sys.exit(f"{path}: no top-level dict")
 lines = region.split("\n")
-if url:
-    lines += ["<key>SallaPushAPIBaseURL</key>", f"<string>{url}</string>"]
 text = text[:end] + "".join(f"\t{line}\n" for line in lines) + text[end:]
 values = plistlib.loads(text.encode("utf-8"))
 if values.get("SallaPushAppId") != "$(SALLAPUSH_APP_ID)":
@@ -1133,7 +1127,7 @@ with open(path, "w", encoding="utf-8") as handle:
 PY
   consumer_extension "$app"
   snippet docs/snippets/CapacitorPushAppDelegate.swift >"$app/ios/App/App/AppDelegate.swift"
-  consumer_info_plist "$app" http://localhost:9/notifications/v1/sallapush
+  consumer_info_plist "$app"
   consumer_android "$app" forwarding
   consumer_sync "$app"
   consumer_ios_build "$app" SALLAPUSH_APP_ID=consumer_check
@@ -1152,7 +1146,7 @@ consumer_min() {
   consumer_new consumer-min "$SP_CAPACITOR_MIN"
   consumer_install "$app" git
   consumer_app_delegate "$app"
-  consumer_info_plist "$app" http://localhost:9/notifications/v1/sallapush
+  consumer_info_plist "$app"
   consumer_android "$app"
   consumer_extension "$app" --spm "$ios_pin"
   local_ios_sdk "$app/ios/App"
