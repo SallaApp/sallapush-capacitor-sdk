@@ -92,8 +92,8 @@ The native SDKs come from their private repositories, as in native apps:
 - **iOS with Swift Package Manager,** Capacitor 8's default: Xcode fetches `SallaApp/sallapush-ios-sdk` when it builds
   the app, and `npx cap sync` fetches nothing. Sign in to Xcode with a GitHub account that can read it (**Xcode →
   Settings → Accounts**).
-- **iOS with CocoaPods:** the [Podfile lines](#swift-package-manager-or-cocoapods) fetch the SallaPush pods with your
-  own git, over SSH, so `pod install` needs an SSH key that can read `SallaApp/sallapush-ios-sdk`.
+- **iOS with CocoaPods:** the [Podfile lines](#swift-package-manager-or-cocoapods) fetch the SallaPush pods from
+  `SallaApp/sallapush-ios-sdk` with your own git, over HTTPS, so `pod install` needs git credentials that can read it.
 - **Android:** the package's Gradle script adds SallaPush's GitHub Packages repository to every project of your
   build. Gradle reads the credentials from the Gradle properties `gpr.user` (your GitHub login) and `gpr.key` (the
   token), for example in `~/.gradle/gradle.properties`, outside every project, or from the environment variables
@@ -102,7 +102,7 @@ The native SDKs come from their private repositories, as in native apps:
 ### CI machines
 
 A machine that has only a token, not an SSH key, rewrites the SSH URLs of SallaApp's repositories to HTTPS with that
-token. It covers this package and the iOS pods. Set the rewrites in the environment of the job that installs and
+token. It covers this package. Set the rewrites in the environment of the job that installs and
 builds the app, where every git that npm, Yarn and CocoaPods start reads them (git 2.31 or later), never with
 `git config --global`: on a machine that stays, such as a self-hosted runner, the token would stay in `~/.gitconfig`
 for every later job, and after a rotation git would keep sending the first token written there.
@@ -116,18 +116,13 @@ export GIT_CONFIG_KEY_1="url.https://x-access-token:${TOKEN}@github.com/SallaApp
 `TOKEN` comes from the machine's secrets: a token that can read the contents of this repository and of
 `SallaApp/sallapush-ios-sdk`. Gradle still needs `GITHUB_ACTOR` and `GITHUB_TOKEN`, with the classic token.
 
-These rewrites never reach the Swift package, whose URL is `https://github.com/SallaApp/sallapush-ios-sdk.git`. A Swift
-Package Manager app builds on CI with `xcodebuild … -scmProvider system`, so that Xcode uses the machine's git
-(`npx cap build ios` doesn't pass it: call `xcodebuild` yourself), and with one of native's rewrites of that URL
+These rewrites never reach the iOS SDK's HTTPS URL, `https://github.com/SallaApp/sallapush-ios-sdk.git`, which the
+Swift package and the pods use. A Swift Package Manager app builds on CI with `xcodebuild … -scmProvider system`, so
+that Xcode uses the machine's git (`npx cap build ios` doesn't pass it: call `xcodebuild` yourself), and with native's
+rewrite of that URL
 ([native private repository access](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#private-repository-access)).
-On a machine with an SSH key, to SSH:
-
-```bash
-git config --global url."git@github.com:SallaApp/sallapush-ios-sdk.git".insteadOf "https://github.com/SallaApp/sallapush-ios-sdk.git"
-```
-
-On a machine with a token that can read the repository's contents, with that token, as a third rewrite in the same
-environment:
+With a token that can read the repository's contents, add it as a third rewrite in the same environment, which the pods'
+fetches use too:
 
 ```bash
 export GIT_CONFIG_COUNT=3
@@ -312,8 +307,8 @@ SallaPush's private repository, so your Podfile names them. In `ios/App/Podfile`
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->
 ```ruby
-pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
 - **Add them before the first `npx cap sync` with the plugin.** The plugin's pod depends on SallaPush at this exact
@@ -351,8 +346,8 @@ build differs from its app's.
 <!-- snippet:docs/snippets/Podfile#podfile-extension -->
 ```ruby
 target 'SallaPushNotificationService' do
-  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-  pod 'SallaPushExtension', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushExtension', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 end
 ```
 

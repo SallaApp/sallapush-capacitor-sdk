@@ -44,7 +44,7 @@ says how to configure and run it.
   `gpr.key` of `~/.gradle/gradle.properties`, or in `GITHUB_ACTOR` and `GITHUB_TOKEN`.
 - **Swift Package Manager:** an account in Xcode that can read `SallaApp/sallapush-ios-sdk`, or, for
   `scripts/verify.sh`, a clean clone of it in `VERIFY_IOS_SDK_CHECKOUT` ([Commands](#commands)).
-- **CocoaPods:** an SSH key that can read `SallaApp/sallapush-ios-sdk`.
+- **CocoaPods:** git credentials that can read `SallaApp/sallapush-ios-sdk` over HTTPS.
 - **The example's own values,** such as its app id and `google-services.json`, go in the files that git ignores
   ([example-app/README.md](example-app/README.md#configure-it)).
 

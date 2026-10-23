@@ -61,18 +61,18 @@ Then run `npx cap sync`, which adds the plugin to both native projects:
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->
 ```ruby
-pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
 ### Access to the private repositories
 
 This repository, `SallaApp/sallapush-ios-sdk` and `SallaApp/sallapush-android-sdk` are private: every developer and
 CI machine that builds the app needs read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in
-to a GitHub account that can read it (**Xcode → Settings → Accounts**). The package install and the pods use your
-git, over SSH. Gradle reads a classic token with the `read:packages` scope from the Gradle properties `gpr.user` (your
-GitHub login) and `gpr.key`, for example in `~/.gradle/gradle.properties`, or from `GITHUB_ACTOR` and `GITHUB_TOKEN`.
-Never commit them. CI machines: [CI machines](docs/SETUP.md#ci-machines).
+to a GitHub account that can read it (**Xcode → Settings → Accounts**). The package install uses your git, over SSH,
+and the pods your git, over HTTPS. Gradle reads a classic token with the `read:packages` scope from the Gradle
+properties `gpr.user` (your GitHub login) and `gpr.key`, for example in `~/.gradle/gradle.properties`, or from
+`GITHUB_ACTOR` and `GITHUB_TOKEN`. Never commit them. CI machines: [CI machines](docs/SETUP.md#ci-machines).
 
 ### Updating the package
 
@@ -364,7 +364,7 @@ code for each.
 
 | Problem | Fix |
 |---|---|
-| `npx cap sync ios` or `pod install`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. It needs SSH access to `SallaApp/sallapush-ios-sdk`. |
+| `npx cap sync ios` or `pod install`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. |
 | Xcode can't resolve `sallapush-ios-sdk` | Sign in to Xcode with an account that can read `SallaApp/sallapush-ios-sdk`; on CI, see [CI machines](docs/SETUP.md#ci-machines). |
 | Gradle: `Could not find com.salla.push:sallapush`, 401, or `Username must not be null!` | Give Gradle a classic token with `read:packages` in `gpr.user` and `gpr.key` ([Access to the private repositories](#access-to-the-private-repositories)). |
 | No notification on Android, or `token.firebase_missing` | Add the right project's `google-services.json`, and with another FCM plugin, the [forwarding service](docs/SETUP.md#another-fcm-plugin). |

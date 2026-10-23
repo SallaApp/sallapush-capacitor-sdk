@@ -8,6 +8,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - The package is available under the MIT License; `package.json` and the podspec declare it.
+- The docs' Podfile lines fetch the SallaPush pods over HTTPS instead of SSH.
 
 ## [1.0.0] - 2026-10-19
 

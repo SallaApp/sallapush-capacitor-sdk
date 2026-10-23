@@ -6,8 +6,8 @@
 target 'App' do
   capacitor_pods
   # snippet:podfile-app
-  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-  pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
   # end-snippet
 end
 
@@ -15,7 +15,7 @@ end
 # template's use_frameworks!.
 # snippet:podfile-extension
 target 'SallaPushNotificationService' do
-  pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-  pod 'SallaPushExtension', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushExtension', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 end
 # end-snippet
