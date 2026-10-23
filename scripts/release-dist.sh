@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Makes the release that apps install with git: the package as npm packs it, with the built dist/ and a package.json
-# reduced to what an install needs, committed as a child of HEAD and tagged <version>, so nothing builds at install time.
-# It never pushes.
+# Makes the release that npm publishes and apps install, from npm or with git: the package as npm packs it, with the
+# built dist/ and a package.json reduced to what an install and npm need, plus the workflow that publishes it, committed
+# as a child of HEAD and tagged <version>, so nothing builds at install time. It never pushes.
 #
 #   scripts/release-dist.sh <version>             a commit signed with your git signing key, and the tag, in this repository;
 #                                                 HEAD must be on origin's master
@@ -118,6 +118,12 @@ with open(path, "w", encoding="utf-8") as handle:
     handle.write("\n")
 print(f"package.json keeps {', '.join(dist)}; drops {', '.join(sorted(set(package) - set(dist))) or 'nothing'}")
 PY
+
+# A tag push runs the workflows of the tagged commit: the dist commit carries the committed publish.yml, which publishes
+# it to npm. The package's files list keeps it out of what npm packs.
+mkdir -p "$work/package/.github/workflows"
+git -C "$root" show "HEAD:.github/workflows/publish.yml" >"$work/package/.github/workflows/publish.yml" 2>/dev/null ||
+  fail ".github/workflows/publish.yml is missing from HEAD: the release tag would publish nothing"
 
 if $dry_run; then
   target="${RELEASE_DIST_DIR:-}"

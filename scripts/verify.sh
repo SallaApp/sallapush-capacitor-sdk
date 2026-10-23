@@ -181,7 +181,7 @@ readonly REQUIRED_FILES=".gitignore .nvmrc .yarnrc.yml .yarn/releases/yarn-4.11.
 yarn.lock README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md docs/SETUP.md docs/REFERENCE.md docs/TROUBLESHOOTING.md
 LICENSE Package.swift Salla.saSallapushCapacitor.podspec rollup.config.mjs tsconfig.json tsconfig.build.json
 android/build.gradle android/src/main/AndroidManifest.xml src/index.ts src/internal/native.ts .github/workflows/ci.yml
-api/sallapush-capacitor.api tool/api-parity/native-ios-API.txt
+.github/workflows/publish.yml api/sallapush-capacitor.api tool/api-parity/native-ios-API.txt
 tool/api-parity/native-android-sallapush.api tool/api-parity/mapping.json
 example-app/ios/App/App.xcodeproj/project.pbxproj example-app/ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme
 example-app/ios/TestPayloads/native.apns example-app/android/TestPayloads/native.json docs/snippets/Podfile

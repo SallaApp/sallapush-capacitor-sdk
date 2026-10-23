@@ -1,0 +1,146 @@
+name: Publish
+
+# A release tag names the dist commit that scripts/release-dist.sh makes: the package as npm packs it, a child of a
+# master commit. Pushing the tag publishes that exact tree to npm with trusted publishing, then creates the GitHub
+# Release from the version's CHANGELOG entry. A tag push runs the workflows of the tagged commit, so release-dist.sh
+# copies this file into every dist commit; the package's files list keeps it out of what npm publishes.
+on:
+  push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+*']
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Check the release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      prerelease: ${{ steps.tag.outputs.prerelease }}
+    steps:
+      # All history: the tag's parent must be on master.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The tag is the dist commit of a master commit, at the version of its package.json and CHANGELOG
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 2 ] ||
+            { echo "::error::$TAG must name a commit with one parent: the dist commit of scripts/release-dist.sh"; exit 1; }
+          git merge-base --is-ancestor HEAD^ origin/master ||
+            { echo "::error::the parent of $TAG isn't on master: release a merged commit with scripts/release-dist.sh"; exit 1; }
+          git show HEAD^:CHANGELOG.md >"$RUNNER_TEMP/CHANGELOG.md"
+          python3 - "$TAG" "$RUNNER_TEMP/CHANGELOG.md" <<'PY'
+          import json, sys
+
+          tag, changelog = sys.argv[1], sys.argv[2]
+          with open("package.json", encoding="utf-8") as handle:
+              package = json.load(handle)
+          problems = []
+          if package.get("version") != tag:
+              problems.append(f"package.json declares {package.get('version')}, not {tag}")
+          if "scripts" in package or "devDependencies" in package:
+              problems.append("package.json has scripts or devDependencies: the tag isn't a dist commit of scripts/release-dist.sh")
+          if package.get("private"):
+              problems.append("package.json is private")
+          if (package.get("publishConfig") or {}).get("access") != "public":
+              problems.append("package.json doesn't publish with public access")
+          with open(changelog, encoding="utf-8") as handle:
+              headings = [line for line in handle if line.startswith(f"## [{tag}]")]
+          if len(headings) != 1:
+              problems.append(f"the CHANGELOG of the tag's parent has {len(headings)} '## [{tag}]' entries, not 1")
+          for problem in problems:
+              print(f"::error::{problem}")
+          sys.exit(1 if problems else 0)
+          PY
+          case "$TAG" in
+            *-alpha* | *-beta* | *-rc*) echo "prerelease=true" >>"$GITHUB_OUTPUT" ;;
+            *) echo "prerelease=false" >>"$GITHUB_OUTPUT" ;;
+          esac
+          echo "$TAG is the dist commit of master's $(git rev-parse --short HEAD^), and package.json and CHANGELOG name it"
+
+  # Trusted publishing: npm takes the workflow's OIDC token, no npm token exists, and the package gets provenance.
+  publish:
+    name: Publish to npm
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - name: npm 11.5.1 or later, which trusted publishing needs
+        run: |
+          set -euo pipefail
+          version="$(npm --version)"
+          python3 -c 'import re, sys; v = tuple(int(p) for p in re.findall(r"\d+", sys.argv[1])[:3]); sys.exit(v < (11, 5, 1))' \
+            "$version" || { echo "::error::npm $version can't publish with trusted publishing: it needs 11.5.1 or later"; exit 1; }
+          echo "npm $version"
+      # The dist package.json has no scripts, so npm packs exactly the tag's files; a pre-release goes to the next tag.
+      - name: Publish the tag's tree
+        env:
+          PRERELEASE: ${{ needs.check.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          dist_tag=latest
+          [ "$PRERELEASE" != true ] || dist_tag=next
+          npm publish --dry-run --access public --tag "$dist_tag"
+          npm publish --access public --tag "$dist_tag"
+
+  github-release:
+    name: GitHub Release
+    needs: [check, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      # The tag and its parent, whose CHANGELOG holds the release notes.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Create the GitHub Release from the version's CHANGELOG entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.check.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          git show HEAD^:CHANGELOG.md >"$RUNNER_TEMP/CHANGELOG.md"
+          python3 - "$TAG" "$RUNNER_TEMP/CHANGELOG.md" >"$RUNNER_TEMP/notes.md" <<'PY'
+          import sys
+
+          tag, changelog = sys.argv[1], sys.argv[2]
+          with open(changelog, encoding="utf-8") as handle:
+              lines = handle.read().split("\n")
+          start = next(index for index, line in enumerate(lines) if line.startswith(f"## [{tag}]"))
+          end = next((index for index in range(start + 1, len(lines)) if lines[index].startswith("## ")), len(lines))
+          print("\n".join(lines[start + 1:end]).strip())
+          PY
+          args=(release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md")
+          [ "$PRERELEASE" != true ] || args+=(--prerelease)
+          gh "${args[@]}"

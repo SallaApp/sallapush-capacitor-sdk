@@ -429,6 +429,8 @@ PY
   printf 'final class SallaPushPlugin {}\n' >"$repo/ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
   printf '# Changelog\n\n## [Unreleased]\n\n### Added\n\n- The SDK.\n' >"$repo/CHANGELOG.md"
   printf 'dist/\n' >"$repo/.gitignore"
+  mkdir -p "$repo/.github/workflows"
+  printf 'name: Publish\n' >"$repo/.github/workflows/publish.yml"
   g() { git -C "$repo" "$@"; }
   g init -q
   g symbolic-ref HEAD refs/heads/master
@@ -466,6 +468,8 @@ PY
   check "  ... with the built library" ok git -C "$clone" cat-file -e "$commit:dist/plugin.cjs.js"
   check "  ... and the native sources" ok git -C "$clone" cat-file -e \
     "$commit:ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
+  check "  ... and the publish workflow, which a push of the tag runs" ok test \
+    "$(git -C "$clone" show "$commit:.github/workflows/publish.yml")" = "name: Publish"
   check "  ... and a package.json reduced to the allowlist, capacitor and publishConfig kept, no scripts" ok python3 -c '
 import json, subprocess, sys
 package = json.loads(subprocess.check_output(["git", "-C", sys.argv[1], "show", sys.argv[2] + ":package.json"]))
@@ -518,6 +522,11 @@ PY
   g commit -q -am "feat: a podspec that reads author"
   check "a podspec that reads a key the dist drops is refused" fails dry_run "$work/dist-3"
   says "it names the key" "the podspec reads package.json's author, which the dist package.json lacks"
+  g revert --no-edit HEAD >/dev/null
+  g rm -q .github/workflows/publish.yml
+  g commit -q -m "ci: no publish workflow"
+  check "a release without the publish workflow is refused" fails dry_run "$work/dist-5"
+  says "it says why" ".github/workflows/publish.yml is missing from HEAD: the release tag would publish nothing"
   g revert --no-edit HEAD >/dev/null
   printf '\n## [1.0.0] - 2026-10-20\n\n- The SDK.\n' >>"$repo/CHANGELOG.md"
   g commit -q -am "docs: release 1.0.0"
