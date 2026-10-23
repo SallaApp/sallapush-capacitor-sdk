@@ -82,7 +82,7 @@ final class SallaPushCapacitorTests: SallaPushCapacitorTestCase {
         start.startFromApp()
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])
-        XCTAssertEqual(native.configurations.first?.autoClearBadge, true)
+        XCTAssertEqual(native.configurations.first?.autoClearBadge, SallaPushConfiguration().autoClearBadge)
         XCTAssertEqual(console.errors, ["Ignored SallaPushAutoClearBadge: \"sometimes\" is not true, false, YES, NO, 1 or 0."])
     }
 

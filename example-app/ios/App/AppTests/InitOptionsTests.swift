@@ -29,7 +29,8 @@ final class InitOptionsTests: XCTestCase {
         XCTAssertFalse(InitOptions(["iosAutoClearBadge": false]).configuration().autoClearBadge)
         XCTAssertTrue(InitOptions(["autoClearBadge": true, "iosAutoClearBadge": false]).configuration().autoClearBadge)
         XCTAssertFalse(InitOptions(["autoClearBadge": false, "iosAutoClearBadge": true]).configuration().autoClearBadge)
-        XCTAssertTrue(InitOptions(["iosAutoClearBadge": false]).configuration().autoUpdateBadge)
+        XCTAssertEqual(InitOptions(["iosAutoClearBadge": false]).configuration().autoUpdateBadge,
+                       SallaPushConfiguration().autoUpdateBadge)
     }
 
     func testMapsEveryLogLevelAndAPNsEnvironmentByName() {
