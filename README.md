@@ -390,4 +390,4 @@ code for each.
 
 ## License
 
-Copyright Salla. All rights reserved. See [LICENSE](LICENSE).
+The SallaPush Capacitor SDK is available under the [MIT License](LICENSE).

@@ -434,12 +434,16 @@ EOF
     "$case_dir/docs/TROUBLESHOOTING.md"
   check "  ... with the API files of the new tags" ok cmp -s "$served/sallapush-ios-sdk/$target/API.txt" \
     "$case_dir/tool/api-parity/native-ios-API.txt"
+  # The line joins the Changed lines that [Unreleased] already has, or starts that section.
   check "  ... and the CHANGELOG line under Changed" ok python3 -c '
 import sys
 text = open(sys.argv[1], encoding="utf-8").read()
 unreleased = text.split("## [Unreleased]", 1)[1].split("\n## ", 1)[0]
 version = sys.argv[2]
-assert f"### Changed\n\n- SallaPush iOS {version} and SallaPush Android {version}.\n" in unreleased, unreleased
+assert unreleased.count("### Changed\n") == 1, unreleased
+changed = unreleased.split("### Changed\n", 1)[1].split("\n### ", 1)[0]
+assert changed.startswith("\n- "), unreleased
+assert f"\n- SallaPush iOS {version} and SallaPush Android {version}.\n" in changed, unreleased
 assert "### Added" not in unreleased or unreleased.index("### Added") < unreleased.index("### Changed"), unreleased' \
     "$case_dir/CHANGELOG.md" "$target"
   check "  ... and it ran the parity check" ok grep -q 'check-api-parity.mjs' "$work/node.args"
@@ -492,7 +496,7 @@ EOF
 import json, sys
 package = {
     "name": "@salla.sa/sallapush-capacitor", "version": "1.0.0", "description": "SallaPush.", "private": True,
-    "license": "UNLICENSED", "author": "Salla",
+    "license": "MIT", "author": "Salla",
     "repository": {"type": "git", "url": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git"},
     "bugs": {"url": "https://github.com/SallaApp/sallapush-capacitor-sdk/issues"},
     "homepage": "https://github.com/SallaApp/sallapush-capacitor-sdk#readme", "keywords": ["capacitor"],
