@@ -6,9 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for the report. Never paste push tokens, identity tokens, device secrets, APNs keys, Firebase files or customer data here: the SallaPush log codes are enough.
+        Thank you for the report. Never paste tokens or customer data here: the SallaPush log codes are enough.
         Security problems don't belong in an issue: report them privately, as this repository's security policy (the Security tab) explains.
-        App ids and push credentials: contact the Salla team. Issues can't help with them.
+        Contact the Salla team for your app id.
   - type: input
     id: sdk-version
     attributes:
@@ -37,7 +37,7 @@ body:
     id: tools
     attributes:
       label: Tools and frameworks
-      description: Your Capacitor, Xcode, Android Gradle plugin and Node versions, npm or Yarn, whether you installed the package from npm or git, and the other push plugins in your app, such as @capacitor/push-notifications or OneSignal.
+      description: Your Capacitor, Xcode, Android Gradle plugin and Node versions, npm or Yarn, whether you installed the package from npm or git, and the other push plugins in your app.
   - type: textarea
     id: what-happened
     attributes:
@@ -63,5 +63,5 @@ body:
       options:
         - label: I searched the existing issues, and this problem isn't reported yet.
           required: true
-        - label: This report holds no push tokens, identity tokens, device secrets, keys, Firebase files or customer data.
+        - label: This report holds no tokens or customer data.
           required: true

@@ -27,8 +27,7 @@ Please include:
 - the steps to reproduce it, ideally with a small sample project;
 - the SallaPush log codes you saw, if any.
 
-Never include real push tokens, identity tokens, device secrets, APNs keys, Firebase service account files or
-customer data. If the problem depends on one of them, describe it instead.
+Never include real tokens, keys or customer data. If the problem depends on one of them, describe it instead.
 
 Problems in Salla's servers, websites or other products are outside this repository: report them to
 security@salla.sa.
