@@ -39,7 +39,7 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 - **An app id for each platform.** Contact the Salla team for your app id. The Salla team sets up the iOS app id with
   your bundle id and APNs key, and the Android one with a Firebase project, whose `google-services.json` your app uses.
-  Until then devices register, but no notification arrives ([Get started](../README.md#get-started);
+  Until then devices register, but no notification arrives ([Before you start](../README.md#before-you-start);
   [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start),
   [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/REFERENCE.md#before-you-start)).
 

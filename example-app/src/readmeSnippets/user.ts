@@ -4,7 +4,7 @@ import {
 } from '@salla.sa/sallapush-capacitor';
 import { settingsScreen, telemetry } from './standIns';
 
-// README "Tags, language and the push subscription" and "Identity".
+// The README's "Tags and language" and "Push subscription", and the setup guide's "Quick start" and "Events".
 
 export function cartChanged(total: number, items: number): void {
   // snippet:tags

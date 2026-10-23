@@ -4,7 +4,8 @@ import {
 } from '@salla.sa/sallapush-capacitor';
 import { settingsScreen } from './standIns';
 
-// README "Notifications": the permission, the badge settings, and a screen that decides about foreground notifications.
+// The README's "Quick start", "Foreground notifications" and "Badges", and the setup guide: the permission, a screen
+// that decides about foreground notifications, and the badge settings.
 
 export async function askForPermission(): Promise<void> {
   // snippet:request-permission

@@ -5,7 +5,8 @@ import OneSignal, {
 import { SallaPush } from '@salla.sa/sallapush-capacitor';
 import { chat, routeOneSignal } from './standIns';
 
-// README "Migrating from OneSignal": OneSignal's listeners and the opt-in switch while both SDKs are in the app.
+// The setup guide's "Migrating from OneSignal": OneSignal's listeners and the opt-in switch while both SDKs are in
+// the app.
 
 export function listenWithBothSdks(): void {
   // snippet:onesignal-click

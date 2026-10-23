@@ -1,7 +1,7 @@
 import { SallaPush, SallaPushLogLevel } from '@salla.sa/sallapush-capacitor';
 import { telemetry } from './standIns';
 
-// README "Initializing from JavaScript", "Consent" and "Logging".
+// The README's and the setup guide's "Consent" and "Logging", and the setup guide's "Initializing from JavaScript".
 
 export function startWithAppIdFromServer(appId: string): void {
   // snippet:initialize

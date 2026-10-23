@@ -30,6 +30,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Install the package from npm: `npm install @salla.sa/sallapush-capacitor`, with no git access or `allow-git`
   setting. A release tag still installs from git, over HTTPS, as a fallback:
   `git+https://github.com/SallaApp/sallapush-capacitor-sdk.git#<version>`.
+- The README is rewritten for developers: the app id and the push credentials, installation, the iOS and Android
+  setup, a quick start, how to verify the integration, every common task, the app badge, and other push SDKs.
 
 ### Deprecated
 
