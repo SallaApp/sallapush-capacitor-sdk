@@ -112,7 +112,7 @@ From the repository's root:
 | `shell` | `bash -n` and shellcheck on every script, then `scripts/self-test.sh`, the tests of the scripts themselves |
 | `swiftlint` | SwiftLint 0.63.2, strict, on the plugin and the example |
 | `android` | The plugin's JUnit tests and lint, a minified release build of the example, and the provider order and service priority of its merged manifest |
-| `ios` | The example's release build, with its Notification Service Extension, then its XCTest suite, which must run at least one test |
+| `ios` | The example's release build, with its Notification Service Extension, then its XCTest suite, serially on one simulator, which must run at least one test |
 | `smoke` | The example's self-test on a simulator and a running emulator: a test push in the foreground, a page reload, and a second test push that the reloaded page's listener gets once. It builds the example with its own bundle id and application id, `sa.salla.sallapush.example`, whatever your local settings name. |
 | `consumer` | Fresh Capacitor apps that install a dry run of the release with only what the README and the setup guide show, and build: the package as npm would publish it, with Swift Package Manager on Capacitor 8.5.3 and with CocoaPods and `@capacitor/push-notifications`; the git fallback with npm, in the oldest Capacitor 8 with the storyboard template; and the git fallback with Yarn. The CocoaPods and storyboard apps also run on the simulator. It needs a clean working tree. |
 

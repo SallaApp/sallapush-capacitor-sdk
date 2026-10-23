@@ -472,9 +472,11 @@ step_ios() {
   keep_example_project
   local_ios_sdk "$root/example-app/ios/App"
   example_build ios Release
+  # Serially, on the chosen simulator: parallel testing would make Xcode clone it.
   (cd "$root/example-app/ios/App" && xcodebuild -quiet test -project App.xcodeproj -scheme "$SP_EXAMPLE" \
     -configuration Debug -destination "id=$udid" -derivedDataPath "$work/derived-ios" -scmProvider system \
-    -only-testing:AppTests -resultBundlePath "$work/AppTests.xcresult") || fail "the example's XCTest suite failed"
+    -parallel-testing-enabled NO -only-testing:AppTests -resultBundlePath "$work/AppTests.xcresult") ||
+    fail "the example's XCTest suite failed"
   rm -rf "$work/derived-ios"
   assert_xctests_ran "$work/AppTests.xcresult" || fail "AppTests ran no test"
   echo "AppTests passed"
