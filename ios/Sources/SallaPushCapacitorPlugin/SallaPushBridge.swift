@@ -137,8 +137,8 @@ final class SallaPushBridge {
     /// Forwards the APNs token another SDK holds, given as hexadecimal text, as native's token data.
     func forwardApnsToken(_ apnsToken: String) {
         guard let deviceToken = Data(hexadecimal: apnsToken) else {
-            console.error("Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even "
-                + "length, as @capacitor-firebase/messaging's apnsTokenReceived event gives it.")
+            console.error(
+                "Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even length.")
             return
         }
         native.didRegisterForRemoteNotifications(deviceToken: deviceToken)
@@ -163,8 +163,9 @@ final class SallaPushBridge {
     }
 
     func trackOpened() -> Bool {
-        once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
-            + "SallaPush notifications reach SallaPush through its notification-center delegate.", to: console)
+        once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on SallaPush "
+            + "notifications in the compatible format reach SallaPush through its notification-center delegate.",
+            to: console)
         return false
     }
 

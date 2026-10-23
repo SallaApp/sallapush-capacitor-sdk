@@ -146,8 +146,8 @@ final class SallaPushPluginNotificationsTests: SallaPushPluginTestCase {
         XCTAssertEqual(native.calls, [])
         XCTAssertEqual(console.infos, [
             "Notifications.removeNotification is Android only and does nothing on iOS.",
-            "Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
-                + "SallaPush notifications reach SallaPush through its notification-center delegate."
+            "Notifications.trackOpened is Android only and resolves false on iOS, where taps on SallaPush "
+                + "notifications in the compatible format reach SallaPush through its notification-center delegate."
         ])
     }
 
