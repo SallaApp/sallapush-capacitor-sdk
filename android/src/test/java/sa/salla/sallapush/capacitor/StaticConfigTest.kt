@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
+import com.salla.push.SallaPushConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -18,6 +19,7 @@ import org.robolectric.shadows.ShadowLog
 @RunWith(RobolectricTestRunner::class)
 class StaticConfigTest {
   private val context: Context = ApplicationProvider.getApplicationContext()
+  private val defaults = SallaPushConfig.Builder().build()
 
   @Before
   fun clearLog() {
@@ -194,8 +196,8 @@ class StaticConfigTest {
     assertNull(config.appVersion)
     assertNull(config.apiBaseUrl)
     assertNull(config.logLevel)
-    assertTrue(config.autoClearBadge)
-    assertTrue(config.autoUpdateBadge)
+    assertEquals(defaults.autoClearBadge, config.autoClearBadge)
+    assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
   }
 
   @Test
@@ -207,28 +209,28 @@ class StaticConfigTest {
       clearTagsOnLogout = true,
       appVersion = "2.1.0",
       displayOneSignalCompatPayloads = false,
-      autoClearBadge = false,
-      autoUpdateBadge = false,
+      autoClearBadge = !defaults.autoClearBadge,
+      autoUpdateBadge = !defaults.autoUpdateBadge,
     ).toSallaPushConfig()
 
     assertFalse(config.openLaunchUrls)
     assertTrue(config.requiresUserConsent)
     assertTrue(config.clearTagsOnLogout)
     assertEquals("2.1.0", config.appVersion)
-    assertFalse(config.autoClearBadge)
-    assertFalse(config.autoUpdateBadge)
+    assertEquals(!defaults.autoClearBadge, config.autoClearBadge)
+    assertEquals(!defaults.autoUpdateBadge, config.autoUpdateBadge)
   }
 
   // Each badge setting alone, at the value that isn't native's default, so the two swapped can't pass.
   @Test
   fun passesEachBadgeSettingAlone() {
-    val clear = StaticConfig(autoClearBadge = false).toSallaPushConfig()
-    val update = StaticConfig(autoUpdateBadge = false).toSallaPushConfig()
+    val clear = StaticConfig(autoClearBadge = !defaults.autoClearBadge).toSallaPushConfig()
+    val update = StaticConfig(autoUpdateBadge = !defaults.autoUpdateBadge).toSallaPushConfig()
 
-    assertFalse(clear.autoClearBadge)
-    assertTrue(clear.autoUpdateBadge)
-    assertTrue(update.autoClearBadge)
-    assertFalse(update.autoUpdateBadge)
+    assertEquals(!defaults.autoClearBadge, clear.autoClearBadge)
+    assertEquals(defaults.autoUpdateBadge, clear.autoUpdateBadge)
+    assertEquals(defaults.autoClearBadge, update.autoClearBadge)
+    assertEquals(!defaults.autoUpdateBadge, update.autoUpdateBadge)
   }
 
   private fun errors(): List<String> =

@@ -5,6 +5,7 @@ import android.content.pm.ProviderInfo
 import android.net.Uri
 import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
+import com.salla.push.SallaPushConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -20,6 +21,7 @@ import org.robolectric.Shadows.shadowOf
 class InitProviderTest {
   private val context: Context = ApplicationProvider.getApplicationContext()
   private val native = FakeNativeSallaPush()
+  private val defaults = SallaPushConfig.Builder().build()
 
   @Before
   fun resetEarlyInit() {
@@ -34,8 +36,8 @@ class InitProviderTest {
       requiresUserConsent = true,
       clearTagsOnLogout = false,
       appVersion = "2.1.0",
-      autoClearBadge = false,
-      autoUpdateBadge = false,
+      autoClearBadge = !defaults.autoClearBadge,
+      autoUpdateBadge = !defaults.autoUpdateBadge,
     )
 
     EarlyInit.start(context, config, native)
@@ -47,8 +49,8 @@ class InitProviderTest {
     assertTrue(nativeConfig.requiresUserConsent)
     assertFalse(nativeConfig.clearTagsOnLogout)
     assertEquals("2.1.0", nativeConfig.appVersion)
-    assertFalse(nativeConfig.autoClearBadge)
-    assertFalse(nativeConfig.autoUpdateBadge)
+    assertEquals(!defaults.autoClearBadge, nativeConfig.autoClearBadge)
+    assertEquals(!defaults.autoUpdateBadge, nativeConfig.autoUpdateBadge)
     assertEquals(config, EarlyInit.config)
   }
 

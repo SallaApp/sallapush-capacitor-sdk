@@ -28,6 +28,7 @@ class SallaPushPluginTest {
   private val context: Context = ApplicationProvider.getApplicationContext()
   private val native = FakeNativeSallaPush()
   private val once = OncePerProcess()
+  private val defaults = SallaPushConfig.Builder().build()
 
   @Before
   fun clearLog() {
@@ -106,10 +107,10 @@ class SallaPushPluginTest {
           "clearTagsOnLogout" to false,
           "requiresUserConsent" to true,
           "openLaunchUrls" to true,
-          "autoClearBadge" to false,
-          "autoUpdateBadge" to false,
+          "autoClearBadge" to !defaults.autoClearBadge,
+          "autoUpdateBadge" to !defaults.autoUpdateBadge,
           "iosAppGroupIdentifier" to "group.sa.salla.example",
-          "iosAutoClearBadge" to true,
+          "iosAutoClearBadge" to defaults.autoClearBadge,
         ),
       )
     )
@@ -123,8 +124,8 @@ class SallaPushPluginTest {
     assertFalse(config.clearTagsOnLogout)
     assertTrue(config.requiresUserConsent)
     assertTrue(config.openLaunchUrls)
-    assertFalse(config.autoClearBadge)
-    assertFalse(config.autoUpdateBadge)
+    assertEquals(!defaults.autoClearBadge, config.autoClearBadge)
+    assertEquals(!defaults.autoUpdateBadge, config.autoUpdateBadge)
     assertTrue(errors().isEmpty())
   }
 
@@ -132,10 +133,16 @@ class SallaPushPluginTest {
   @Test
   fun ignoresTheDeprecatedIOSBadgeOption() {
     plugin().initialize(
-      call("initialize", "appId" to "st_42_android", "config" to json("iosAutoClearBadge" to false))
+      call(
+        "initialize",
+        "appId" to "st_42_android",
+        "config" to json("iosAutoClearBadge" to !defaults.autoClearBadge),
+      )
     )
 
-    assertTrue(native.initConfigs.single().autoClearBadge)
+    val config = native.initConfigs.single()
+    assertEquals(defaults.autoClearBadge, config.autoClearBadge)
+    assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
   }
 
   // Each boolean alone, at the value that isn't native's default, so options swapped with each other can't pass.
@@ -148,7 +155,6 @@ class SallaPushPluginTest {
       "autoClearBadge" to { it.autoClearBadge },
       "autoUpdateBadge" to { it.autoUpdateBadge },
     )
-    val defaults = SallaPushConfig.Builder().build()
     options.forEach { (name, read) ->
       val native = FakeNativeSallaPush()
 
@@ -179,8 +185,8 @@ class SallaPushPluginTest {
       assertTrue(config.clearTagsOnLogout)
       assertFalse(config.requiresUserConsent)
       assertFalse(config.openLaunchUrls)
-      assertTrue(config.autoClearBadge)
-      assertTrue(config.autoUpdateBadge)
+      assertEquals(defaults.autoClearBadge, config.autoClearBadge)
+      assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
     }
   }
 
@@ -203,7 +209,8 @@ class SallaPushPluginTest {
     assertEquals(levels.values.toList() + listOf(null), native.initConfigs.map { it.logLevel })
   }
 
-  // The TypeScript API validates every argument first, so only another caller could send these.
+  // The TypeScript API validates every argument first, so only another caller could send these. Each badge setting
+  // comes as the text or number of the value that isn't native's default, so applying it would fail the test.
   @Test
   fun ignoresAMissingAppIdAndMistypedOptionsWithoutThrowing() {
     val plugin = plugin()
@@ -218,8 +225,8 @@ class SallaPushPluginTest {
           "appVersion" to 2,
           "openLaunchUrls" to "yes",
           "requiresUserConsent" to 1,
-          "autoClearBadge" to "false",
-          "autoUpdateBadge" to 0,
+          "autoClearBadge" to (!defaults.autoClearBadge).toString(),
+          "autoUpdateBadge" to (if (defaults.autoUpdateBadge) 0 else 1),
         ),
       )
     )
@@ -229,8 +236,8 @@ class SallaPushPluginTest {
     assertNull(config.appVersion)
     assertFalse(config.openLaunchUrls)
     assertFalse(config.requiresUserConsent)
-    assertTrue(config.autoClearBadge)
-    assertTrue(config.autoUpdateBadge)
+    assertEquals(defaults.autoClearBadge, config.autoClearBadge)
+    assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
   }
 
   // The early-init console errors
