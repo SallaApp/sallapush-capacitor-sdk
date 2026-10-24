@@ -21,7 +21,7 @@ Push notifications for the Capacitor apps of [Salla](https://salla.dev) stores, 
 
 | Wrapper | SallaPush iOS | SallaPush Android | Framework | iOS | Android | Node |
 |---|---|---|---|---|---|---|
-| Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (Capacitor 9 isn't supported yet) | 15.0, Xcode 26 | minSdk 24, compileSdk 36, JDK 21 | 22 or later |
+| Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (Capacitor 9 isn't supported yet) | 15.0, Xcode 26 or later | minSdk 24, compileSdk 36 or later, JDK 21 | 22 or later |
 
 SallaPush needs an app id for iOS and one for Android. On the web its calls fail: check
 `Capacitor.isNativePlatform()` first.

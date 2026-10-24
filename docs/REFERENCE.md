@@ -312,9 +312,9 @@ The package's own lines start with `[SallaPush]`, on iOS in category `wrapper`:
 ## Compatibility
 
 - **Capacitor 8,** 8.0.0 or later and below 9. Capacitor 9 isn't supported yet.
-- **iOS 15.0** or later, with Xcode 26; Swift Package Manager or CocoaPods.
-- **Android** minSdk 24 and compileSdk 36, from your app's `variables.gradle`; Java 21. Minified release builds need no
-  rule of your own.
+- **iOS 15.0** or later, with Xcode 26 or later; Swift Package Manager or CocoaPods.
+- **Android** minSdk 24 and compileSdk 36 or later, from your app's `variables.gradle`; Java 21. Minified release builds
+  need no rule of your own.
 - **JavaScript:** ES2017, as Capacitor's own, so the package runs on the oldest Android System WebView Capacitor
   accepts without transpiling.
 - **Package managers:** npm and Yarn 4; from git with npm 12 or Yarn 4.14 and later. pnpm, Yarn 1 and Bun aren't
