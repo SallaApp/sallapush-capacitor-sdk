@@ -211,10 +211,13 @@ SallaPush.logout();
 At each app launch while nobody is signed in, call `SallaPush.logout()` too: on iOS, a reinstall keeps the earlier
 install's customer linked until then.
 
-### Permission and listeners
+### Notification permission
 
-- **Permission:** `requestPermission(true)` also opens the app's notification settings when the prompt no longer
-  shows; `getPermission()` resolves whether notifications are allowed.
+`requestPermission(true)` also opens the app's notification settings when the prompt no longer shows; `getPermission()`
+resolves whether notifications are allowed.
+
+### Notification taps and deep links
+
 - **Taps:** the click listener gets `event.notification`, the launch URL in `event.result.url`, and on iOS the tapped
   action button in `event.result.actionId`. Route with the typed getters, such as `notification.getString('type')`
   and `notification.getInt('id')`.
