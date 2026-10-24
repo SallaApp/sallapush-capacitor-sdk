@@ -10,4 +10,4 @@
 
 - [ ] The tests and the docs are updated.
 - [ ] CHANGELOG.md has a line under `## [Unreleased]`.
-- [ ] Nothing in this pull request holds push tokens, identity tokens, keys or customer data.
+- [ ] Nothing in this pull request holds tokens, keys or customer data.
