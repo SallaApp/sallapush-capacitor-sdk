@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SallaPush Capacitor SDK: push notifications for the Capacitor apps of Salla stores, built on the native SallaPush SDKs.",
   "license": "MIT",
-  "author": "Salla <mobile@salla.sa> (https://salla.sa)",
+  "author": "Salla",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git"
