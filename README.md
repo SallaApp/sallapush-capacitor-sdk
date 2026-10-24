@@ -322,7 +322,7 @@ order of your forwarding lines doesn't matter.
 
 - **iOS:** `SallaPush.Notifications.didReceiveRemoteNotification(_:)` returns true for a SallaPush notification: hand
   another SDK only the notifications for which it returns false. When another SDK takes the APNs token, also pass it to
-  `SallaPush.Notifications.forwardApnsToken`.
+  `SallaPush.Notifications.forwardApnsToken` in JavaScript, as hexadecimal text.
 - **A shared Notification Service Extension:** call SallaPush first, and hand the other SDK only the notifications for
   which `SallaPushServiceExtension.isSallaPushNotification(request)` is false.
 - **Android:** add the forwarding service of [Platform setup](#android).
