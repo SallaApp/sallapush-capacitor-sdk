@@ -12,6 +12,11 @@ Push notifications for the Capacitor apps of [Salla](https://salla.dev) stores, 
 - **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See [CHANGELOG.md](CHANGELOG.md).
 - **Also for:** [iOS](https://github.com/SallaApp/sallapush-ios-sdk) · [Android](https://github.com/SallaApp/sallapush-android-sdk) · [Flutter](https://github.com/SallaApp/sallapush-flutter-sdk) · [React Native](https://github.com/SallaApp/sallapush-react-native-sdk)
 
+**Contents:** [Requirements](#requirements) · [Installation](#installation) · [Platform setup](#platform-setup) ·
+[Quick start](#quick-start) · [Usage](#usage) · [Other push SDKs](#sallapush-and-other-push-sdks) ·
+[Example app](#example-app) · [Troubleshooting](#troubleshooting) · [Support](#support) ·
+[Contributing](#contributing) · [License](#license)
+
 ## Requirements
 
 | Wrapper | SallaPush iOS | SallaPush Android | Framework | iOS | Android | Node |
