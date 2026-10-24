@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for the report. Never paste tokens or customer data here: the SallaPush log codes are enough.
+        Thank you for the report. Never paste tokens, keys or customer data here: the SallaPush log codes are enough.
         Security problems don't belong in an issue: report them privately, as this repository's security policy (the Security tab) explains.
         Contact the Salla team for your app id.
   - type: input
@@ -63,5 +63,5 @@ body:
       options:
         - label: I searched the existing issues, and this problem isn't reported yet.
           required: true
-        - label: This report holds no tokens or customer data.
+        - label: This report holds no tokens, keys or customer data.
           required: true

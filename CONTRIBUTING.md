@@ -6,7 +6,7 @@ Thank you for helping improve the SallaPush Capacitor SDK.
 
 - **Bugs and feature requests:** [open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose)
   with the SDK version, the platform and OS version, what you expected and what happened, and the SallaPush log codes
-  you saw. Never paste tokens or customer data.
+  you saw. Never paste tokens, keys or customer data.
 - **Security problems:** don't open an issue. Report them privately, as [SECURITY.md](SECURITY.md) explains.
 - **App ids:** Contact the Salla team for your app id.
 

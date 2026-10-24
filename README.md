@@ -345,8 +345,8 @@ API call. Its [README](example-app/README.md) says how to set your app ids and r
 ## Support
 
 - **SDK bugs and feature requests:**
-  [open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose) with the SDK, Capacitor and
-  OS versions, how you installed SallaPush, and its log codes at verbose level. Never paste tokens or customer data.
+  [open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose) with the SDK, Capacitor and OS
+  versions, how you installed SallaPush, and its log codes at verbose level. Never paste tokens, keys or customer data.
 - **App ids:** Contact the Salla team for your app id.
 
 ## Contributing
