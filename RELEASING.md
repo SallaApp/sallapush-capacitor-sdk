@@ -68,8 +68,6 @@ Package Manager and the Notification Service Extension: update the package, move
    [Static configuration](docs/REFERENCE.md#static-configuration).
 5. Open the pull request, and release as above.
 
-SallaPush iOS has no release 1.0.1, and `bump-native.sh` refuses it.
-
 ## Device checks
 
 On an iPhone and on an Android 13 or later phone, with a real app id, the example app with your values
