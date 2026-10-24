@@ -1,6 +1,6 @@
 # SallaPush Capacitor SDK
 
-Push notifications for the Capacitor apps of [Salla](https://salla.dev) stores, on iOS and Android.
+Push notifications for the Capacitor apps of Salla stores, on iOS and Android.
 
 [![npm](https://img.shields.io/npm/v/@salla.sa/sallapush-capacitor?color=004956)](https://www.npmjs.com/package/@salla.sa/sallapush-capacitor) [![Capacitor 8](https://img.shields.io/badge/Capacitor-8-004956?logo=capacitor&logoColor=white)](#requirements) [![License: MIT](https://img.shields.io/github/license/SallaApp/sallapush-capacitor-sdk?color=004956)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/SallaApp/sallapush-capacitor-sdk/ci.yml?branch=master&label=CI)](https://github.com/SallaApp/sallapush-capacitor-sdk/actions/workflows/ci.yml)
 
