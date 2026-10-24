@@ -40,9 +40,3 @@ npx cap run ios # or: npx cap run android
 
 A change in the plugin's TypeScript or in `src/` needs only `yarn example build` and `npx cap copy` before the next
 run. To run from Xcode, open `ios/App/App.xcodeproj` (`npx cap open ios`) and run the App scheme.
-
-## The self-test
-
-With the app id `example_smoke`, the app runs `src/selfTest.ts` at launch: it calls every API member, reloads the page
-once, and logs its results in `SALLAPUSH_SELFTEST` lines. `scripts/verify.sh smoke` builds, runs and reads it. The
-example's `SmokeReporter` plugin and `TestPushReceiver` exist only for that check: never copy them into an app.
