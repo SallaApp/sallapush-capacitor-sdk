@@ -35,8 +35,8 @@ Info.plist keys on iOS, and `<meta-data>` inside `<application>` on Android:
 | The log level | `SallaPushLogLevel` | `com.salla.push.LOG_LEVEL` | `warn` |
 | The full push token and customer id in the iOS status lines; debug builds only | `SallaPushLogFullIdentifiers` | – | `false` |
 | The App Group, in the app and the extension | `SallaPushAppGroup` | – | None |
-| The small notification icon, white on transparent (required) | – | `com.salla.push.default_notification_icon` (`android:resource`) | SallaPush's bell, with `display.default_icon` |
-| The default channel | – | `com.salla.push.default_channel_id`, `com.salla.push.default_channel_name` | SallaPush's own channel |
+| The small notification icon, white on transparent (required) | – | `com.salla.push.default_notification_icon` (`android:resource`) | Firebase's default icon, else SallaPush's bell, with `display.default_icon` |
+| The default channel | – | `com.salla.push.default_channel_id`, `com.salla.push.default_channel_name` | Firebase's default channel (`com.google.firebase.messaging.default_notification_channel_id`) when it exists, else SallaPush's own channel |
 
 - **The keys from "Require consent" to "The APNs environment" apply only with the app id.** Without it, pass those
   settings to `initialize`.
