@@ -269,9 +269,9 @@ SallaPush.User.addTags({
 ### Push subscription
 
 `SallaPush.User.pushSubscription.optOut()` turns SallaPush notifications off on this device, and `optIn()` turns them
-back on. Its `'change'` listener gets the device id, the push token and the opted-in state once the device is
-registered, then every change: read them there, since right after a cold start the getters show only this launch's
-calls. The push token is private: don't send it to analytics or third parties.
+back on, with the permission prompt while it can still show. Its `'change'` listener gets the device id, the push token
+and the opted-in state once the device is registered, then every change: read them there, since right after a cold start
+the getters show only this launch's calls. The push token is private: don't send it to analytics or third parties.
 
 ### Consent
 
