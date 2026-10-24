@@ -1,9 +1,10 @@
 name: CI
 
-# Every pull request and every push to master: the checks that need no private SallaPush artifacts. Native builds,
-# native unit tests, the example smoke tests and the consumer installs need read access to the private SallaPush SDKs
-# and macOS, so scripts/verify.sh runs them locally, and "Native verified" fails until a maintainer attests that run for
-# the head commit.
+# Every pull request and every push to master, on GitHub-hosted runners, as steps of scripts/verify.sh, the script a
+# contributor runs locally: the portable steps on Linux; the plugin's Android unit tests and lint and the example's
+# minified Android build on Linux; SwiftLint, and the example's iOS build and XCTest suite, on macOS. The example smoke
+# tests and the consumer installs stay local release steps (RELEASING.md). The native jobs resolve the pinned SallaPush
+# iOS and Android releases from GitHub and Maven Central.
 on:
   pull_request:
   push:
@@ -23,8 +24,7 @@ defaults:
 jobs:
   js:
     name: JavaScript, types and unit tests
-    # GitHub-hosted runners fail the organization's IP allow list; RUNS_ON is the organization's Linux runner label.
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,12 +37,12 @@ jobs:
         run: |
           corepack enable
           yarn install --immutable
-      - name: Lint, types, unit tests, checker self-tests, build, API surface, parity, README snippets, version pins and tree
-        run: scripts/verify.sh lint typecheck test build api parity snippets pins tree
+      - name: Lint, types, unit tests, checker self-tests, build, package contents, API surface, parity, README snippets, version pins and tree
+        run: scripts/verify.sh lint typecheck test build pack api parity snippets pins tree
 
   shell-scripts:
     name: Shell scripts
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -51,37 +51,117 @@ jobs:
       - name: bash -n, shellcheck and the tooling self-test
         run: scripts/verify.sh shell
 
-  # CI can't build the native code (no access to the private SDKs, no macOS runner), and Testing Ready counts a skipped
-  # job as a pass. So this job fails until the person who added the label native-verified-locally comments
-  # "native-verified-locally <full sha>" for the pull request's head commit, after running scripts/verify.sh on a Mac.
-  native-verified:
-    name: Native verified
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+  android:
+    name: Android plugin and example
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Require the native-verified-locally label and an attestation of the head commit
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      # Capacitor 8 builds Android with Java 21.
+      - id: java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Install
+        run: |
+          corepack enable
+          yarn install --immutable
+      - name: The plugin's unit tests and lint, the example's minified release build and its merged manifest
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: scripts/verified-label.sh
+          SALLAPUSH_JAVA_HOME: ${{ steps.java.outputs.path }}
+        run: scripts/verify.sh android
 
-  # The organization's required check: it fails unless every job above succeeded or was skipped.
-  testing-result:
+  ios:
+    name: iOS plugin and example
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      SWIFTLINT_VERSION: 0.63.2
+      SWIFTLINT_BUNDLE_URL: https://github.com/realm/SwiftLint/releases/download/0.63.2/SwiftLintBinary.artifactbundle.zip
+      # GitHub's digest of that release asset, which is also the binary-target checksum in SwiftLint's Package.swift at
+      # tag 0.63.2. The release is not immutable, so this pin is its only protection. Re-confirm it with:
+      #   gh api repos/realm/SwiftLint/releases/tags/0.63.2 --jq '.assets[] | select(.name == "SwiftLintBinary.artifactbundle.zip") | .digest'
+      SWIFTLINT_BUNDLE_SHA256: 12befab676fc972ffde2ec295d016d53c3a85f64aabd9c7fee0032d681e307e9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # DEVELOPER_DIR instead of `sudo xcode-select`: no privilege needed, and every later step inherits it.
+      - name: Select the newest Xcode 26
+        run: |
+          set -euo pipefail
+          xcode="$(find /Applications -maxdepth 1 -name 'Xcode_26.*.app' | grep -E '/Xcode_26\.[0-9]+(\.[0-9]+)?\.app$' | sort -V | tail -n 1 || true)"
+          if [ -z "$xcode" ]; then
+            default_version="$(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -version 2>/dev/null || true)"
+            case "$default_version" in "Xcode 26."*) xcode=/Applications/Xcode.app ;; esac
+          fi
+          [ -n "$xcode" ] || { echo "::error::no Xcode 26.x is installed on this runner"; exit 1; }
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
+      # Mandatory and pinned: CI fails when the bundle is missing or its checksum differs.
+      - name: Install SwiftLint ${{ env.SWIFTLINT_VERSION }} (pinned bundle)
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 -o swiftlint.zip "$SWIFTLINT_BUNDLE_URL"
+          echo "$SWIFTLINT_BUNDLE_SHA256  swiftlint.zip" | shasum -a 256 -c -
+          rm -rf swiftlint && mkdir swiftlint && unzip -q swiftlint.zip -d swiftlint
+          bundle="$(find "$PWD/swiftlint" -maxdepth 2 -name '*.artifactbundle' -type d | sed -n 1p)"
+          [ -n "$bundle" ] || { echo "::error::the SwiftLint zip holds no .artifactbundle"; exit 1; }
+          # The executable's path comes from the bundle's manifest. The helper is a file, not a heredoc inside $(...),
+          # which macOS's bash 3.2 can mis-parse.
+          cat > find-swiftlint.py <<'PY'
+          import json, platform, sys
+          bundle = sys.argv[1]
+          triple = ("arm64" if platform.machine() == "arm64" else "x86_64") + "-apple-macosx"
+          info = json.load(open(f"{bundle}/info.json"))
+          for artifact in info["artifacts"].values():
+              for variant in artifact.get("variants", []):
+                  if artifact.get("type") == "executable" and triple in variant.get("supportedTriples", []):
+                      print(f"{bundle}/{variant['path']}")
+                      sys.exit(0)
+          sys.exit(f"no {triple} swiftlint in {bundle}/info.json")
+          PY
+          binary="$(python3 find-swiftlint.py "$bundle")"
+          [ "$("$binary" version)" = "$SWIFTLINT_VERSION" ] || { echo "::error::the bundle is not SwiftLint $SWIFTLINT_VERSION"; exit 1; }
+          echo "SWIFTLINT=$binary" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install
+        run: |
+          corepack enable
+          yarn install --immutable
+      - name: SwiftLint, strict, on the plugin and the example
+        run: scripts/verify.sh swiftlint
+      - name: The example's release build with its Notification Service Extension, then its XCTest suite
+        run: scripts/verify.sh ios
+
+  # The required check: it fails unless every job above succeeded or was skipped.
+  testing-ready:
     name: Testing Ready
     if: always()
-    needs: [js, shell-scripts, native-verified]
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    needs: [js, shell-scripts, android, ios]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: SallaApp/.CI/testing-ready@master
-        with:
-          needs: ${{ toJSON(needs) }}
+      - name: Every job above succeeded or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          for result in $RESULTS; do
+            case "$result" in
+              success | skipped) ;;
+              *) echo "::error::a job this check needs ended with $result"; exit 1 ;;
+            esac
+          done
+          echo "every job succeeded or was skipped: $RESULTS"

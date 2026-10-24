@@ -1,145 +1,80 @@
 # SallaPush Capacitor SDK: troubleshooting
 
-Common problems, what each one means and how to fix it. Log codes are SallaPush's own: the native docs list every one
+Known problems, by what you see. Set the log level to `verbose` first ([Logging](../README.md#logging)); the native
+docs explain every log code
 ([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference)), and the
-native troubleshooting guides cover more
-([iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/TROUBLESHOOTING.md),
-[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/TROUBLESHOOTING.md)).
-
-Back to the [README](../README.md). Other docs: [Setup guide](SETUP.md), [Reference](REFERENCE.md)
-
-## Contents
-
-1. [Installing and building](#installing-and-building)
-2. [Capacitor setup](#capacitor-setup)
-3. [iOS](#ios)
-4. [Android](#android)
-5. [Identity](#identity)
-6. [JavaScript](#javascript)
-7. [Not verified yet](#not-verified-yet)
+[Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference)).
 
 ## Installing and building
 
-| You see | Cause | Fix |
-|---|---|---|
-| npm doesn't install the package, or warns that git dependencies aren't allowed | npm 12 fetches no git dependency unless the app allows it; npm 11 warns | Add `allow-git=root` to the app's `.npmrc` ([Install](SETUP.md#install)). |
-| Yarn: the repository "doesn't match any of the patterns in 'approvedGitRepositories'" | Yarn 4.14 and later fetch only the git repositories the app approves | Add `ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git` to `approvedGitRepositories` in `.yarnrc.yml`, with `nodeLinker: node-modules`. |
-| Yarn can't fetch the package on a machine that has an SSH key | The dependency uses the `github:` shorthand, which Yarn fetches over HTTPS, never SSH | Use the `git+ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git#<version>` form. |
-| npm: `ERESOLVE`, "could not resolve", for the peer dependency `@capacitor/core@"^8.0.0"` | The app uses Capacitor 9, which this release doesn't support yet | Stay on Capacitor 8 for now ([Versions](SETUP.md#versions)). Yarn and pnpm, and Capacitor's CLI with Swift Package Manager, only warn: the app may build, but this release isn't tested with Capacitor 9. |
-| The app's JavaScript: `"SallaPush" plugin is not implemented on ios` (or `android`) | The native app doesn't contain the plugin: `npx cap sync` didn't run after the install, or the app wasn't rebuilt since | Run `npx cap sync`, then rebuild the app. On the web the same error is expected ([JavaScript](#javascript)). |
-| `npx cap sync ios`, `npx cap add ios` or `pod install`: "Unable to find a specification for `SallaPush (= 1.0.4)` depended upon by `Salla.saSallapushCapacitor`" | A CocoaPods app without the Podfile lines: the SallaPush pods aren't in the public specs repository | Add the [Podfile lines](SETUP.md#swift-package-manager-or-cocoapods), and the extension's target when the app has the extension, then run `npx cap sync ios` again. In a new app, add the iOS platform before the plugin: `npx cap add ios` syncs too. |
-| `npx cap sync ios` or `pod install`, after an update of the package: `CocoaPods could not find compatible versions for pod "SallaPush"`, or ``There are multiple dependencies with different sources for `SallaPushCore` in `Podfile` `` | The new release pins another SallaPush iOS version, and the Podfile's SallaPush tags didn't move with it, or only some of them did | Set every SallaPush `:tag =>` of the Podfile, in the App target and the extension's, to the SallaPush iOS version of the [versions table](../README.md#requirements), then run `npx cap sync ios` again ([Updating the package](SETUP.md#updating-the-package)). |
-| Xcode or `xcodebuild`, after an update of the package: "Dependencies could not be resolved because root depends on 'sallapush-ios-sdk' …" | A Swift Package Manager app with the Notification Service Extension: the rule of the extension's SallaPush package still names the version of an earlier release | Set that rule, **Exact Version**, in the project's **Package Dependencies**, to the SallaPush iOS version of the [versions table](../README.md#requirements) ([Updating the package](SETUP.md#updating-the-package)). |
-| `pod install` or the package install: "Permission denied (publickey)", or "Repository not found" | The machine's git can't read `SallaApp/sallapush-ios-sdk` or this repository | Use an SSH key from an account with read access. On a machine with only a token, set the two rewrites of [CI machines](SETUP.md#ci-machines) in the job's environment. |
-| Xcode or `xcodebuild` can't resolve the package `sallapush-ios-sdk`: authentication failed, or the repository isn't found | A Swift Package Manager app: Xcode fetches the package itself, over HTTPS, and has no access to it | On a Mac, sign in to Xcode with a GitHub account that can read `SallaApp/sallapush-ios-sdk` (**Xcode → Settings → Accounts**). On CI, build with `xcodebuild … -scmProvider system` and one of native's rewrites of `https://github.com/SallaApp/sallapush-ios-sdk.git` ([CI machines](SETUP.md#ci-machines)): the rewrites of the SSH URLs never touch it. |
-| Duplicate SallaPush symbols, "redefinition of module 'SallaPush'", or two SallaPush instances at run time | The SallaPush pods were added to the Podfile of a Swift Package Manager app, which gets SallaPush through the plugin's Swift package | Remove the SallaPush pods from the Podfile, and run `pod install` again. An app with `ios/App/CapApp-SPM` never declares them. |
-| `npx cap sync ios` or `pod install`: "unknown ISA `PBXFileSystemSynchronizedRootGroup`", or "Unable to find compatibility version string for object version 77" (or 70) | Xcode 16 or later added the extension target as a synchronized folder and raised the project format, which an older CocoaPods can't read | Update CocoaPods to 1.16 or later, which reads synchronized folders and version 77, but not 70. Or convert the folder (right-click `SallaPushNotificationService` → **Convert to Group**) and set the project's **Project Format** back to **Xcode 15.3-compatible**. |
-| Gradle: `Could not find com.salla.push:sallapush` | Gradle has no access to SallaPush's GitHub Packages repository: no credentials, or a build that ignores project repositories | Give Gradle the credentials ([Install](SETUP.md#install)). If your settings set `RepositoriesMode.PREFER_SETTINGS`, declare the repository in the settings ([Builds that refuse project repositories](SETUP.md#builds-that-refuse-project-repositories)). |
-| Gradle: `Username must not be null!` | Gradle has no GitHub token | Set the Gradle properties `gpr.user` and `gpr.key`, or the environment variables `GITHUB_ACTOR` and `GITHUB_TOKEN`. |
-| Gradle: `Received status code 401 from server: Unauthorized` | The token is wrong or expired, or it isn't a classic token with `read:packages` | Create a classic token with `read:packages`. Fine-grained tokens don't work with GitHub Packages' Maven registry. |
-| Gradle: status 403 from `maven.pkg.github.com` | The token's account can't read `SallaApp/sallapush-android-sdk`, or the machine's network isn't one the SallaApp organization allows | Ask the repository's admins for read access, or build on an allowed network. |
-| git, the package install or `pod install`: "The repository owner has an IP allow list enabled" | The SallaApp organization accepts fetches from its private repositories only from allowed networks, and this machine's isn't one. GitHub-hosted CI runners aren't either. | Build on an allowed network: no token or SSH key changes this. |
-| Gradle warns that a build file added the repository `SallaPushGitHubPackages`, while the build prefers the settings' repositories | The settings set `RepositoriesMode.PREFER_SETTINGS`, and the package adds its repository to the projects, which Gradle ignores | Declare the repository in `settings.gradle` under the same name ([Setup guide](SETUP.md#builds-that-refuse-project-repositories)). The warning stays, and is harmless. |
-| Gradle fails: a repository "was added by build file", while the settings require their own repositories | The settings set `RepositoriesMode.FAIL_ON_PROJECT_REPOS`, which no Capacitor app can use: Capacitor's own Gradle files add project repositories too | Use `PREFER_SETTINGS` instead, with the repository declared in `settings.gradle` ([Setup guide](SETUP.md#builds-that-refuse-project-repositories)). |
-| Gradle: "invalid source release: 21" | Gradle runs on a JDK older than 21, and Capacitor 8 compiles Java 21 | Build with a JDK 21, through `JAVA_HOME` or Android Studio's Gradle JDK setting ([JDK 21](SETUP.md#jdk-21)). |
-| The manifest merger: "requires a placeholder substitution but no value for <sallaPushAppId> is provided" | The manifest uses `${sallaPushAppId}`, which the app's `build.gradle` doesn't define | Add `manifestPlaceholders += [sallaPushAppId: "…"]` to `defaultConfig`, or write the app id in the manifest ([App id and notification icon](SETUP.md#app-id-and-notification-icon)). |
+| You see | Fix |
+|---|---|
+| `npx cap sync ios` or `pod install`: "Unable to find a specification for `SallaPush (= 1.0.4)` depended upon by `Salla.saSallapushCapacitor`" | A CocoaPods app: add the [Podfile lines](../README.md#installation), and the extension's target when the app has the extension, then run `npx cap sync ios` again. |
+| After an update: `CocoaPods could not find compatible versions for pod "SallaPush"`, or Xcode can't resolve `sallapush-ios-sdk` | Set every SallaPush pin of your app, each `:tag =>` of the Podfile or the extension's package rule, to the SallaPush iOS version of [Requirements](../README.md#requirements), then run `npx cap sync`. |
+| Duplicate SallaPush symbols, or two SallaPush instances at run time | A Swift Package Manager app, with `ios/App/CapApp-SPM`, never declares the SallaPush pods: remove them from the Podfile. |
+| "unknown ISA `PBXFileSystemSynchronizedRootGroup`", or "Unable to find compatibility version string for object version 77" | Update CocoaPods to 1.16 or later, or convert the extension's folder to a group (right-click it, **Convert to Group**). |
+| `"SallaPush" plugin is not implemented on ios` (or `android`) | Run `npx cap sync`, then rebuild the app. On the web, it is expected. |
+| npm: `ERESOLVE` for the peer dependency `@capacitor/core@"^8.0.0"` | The app uses Capacitor 9, which isn't supported yet. |
+| npm or Yarn refuses the git dependency | npm 12 needs `allow-git=root` in `.npmrc`; Yarn 4.14 or later, the repository in `approvedGitRepositories` ([Installation](../README.md#installation)). |
+| Gradle: `Could not find com.salla.push:sallapush` | Add `mavenCentral()` to the repositories, or to `settings.gradle`'s when it sets `RepositoriesMode.PREFER_SETTINGS`. |
+| Gradle: "invalid source release: 21" | Build with JDK 21, through `JAVA_HOME` or Android Studio's Gradle JDK setting. |
+| The manifest merger: "requires a placeholder substitution but no value for <sallaPushAppId> is provided" | Add `manifestPlaceholders += [sallaPushAppId: "…"]` to `defaultConfig` ([Android setup](../README.md#android)). |
 
-## Capacitor setup
+## Setup
 
-| You see | Cause | Fix |
-|---|---|---|
-| `[SallaPush] SallaPushCapacitor.start() was not called in application(_:didFinishLaunchingWithOptions:), so SallaPush started when Capacitor loaded its plugin, and the tap that launched the app can be missed. …` | The `AppDelegate` doesn't call `SallaPushCapacitor.start()`: SallaPush started late, when Capacitor's bridge loaded the plugin | Add `SallaPushCapacitor.start()` as the first statement of `application(_:didFinishLaunchingWithOptions:)` ([AppDelegate](SETUP.md#appdelegate)). |
-| `[SallaPush] <class> replaced SallaPush's notification-center delegate after SallaPushCapacitor.start(): …` | A notification-center delegate was set after `start()`: the app's own `UNUserNotificationCenter.current().delegate = …`, below `start()` or later in a screen, or another SDK's or plugin's. SallaPush then gets no taps and no foreground notifications. | Set your own delegate before `SallaPushCapacitor.start()`, or forward from it with `SallaPush.Notifications.willPresent(_:)` and `didReceive(_:)`. For another SDK's or plugin's class, tell the SallaPush team which one. |
-| `[SallaPush] capacitor.config's plugins.SallaPush section is ignored: …` | `capacitor.config` has a `plugins.SallaPush` section, which SallaPush never reads | Remove it. Set the values with the Info.plist keys and the manifest meta-data ([Static configuration](REFERENCE.md#static-configuration)). |
-| `[SallaPush] SallaPush's notification-center delegate is the current one; it hands other notifications to nothing.` (or a class name), with `@capacitor/push-notifications` or `@capacitor/local-notifications` in the app | Information, not an error: `ios.handleApplicationNotifications` is `false`, so Capacitor's router never became the delegate, and those plugins get nothing on iOS, with or without SallaPush | Leave `ios.handleApplicationNotifications` at its default, `true`, unless OneSignal's setup needs `false`. With `true`, the line names "Capacitor's notification router". |
-| `@capacitor/push-notifications` or `@capacitor-firebase/messaging` listeners never get SallaPush's notifications | By design: on iOS SallaPush's delegate handles SallaPush's notifications before Capacitor's router, and on Android the forwarding service hands SallaPush's messages to SallaPush only | Handle SallaPush's notifications with SallaPush's own listeners ([Events](SETUP.md#events)). |
-| `@capacitor-firebase/messaging`'s `notificationReceived` reports SallaPush's notifications on iOS | The `AppDelegate` posts `"didReceiveRemoteNotification"` for every background notification, as that plugin's own setup shows | Post only when `SallaPush.Notifications.didReceiveRemoteNotification(userInfo)` returns false ([Another push plugin](SETUP.md#another-push-plugin)). |
-| SallaPush's delivered notifications disappear from the notification center | Another plugin's `removeAllDeliveredNotifications()` removes every notification of the app, SallaPush's included, on both platforms | Remove SallaPush's with `SallaPush.Notifications.clearAll()`, and the other plugin's with its `removeDeliveredNotifications(…)` ([Coexistence](SETUP.md#coexistence)). |
-| On iOS 15, the app's delivered notifications, other plugins' included, disappear when the app becomes active | SallaPush's `autoClearBadge`, on by default, sets the badge to 0 when the app becomes active with a badge, which on iOS 15 can also remove the delivered notifications | Set `SallaPushAutoClearBadge` to `NO` in the Info.plist, or `ios.autoClearBadge` to `false` in `initialize`'s config ([Removing delivered notifications](REFERENCE.md#removing-delivered-notifications)). |
-| SallaPush's notifications stop after the app called `unregister()` of `@capacitor/push-notifications`, or `deleteToken()` of `@capacitor-firebase/messaging` | On iOS `unregister()` unregisters the app from APNs, for every SDK; on Android both delete the app's FCM token, which SallaPush uses too, and `unregister()` turns FCM's auto-init off | Don't call them. To stop SallaPush's notifications for a user, call `SallaPush.User.pushSubscription.optOut()`. |
+| You see | Fix |
+|---|---|
+| SallaPush doesn't start: no `init.started`, and `isInitialized()` resolves `false` | The build has no app id: define `SALLAPUSH_APP_ID` for every build configuration, Release included, and the `sallaPushAppId` placeholder for every product flavor. |
+| `init.invalid_app_id` | Fix the app id: 1 to 64 letters, digits, `_` and `-`. |
+| `register.dormant` with `404 unknown_app` | Check the app id you set. |
+| Nothing registers, and `consent.waiting` at info level | Consent is required and not given: call `SallaPush.setConsentGiven(true)` once the user agrees. |
+| `[SallaPush] SallaPushCapacitor.start() was not called in application(_:didFinishLaunchingWithOptions:)…` | Add `SallaPushCapacitor.start()` as its first statement ([iOS setup](../README.md#ios)). |
+| `[SallaPush] <class> replaced SallaPush's notification-center delegate after SallaPushCapacitor.start(): …`, or no tap reaches the click listener | Set your own `UNUserNotificationCenter` delegate before `SallaPushCapacitor.start()`, or forward from it with `SallaPush.Notifications.willPresent(_:)` and `didReceive(_:)`. |
+| `[SallaPush] capacitor.config's plugins.SallaPush section is ignored: …` | Remove it, and use the [static keys](REFERENCE.md#static-configuration). |
+| `[SallaPush] initialize ignored …` | Set those options with the static keys the message names, and drop the `initialize` call. |
+| `[SallaPush] setConsentRequired(true) came after SallaPush started from …` | Set `SallaPushRequiresUserConsent` to `YES` and `com.salla.push.REQUIRES_USER_CONSENT` to `true`. |
+| `[SallaPush] Ignored …` | Fix the static key's value as the message says ([Static configuration](REFERENCE.md#static-configuration)). |
 
 ## iOS
 
-| You see | Cause | Fix |
-|---|---|---|
-| No `token.received`; `token.missing` 30 seconds after the app came to the foreground | The APNs token never reached SallaPush: the Push Notifications capability is missing, the `AppDelegate` doesn't forward the token, `registerForRemoteNotificationsOnInit` is off while the app doesn't register itself, or consent is required and not given | Add the capability and the [forwarding methods](SETUP.md#appdelegate). With `registerForRemoteNotificationsOnInit` off, call `SallaPush.Notifications.registerForRemoteNotifications()` at every launch. |
-| `token.registration_failed` | iOS gave the app no token; the message ends with its reason | "remote notifications are not supported in the simulator": use a simulator with iOS 16 or later on a Mac with Apple silicon, or a device. "no valid "aps-environment" entitlement": add the Push Notifications capability, with a provisioning profile that has it. |
-| `init.no_delegate` | No notification-center delegate 2 seconds after the app became active | Call `SallaPushCapacitor.start()` first in `didFinishLaunchingWithOptions`. |
-| The tap that launched the app never reaches the click listener | `SallaPushCapacitor.start()` isn't the first statement of `didFinishLaunchingWithOptions` (a `[SallaPush]` error says so); a delegate set later replaced SallaPush's (an error names it); the click listener was added in a screen, not at app start; it was added more than 5 minutes after the tap; or the first page reloaded at launch, for a live update for example, and took the tap with it | Call `SallaPushCapacitor.start()` first, set your own delegate before it, and add the click listener in your entry module, in the page that stays ([At app start](SETUP.md#at-app-start), [Taps](SETUP.md#taps)). If a device still loses it in an app with a `SceneDelegate`, also hand the scene's launch response to SallaPush: add `import SallaPushCapacitorPlugin` to `SceneDelegate.swift`, whose template imports only UIKit and Capacitor, and in `scene(_:willConnectTo:options:)` call `if let response = connectionOptions.notificationResponse { SallaPush.Notifications.didReceive(response) }`. SallaPush delivers a tap it gets twice once. |
-| No tap reaches the click listener, warm taps included, and no foreground notification reaches SallaPush | A notification-center delegate was assigned after `SallaPushCapacitor.start()`, such as the app delegate's own `UNUserNotificationCenter.current().delegate = self`, and replaced SallaPush's | Move that line above `SallaPushCapacitor.start()`, or forward from that delegate with `SallaPush.Notifications.willPresent(_:)` and `didReceive(_:)` ([AppDelegate](SETUP.md#appdelegate)). |
-| A SallaPush notification in the foreground has no image, no action buttons, no time-sensitive level, or isn't replaced by a later push with the same collapse id | A `'foregroundWillDisplay'` listener is registered, so iOS shows SallaPush's local copy | Expected: [Foreground display](REFERENCE.md#foreground-display). Register that listener only on the screens that decide per notification. |
-| SallaPush notifications show without their image, or `received` is missing for those that arrived in the background | The Notification Service Extension didn't run, or couldn't attach the image or reach the App Group | Embed the [extension](SETUP.md#notification-service-extension), with `SallaPushExtension`. Images must be https, and at most 10 MB (`nse.attachment_failed`). For `received`, give both targets the same App Group, also in `SallaPushAppGroup`. `xcrun simctl push` never runs the extension: test on a device. |
-| `register.ok`, but no notification arrives | push-service can't reach the device yet, or the device takes no notifications | Ask the SallaPush team to check your app id's bundle id and APNs key. Check `getOptedIn()`. Development builds use the APNs sandbox, and TestFlight and App Store builds production. |
-| With OneSignal, a OneSignal-compatible SallaPush notification shows twice in the foreground, or its tap is routed twice | Both SDKs see OneSignal-compatible SallaPush notifications on iOS | Route each tap once, and add no SallaPush `'foregroundWillDisplay'` listener on iOS while OneSignal is in the app ([Migrating from OneSignal](SETUP.md#migrating-from-onesignal)). |
-| `[SallaPush] initialize ignored …: SallaPush already started with this app id from SallaPushAppId, so the call changes nothing` | JavaScript's `initialize` repeats the static app id, with options | Set those options with the Info.plist keys the message names, and drop the `initialize` call. |
-| `[SallaPush] setConsentRequired(true) came after SallaPush started from SallaPushAppId without SallaPushRequiresUserConsent, …` | Consent is required from JavaScript, after SallaPush started from the static app id: the device may already have registered and sent data | Set `SallaPushRequiresUserConsent` to `YES` in the Info.plist. |
-| `[SallaPush] Ignored SallaPush…: …` | A static key with a value the package can't use | Fix the value as the message says ([Static configuration](REFERENCE.md#static-configuration)). |
-| `[SallaPush] Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even length, …` | `forwardApnsToken` got something else than the token's hexadecimal text | Pass the `token` of `@capacitor-firebase/messaging`'s `apnsTokenReceived` event as it is. |
+| You see | Fix |
+|---|---|
+| No `token.received`, and `token.missing` | Add the Push Notifications capability and the [AppDelegate methods](../README.md#ios). With `registerForRemoteNotificationsOnInit` off, call `SallaPush.Notifications.registerForRemoteNotifications()` at every launch. |
+| `token.registration_failed` | The message ends with iOS's reason. "remote notifications are not supported in the simulator": use iOS 16 or later on a Mac with Apple silicon or a T2 chip, or a device. "no valid aps-environment entitlement": add the Push Notifications capability. |
+| The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first, set your own delegate before it, and add the click listener in your entry module, in the page that stays. |
+| No image, no `received`, or the badge doesn't count | Add the [Notification Service Extension](../README.md#ios), with the same App Group in both targets and in their `SallaPushAppGroup`. Images must be https, at most 10 MB. With `SallaPushLogLevel` at `info` in the extension's Info.plist, `nse.badge_skipped` says why it doesn't count. |
+| The badge always shows 1 | The extension isn't counting: see the row above. |
+| A foreground notification has no image or action buttons | A `'foregroundWillDisplay'` listener exists, so iOS shows SallaPush's local copy ([Foreground display](REFERENCE.md#foreground-display)). |
+| On iOS 15, delivered notifications disappear when the app opens | `autoClearBadge` sets the badge to 0, which on iOS 15 removes them: set it to `false`. |
 
 ## Android
 
-| You see | Cause | Fix |
-|---|---|---|
-| `token.firebase_missing` | The app has no default Firebase app | Put the `google-services.json` of your Firebase project in `android/app`: Capacitor's template then applies the Google services plugin ([Firebase](SETUP.md#firebase)). |
-| `token.auto_init_disabled` | Firebase's auto-init is off, so SallaPush waits for a token your service forwards | Turn auto-init back on, or forward `onNewToken` from your service. `unregister()` of `@capacitor/push-notifications` turns it off. |
-| `register.ok`, but SallaPush notifications never show and record no `received` | Another FCM service in your merged manifest receives the messages, such as `@capacitor/push-notifications`' or `@capacitor-firebase/messaging`'s (`fcm.forwarding_hint` names it, at info level, below the default `warn`), or `google-services.json` is from another Firebase project than the one SallaPush sends with for your app id | Add the [forwarding service](SETUP.md#another-fcm-plugin) at priority 1, and use the Firebase project your app id is set up with. |
-| `fcm.forwarding_hint` | FCM delivers to another service, and nothing was forwarded yet | Expected with your own forwarding service. If it names a service your app doesn't forward from, add the forwarding service. |
-| `notif.suppressed` | A notification wasn't shown: notifications are off, its channel is blocked, the user opted out, or it has no text | The message says which. Ask for the permission, let the user turn the channel back on, or call `optIn()`. |
-| `display.default_icon` | No usable small icon in the meta-data | Add a white-on-transparent drawable as `com.salla.push.default_notification_icon`. |
-| Two copies of a notification, with OneSignal in the app | OneSignal showed a OneSignal-format notification, and let it through to SallaPush too | Set `com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS` to `false`. |
-| `[SallaPush] initialize ignored …: SallaPush already started with this app id from com.salla.push.APP_ID, …`, or `[SallaPush] setConsentRequired(true) came after SallaPush started from com.salla.push.APP_ID without com.salla.push.REQUIRES_USER_CONSENT, …` | As on iOS | Set the meta-data the message names. |
-| A minified release build crashes at start: "Failed to create an instance of class androidx.work.impl.WorkDatabase…" | R8 removed the constructor of WorkManager's database class: the build ignores the libraries' consumer rules, or uses SallaPush natively without this package's rule | Keep the libraries' consumer rules, or add `-keep class * extends androidx.room.RoomDatabase { <init>(); }` to your rules ([Compatibility](REFERENCE.md#compatibility)). |
-| `[SallaPush] Ignored com.salla.push.…: …` | A meta-data value the package can't use, such as a version like `2.1` or a long number, which Android stores as a float | Put the value in a string resource and use `android:value="@string/…"`. |
+| You see | Fix |
+|---|---|
+| `token.firebase_missing` | Put your app's `google-services.json` in `android/app`. |
+| `token.auto_init_disabled` | Turn Firebase's auto-init back on. |
+| `register.ok`, but SallaPush notifications never show; `fcm.forwarding_hint` | Another plugin's service receives the messages: add the [forwarding service](REFERENCE.md#another-push-plugin-on-android). |
+| `notif.suppressed` | The message says why: notifications are off, the channel is blocked, the user opted out, or the notification has no text. |
+| `display.default_icon` | Add a white-on-transparent drawable as `com.salla.push.default_notification_icon`. |
+| SallaPush notifications leave the shade when the app opens | `autoClearBadge` is on: remove `com.salla.push.AUTO_CLEAR_BADGE` or set it to `false`, and leave `autoClearBadge` out of `initialize`'s config. |
+| The badge stays after the app opens | Expected: `autoClearBadge` is off by default on Android. Turn it on, or call `SallaPush.Notifications.clearAll()`. |
+| `badge.channel_badges_on` | The channel existed with badges: create your own with `setShowBadge(false)`, and name it in `com.salla.push.default_channel_id`. |
+| A minified release build crashes at start: "Failed to create an instance of class androidx.work.impl.WorkDatabase" | Keep the libraries' consumer rules, or add `-keep class * extends androidx.room.RoomDatabase { <init>(); }`. |
 
-## Identity
+## Identity and JavaScript
 
-| You see | Cause | Fix |
-|---|---|---|
-| `identity.token_needed` | SallaPush has to link the device, after a new registration or for a login queued before a relaunch, but has no identity token: it keeps the token in memory only, and no `login` call came in this process. A process without JavaScript, such as one FCM starts, makes no launch identity call. | Make the launch identity call at every launch. When native code can read your app's session, make it natively too ([Quick start](SETUP.md#at-app-start)). |
-| `login.rejected`, and a `'loginFailure'` event with `tokenRejected` | push-service refused the identity token for that customer id: it expired, was revoked or belongs to another customer, push-service couldn't check it, or it has a `Bearer ` prefix | Pass the raw token, and the id of its customer as `externalId`. Call `login` again when your app next has a current token, not from the `'loginFailure'` listener: a login sent at once only repeats the refusal. |
-| `identity.client_error`, and a `'loginFailure'` event with `invalidRequest` | push-service refused the login as invalid | Tell the SallaPush team when it happened, with your app id and the device id (`pushSubscription.getId()`). |
-| SallaPush doesn't start at launch: no `init.started`, `isInitialized()` resolves `false` and `getAppId()` `null` | This build has no app id, and the app doesn't call `initialize`: `SALLAPUSH_APP_ID` isn't defined for its build configuration, such as Release, and expands to an empty value, or its flavor's `sallaPushAppId` placeholder is empty. SallaPush then doesn't start, and nothing logs it. | Define `SALLAPUSH_APP_ID` for every build configuration, and the placeholder for every product flavor ([Info.plist](SETUP.md#infoplist), [App id and notification icon](SETUP.md#app-id-and-notification-icon)). To check a build, look for `SallaPushAppId` in its built `Info.plist`, or for `com.salla.push.APP_ID` in Android Studio's Merged Manifest tab. |
-| Nothing registers: no `register.ok`, and `pushSubscription.getId()` stays `null` | Consent is required and not given: SallaPush waits for `setConsentGiven(true)`, and logs `consent.waiting` at info level, below the default `warn` | Call `SallaPush.setConsentGiven(true)` once the user agrees. An app that doesn't ask for consent drops `requiresUserConsent` and the consent keys. |
-| `init.invalid_app_id` | The app id isn't 1 to 64 letters, digits, `_` and `-`: an invalid first app id turns SallaPush off until the next launch | Fix the app id. |
-| `register.dormant` with `404 unknown_app` | push-service doesn't know the app id | Check the app id the SallaPush team gave you. SallaPush tries again after 24 hours. |
-| `register.dormant` with `404 not_found` | push-service has no SallaPush routes at the API URL | Remove a custom API URL, or make it end in `/notifications/v1/sallapush`. |
-
-## JavaScript
-
-| You see | Cause | Fix |
-|---|---|---|
-| In a browser, requests reject with `"SallaPush" plugin is not implemented on web`, and the console shows `[SallaPush] SallaPush.login failed: "SallaPush" plugin is not implemented on web` and the like | SallaPush runs on iOS and Android only. On the web, requests reject and other calls print one console error per method and page. | Expected. Guard code that also runs on the web with `Capacitor.isNativePlatform()` ([On the web](SETUP.md#on-the-web)). |
-| `[SallaPush] <method> ignored: <argument> must be …` | An argument of the wrong type: JavaScript dropped the call. The warning shows once per method and argument. | Pass the type the message names. |
-| `[SallaPush] A … listener threw:` | One of your listeners or your log handler threw | Fix that listener. The other listeners still ran, and a foreground notification was still decided. |
-| Listeners get nothing after the page reloaded or navigated | A page load removes the page's listeners, and SallaPush's native registrations with them | Add the listeners again in the new page: put them in the start-up code that runs at every page load ([Events](SETUP.md#events)). |
-| `getId()` is `null`, `getOptedIn()` is `false`, or `getTags()` lacks earlier tags right after launch | SallaPush loads its saved state after launch, and the getters show only this launch's calls until then | Read the subscription in its `'change'` listener, which gets the state once the device is registered ([Subscription changes](SETUP.md#subscription-changes)). |
-| `[SallaPush] SallaPushNotification.display() did nothing: a prevented notification is shown once, within 10 minutes of its foregroundWillDisplay event.` | The notification was already shown, or held for more than 10 minutes, or the page loaded again since | Call `display()` once, within 10 minutes of the event, in the page that got it. |
-| `[SallaPush] SallaPushNotification.display() did nothing: it was not prevented. …` | `display()` of a `'foregroundWillDisplay'` notification that no listener had prevented | Call `event.preventDefault()` in the listener first, before any `await`. |
-| `[SallaPush] SallaPushNotification.display() does nothing here: …` | `display()` of a notification that wasn't held, such as a click event's | Call it only on the notification of a `'foregroundWillDisplay'` event. |
-| A tap's launch URL opens twice, in the browser and in the app | The open-launch-URLs option is on, so SallaPush opened the URL, and the click listener opened it too | With the option on, don't open `result.url` from the click listener ([Taps](SETUP.md#taps)). |
-| A cold-start tap opens the home screen instead of its destination | The click listener navigated before the app's navigation was ready | Keep the destination, and open it once navigation is ready ([At app start](SETUP.md#at-app-start)). |
-| The identity token, push tokens or log entries appear in the device log | Capacitor's own logging: debug builds log every plugin call with its options, and on iOS the start of every result and event | Expected in debug builds. Never set `loggingBehavior` to `'production'` in `capacitor.config` ([Logging](SETUP.md#logging)). |
-| A promise rejected with `E_SALLAPUSH_INTERNAL` | An unexpected exception inside the Android plugin | Report it, with the message and the native version. |
-
-## Not verified yet
-
-These setups follow from the sources of the tools involved, but haven't been run with SallaPush yet. If one fails for
-you, tell the SallaPush team.
-
-- **pnpm.** The release runs no install script, so pnpm should need no `allowBuilds` entry for it.
-- **Yarn 1 (classic) and Bun.** Neither has an approval setting for git dependencies, and the release runs no install
-  script, so the README's dependency line should install as it is.
-- **Resolving the private Swift package on CI** with `xcodebuild -scmProvider system` and native's rewrite of the
-  package's HTTPS URL ([CI machines](SETUP.md#ci-machines)). A CI Mac whose Xcode is signed in, and CocoaPods, are
-  the proven ways.
-- **Checks on devices,** which run before releases that change native code
-  ([the device checklist](../RELEASING.md#the-device-checklist)):
-  - the tap that launches the app reaches the click listener once, in an app with the UIScene template and in a
-    storyboard app;
-  - `@capacitor/push-notifications`, `@capacitor/local-notifications`, `@capacitor-firebase/messaging` and OneSignal
-    keep working beside SallaPush, with their own notifications and taps;
-  - another SDK's tap that launches the app reaches that SDK as it does without SallaPush; the check also notes whether
-    the line "A notification response that isn't SallaPush's arrived before Capacitor's notification router existed"
-    appears;
-  - after a page reload, a tap reaches the new page's click listener once.
+| You see | Fix |
+|---|---|
+| `login.rejected`, and a `'loginFailure'` event with `tokenRejected` | Pass the customer's current token, without `Bearer `, and their id as `externalId`. Call `login` again once your app has a current token, not from the listener. |
+| `identity.token_needed` | Call `login` at each app launch while the customer is signed in. |
+| `identity.client_error`, and a `'loginFailure'` event with `invalidRequest` | Contact the Salla team, with your app id and when it happened. |
+| In a browser: `"SallaPush" plugin is not implemented on web` | Expected: guard code that also runs on the web with `Capacitor.isNativePlatform()`. |
+| `[SallaPush] <method> ignored: <argument> must be …` | Pass the type the message names. |
+| `[SallaPush] A … listener threw:` | Fix that listener; the others still ran. |
+| Listeners get nothing after the page reloaded | Add them in start-up code that runs at every page load. |
+| `getId()` is `null`, or `getTags()` lacks earlier tags, right after launch | Read the subscription in its `'change'` listener. |
+| `[SallaPush] SallaPushNotification.display() did nothing…` | Call `display()` once, within 10 minutes, on a notification a listener prevented. |
+| A tap's launch URL opens twice | With the open-launch-URLs option on, don't open `result.url` from the click listener. |
+| A cold-start tap opens the home screen | Keep the destination, and open it once your navigation is ready. |
+| Tokens appear in the device log | Capacitor's logging in debug builds. Never set `loggingBehavior` to `'production'`. |
+| A promise rejected with `E_SALLAPUSH_INTERNAL` | [Open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose) with the message and the versions. |

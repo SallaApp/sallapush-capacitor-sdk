@@ -10,7 +10,7 @@ import java.util.Locale
 
 /**
  * The com.salla.push.* meta-data that only the wrapper reads, from the app's manifest. Null means the key is absent and
- * native's default applies. SallaPush reads its own keys (LOG_LEVEL, API_BASE_URL, the icon and channel keys) itself.
+ * native's default applies. SallaPush reads its own keys (LOG_LEVEL, the icon and channel keys) itself.
  */
 internal data class StaticConfig(
   val appId: String? = null,
@@ -18,7 +18,9 @@ internal data class StaticConfig(
   val requiresUserConsent: Boolean? = null,
   val clearTagsOnLogout: Boolean? = null,
   val appVersion: String? = null,
-  val displayOneSignalCompatPayloads: Boolean? = null,
+  val displayCompatPayloads: Boolean? = null,
+  val autoClearBadge: Boolean? = null,
+  val autoUpdateBadge: Boolean? = null,
 ) {
 
   /** The native configuration with the options the manifest sets, and native's defaults for the others. */
@@ -28,6 +30,8 @@ internal data class StaticConfig(
     requiresUserConsent?.let { builder.setRequiresUserConsent(it) }
     clearTagsOnLogout?.let { builder.setClearTagsOnLogout(it) }
     appVersion?.let { builder.setAppVersion(it) }
+    autoClearBadge?.let { builder.setAutoClearBadge(it) }
+    autoUpdateBadge?.let { builder.setAutoUpdateBadge(it) }
     return builder.build()
   }
 
@@ -37,7 +41,9 @@ internal data class StaticConfig(
     const val REQUIRES_USER_CONSENT = "com.salla.push.REQUIRES_USER_CONSENT"
     const val CLEAR_TAGS_ON_LOGOUT = "com.salla.push.CLEAR_TAGS_ON_LOGOUT"
     const val APP_VERSION = "com.salla.push.APP_VERSION"
-    const val DISPLAY_ONESIGNAL_COMPAT_PAYLOADS = "com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS"
+    const val DISPLAY_COMPAT_PAYLOADS = "com.salla.push.DISPLAY_COMPAT_PAYLOADS"
+    const val AUTO_CLEAR_BADGE = "com.salla.push.AUTO_CLEAR_BADGE"
+    const val AUTO_UPDATE_BADGE = "com.salla.push.AUTO_UPDATE_BADGE"
 
     fun read(context: Context): StaticConfig = from(context, metaData(context))
 
@@ -49,7 +55,9 @@ internal data class StaticConfig(
         requiresUserConsent = values.flag(REQUIRES_USER_CONSENT),
         clearTagsOnLogout = values.flag(CLEAR_TAGS_ON_LOGOUT),
         appVersion = values.text(APP_VERSION),
-        displayOneSignalCompatPayloads = values.flag(DISPLAY_ONESIGNAL_COMPAT_PAYLOADS),
+        displayCompatPayloads = values.flag(DISPLAY_COMPAT_PAYLOADS),
+        autoClearBadge = values.flag(AUTO_CLEAR_BADGE),
+        autoUpdateBadge = values.flag(AUTO_UPDATE_BADGE),
       )
     }
 

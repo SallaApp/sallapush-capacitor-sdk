@@ -1,15 +1,15 @@
 import { registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 export type ConfigSpec = {
-  apiBaseUrl?: string;
   logLevel?: string;
   appVersion?: string;
   clearTagsOnLogout?: boolean;
   requiresUserConsent?: boolean;
   openLaunchUrls?: boolean;
+  autoClearBadge?: boolean;
+  autoUpdateBadge?: boolean;
   iosAppGroupIdentifier?: string;
   iosApnsEnvironment?: string;
-  iosAutoClearBadge?: boolean;
   iosRegisterForRemoteNotificationsOnInit?: boolean;
 };
 export type NotificationSpec = {
@@ -123,9 +123,7 @@ export interface SallaPushNativePlugin {
   }): Promise<Value<boolean>>;
   displayNotification(options: { handle: string }): Promise<void>;
 
-  setDisplayOneSignalCompatPayloads(options: {
-    display: boolean;
-  }): Promise<void>;
+  setDisplayCompatPayloads(options: { display: boolean }): Promise<void>;
 
   getLogLevel(): Promise<Value<string>>;
   setLogLevel(options: { level: string }): Promise<void>;

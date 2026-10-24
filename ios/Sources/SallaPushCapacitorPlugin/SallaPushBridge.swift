@@ -28,7 +28,7 @@ final class SallaPushBridge {
     /// Initializes SallaPush with the `ConfigSpec` fields that JavaScript set, keyed by name.
     func initialize(appId: String, options: [String: Any]) {
         let options = InitOptions(options)
-        if let earlyInit = earlyInit(), earlyInit.appId == appId, options.apiBaseUrl == nil {
+        if let earlyInit = earlyInit(), earlyInit.appId == appId {
             reportIgnoredOptions(options.startOptions)
         }
         native.initialize(appId, configuration: options.configuration())
@@ -137,8 +137,8 @@ final class SallaPushBridge {
     /// Forwards the APNs token another SDK holds, given as hexadecimal text, as native's token data.
     func forwardApnsToken(_ apnsToken: String) {
         guard let deviceToken = Data(hexadecimal: apnsToken) else {
-            console.error("Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even "
-                + "length, as @capacitor-firebase/messaging's apnsTokenReceived event gives it.")
+            console.error(
+                "Notifications.forwardApnsToken ignored: the APNs token must be hexadecimal text of even length.")
             return
         }
         native.didRegisterForRemoteNotifications(deviceToken: deviceToken)
@@ -163,8 +163,9 @@ final class SallaPushBridge {
     }
 
     func trackOpened() -> Bool {
-        once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
-            + "SallaPush notifications reach SallaPush through its notification-center delegate.", to: console)
+        once.info("Notifications.trackOpened is Android only and resolves false on iOS, where taps on SallaPush "
+            + "notifications in the compatible format reach SallaPush through its notification-center delegate.",
+            to: console)
         return false
     }
 
@@ -185,8 +186,8 @@ final class SallaPushBridge {
         events.setLogLevel(level)
     }
 
-    func setDisplayOneSignalCompatPayloads() {
-        once.info("Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS.", to: console)
+    func setDisplayCompatPayloads() {
+        once.info("Migration.setDisplayCompatPayloads is Android only and does nothing on iOS.", to: console)
     }
 
     // MARK: - Events
@@ -219,7 +220,7 @@ final class SallaPushBridge {
 
     // MARK: - Console
 
-    /// A second initialize with the static app id and API host changes nothing natively, its options included.
+    /// A second initialize with the static app id changes nothing natively, its options included.
     private func reportIgnoredOptions(_ options: [(option: String, key: String)]) {
         guard !options.isEmpty else { return }
         let names = options.map(\.option).joined(separator: ", ")
@@ -231,30 +232,30 @@ final class SallaPushBridge {
 
 /// The options of a JavaScript `initialize` call; nil means the option was left out.
 struct InitOptions {
-    var apiBaseUrl: String?
     var logLevel: SallaPushLogLevel?
     var appVersion: String?
     var clearTagsOnLogout: Bool?
     var requiresUserConsent: Bool?
     var openLaunchUrls: Bool?
+    var autoClearBadge: Bool?
+    var autoUpdateBadge: Bool?
     var appGroupIdentifier: String?
     var apnsEnvironment: SallaPushAPNsEnvironment?
-    var autoClearBadge: Bool?
     var registerForRemoteNotificationsOnInit: Bool?
 }
 
 extension InitOptions {
     init(_ options: [String: Any]) {
         self.init(
-            apiBaseUrl: options["apiBaseUrl"] as? String,
             logLevel: (options["logLevel"] as? String).flatMap(SallaPushLogLevel.init(name:)),
             appVersion: options["appVersion"] as? String,
             clearTagsOnLogout: options["clearTagsOnLogout"] as? Bool,
             requiresUserConsent: options["requiresUserConsent"] as? Bool,
             openLaunchUrls: options["openLaunchUrls"] as? Bool,
+            autoClearBadge: options["autoClearBadge"] as? Bool,
+            autoUpdateBadge: options["autoUpdateBadge"] as? Bool,
             appGroupIdentifier: options["iosAppGroupIdentifier"] as? String,
             apnsEnvironment: (options["iosApnsEnvironment"] as? String).flatMap(SallaPushAPNsEnvironment.init(name:)),
-            autoClearBadge: options["iosAutoClearBadge"] as? Bool,
             registerForRemoteNotificationsOnInit: options["iosRegisterForRemoteNotificationsOnInit"] as? Bool
         )
     }
@@ -262,24 +263,24 @@ extension InitOptions {
     /// The native configuration with the options that were given, and native's defaults for the others.
     func configuration() -> SallaPushConfiguration {
         let configuration = SallaPushConfiguration()
-        if let apiBaseUrl {
-            // Text that isn't a URL reaches native as an invalid URL, so native logs config.invalid_base_url and uses
-            // production, as on Android; nil would mean the Info.plist URL.
-            let text = apiBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
-            configuration.apiBaseURL = URL(string: text) ?? URL(fileURLWithPath: "/")
-        }
         if let logLevel { configuration.logLevel = logLevel }
         if let appVersion { configuration.appVersion = appVersion }
         if let clearTagsOnLogout { configuration.clearTagsOnLogout = clearTagsOnLogout }
         if let requiresUserConsent { configuration.requiresUserConsent = requiresUserConsent }
         if let openLaunchUrls { configuration.openLaunchURLs = openLaunchUrls }
+        applyBadgeOptions(to: configuration)
         if let appGroupIdentifier { configuration.appGroupIdentifier = appGroupIdentifier }
         if let apnsEnvironment { configuration.apnsEnvironment = apnsEnvironment }
-        if let autoClearBadge { configuration.autoClearBadge = autoClearBadge }
         if let registerForRemoteNotificationsOnInit {
             configuration.registerForRemoteNotificationsOnInit = registerForRemoteNotificationsOnInit
         }
         return configuration
+    }
+
+    /// The badge options: autoClearBadge and autoUpdateBadge.
+    private func applyBadgeOptions(to configuration: SallaPushConfiguration) {
+        if let autoClearBadge { configuration.autoClearBadge = autoClearBadge }
+        if let autoUpdateBadge { configuration.autoUpdateBadge = autoUpdateBadge }
     }
 
     /// The given options that only the first initialize applies, each with the Info.plist key that sets it at launch.
@@ -290,9 +291,10 @@ extension InitOptions {
             clearTagsOnLogout.map { _ in ("clearTagsOnLogout", StaticConfig.Key.clearTagsOnLogout) },
             requiresUserConsent.map { _ in ("requiresUserConsent", StaticConfig.Key.requiresUserConsent) },
             openLaunchUrls.map { _ in ("openLaunchUrls", StaticConfig.Key.openLaunchURLs) },
+            autoClearBadge.map { _ in ("autoClearBadge", StaticConfig.Key.autoClearBadge) },
+            autoUpdateBadge.map { _ in ("autoUpdateBadge", StaticConfig.Key.autoUpdateBadge) },
             appGroupIdentifier.map { _ in ("ios.appGroupIdentifier", "SallaPushAppGroup") },
             apnsEnvironment.map { _ in ("ios.apnsEnvironment", StaticConfig.Key.apnsEnvironment) },
-            autoClearBadge.map { _ in ("ios.autoClearBadge", StaticConfig.Key.autoClearBadge) },
             registerForRemoteNotificationsOnInit.map { _ in
                 ("ios.registerForRemoteNotificationsOnInit", StaticConfig.Key.registerForRemoteNotificationsOnInit)
             }

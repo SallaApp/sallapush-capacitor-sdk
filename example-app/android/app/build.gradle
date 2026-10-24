@@ -15,28 +15,27 @@ android {
     namespace = "sa.salla.sallapush.example"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId sallaPushSetting("sallapushApplicationId", "sa.salla.sallapush.example")
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        applicationId = sallaPushSetting("sallapushApplicationId", "sa.salla.sallapush.example")
+        minSdk = rootProject.ext.minSdkVersion
+        targetSdk = rootProject.ext.targetSdkVersion
+        versionCode = 1
+        versionName = "1.0"
         manifestPlaceholders += [
-            sallaPushAppId: sallaPushSetting("sallapushAppId", ""),
-            sallaPushApiBaseUrl: sallaPushSetting("sallapushApiBaseUrl", "https://api.salla.dev/notifications/v1/sallapush")
+            sallaPushAppId: sallaPushSetting("sallapushAppId", "")
         ]
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    androidResources {
+        // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+        // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+        ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
     // No keystore is committed: release uses the Android SDK's default debug keystore. Release builds, the smoke
     // tests' among them, shrink the app with R8 as production apps do.
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
-            minifyEnabled true
+            signingConfig = signingConfigs.debug
+            minifyEnabled = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

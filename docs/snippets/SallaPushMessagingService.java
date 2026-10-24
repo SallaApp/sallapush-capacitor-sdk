@@ -1,11 +1,10 @@
 package com.example.app;
 
-import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.salla.push.SallaPush;
 
-/** Hands SallaPush its own messages and tokens first; everything else goes to @capacitor/push-notifications. */
-public class SallaPushMessagingService extends MessagingService {
+/** Hands SallaPush its own messages and tokens first, and every other one to the push plugin's service it extends. */
+public class SallaPushMessagingService extends OtherPluginMessagingService {
 
     @Override
     public void onMessageReceived(RemoteMessage message) {

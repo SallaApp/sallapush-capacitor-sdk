@@ -14,14 +14,14 @@ readonly SP_PINS=(
   "Salla.saSallapushCapacitor.podspec|s\\.dependency \"SallaPush\", \"($SP_VERSION_RE)\"|ios"
   "Package.swift|url: \"https://github\\.com/SallaApp/sallapush-ios-sdk\\.git\", exact: \"($SP_VERSION_RE)\"|ios"
   "example-app/ios/App/App.xcodeproj/project.pbxproj|^[ \\t]*version = ($SP_VERSION_RE);\$|ios"
-  "docs/snippets/Podfile|:git => 'git@github\\.com:SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
+  "docs/snippets/Podfile|:git => 'https://github\\.com/SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
   "tool/api-parity/mapping.json|\"ios\": \"($SP_VERSION_RE)\"|ios"
   "README.md|SallaPush iOS ($SP_VERSION_RE)|ios"
   "README.md|^\\| Capacitor [^|]*\\| ($SP_VERSION_RE) \\||ios"
-  "README.md|:git => 'git@github\\.com:SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
+  "README.md|:git => 'https://github\\.com/SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
   "README.md|github\\.com/SallaApp/sallapush-ios-sdk/blob/($SP_VERSION_RE)/|ios"
   "docs/*.md|SallaPush iOS ($SP_VERSION_RE)|ios"
-  "docs/*.md|:git => 'git@github\\.com:SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
+  "docs/*.md|:git => 'https://github\\.com/SallaApp/sallapush-ios-sdk\\.git', :tag => '($SP_VERSION_RE)'|ios"
   "docs/*.md|SallaPush \\(= ($SP_VERSION_RE)\\)|ios"
   "docs/*.md|github\\.com/SallaApp/sallapush-ios-sdk/blob/($SP_VERSION_RE)/|ios"
   "android/build.gradle|api \"com\\.salla\\.push:sallapush:($SP_VERSION_RE)\"|android"
@@ -313,9 +313,8 @@ sp_java_home() {
 }
 
 # Sets ANDROID_HOME, JAVA_HOME and ADB for the Android steps: the SDK (ANDROID_HOME, else the default macOS location) and
-# JDK 21 (sp_java_home). Checks that GitHub Packages credentials exist, without reading them.
+# JDK 21 (sp_java_home). SallaPush Android comes from Maven Central, which needs no credentials.
 sp_android_env() {
-  local properties="${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
   if [ -z "${ANDROID_HOME:-}" ] && [ -d "$HOME/Library/Android/sdk" ]; then
     ANDROID_HOME="$HOME/Library/Android/sdk"
   fi
@@ -326,12 +325,6 @@ sp_android_env() {
   JAVA_HOME="$(sp_java_home)" || return 1
   export ANDROID_HOME JAVA_HOME
   ADB="$ANDROID_HOME/platform-tools/adb"
-  if { [ -f "$properties" ] && grep -q '^gpr\.user=' "$properties" && grep -q '^gpr\.key=' "$properties"; } ||
-    { [ -n "${GITHUB_ACTOR:-}" ] && [ -n "${GITHUB_TOKEN:-}" ]; }; then
-    return 0
-  fi
-  echo "no GitHub Packages credentials for com.salla.push:sallapush: set gpr.user and gpr.key (a classic token with read:packages) in $properties, or GITHUB_ACTOR and GITHUB_TOKEN" >&2
-  return 1
 }
 
 # Prints the serial of the emulator to use: VERIFY_EMULATOR_SERIAL, else the one running emulator.

@@ -9,8 +9,8 @@ Pod::Spec.new do |s|
   s.version       = package["version"]
   s.summary       = package["description"]
   s.homepage      = package["homepage"]
-  s.license       = { :type => "Proprietary", :text => "Copyright Salla. All rights reserved." }
-  s.authors       = { "Salla" => "mobile@salla.sa" }
+  s.license       = { :type => "MIT", :file => "LICENSE" }
+  s.author        = "Salla"
 
   s.platforms     = { :ios => "15.0" }
   s.swift_version = "5.0"

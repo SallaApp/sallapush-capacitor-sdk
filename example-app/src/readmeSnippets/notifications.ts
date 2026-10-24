@@ -4,7 +4,8 @@ import {
 } from '@salla.sa/sallapush-capacitor';
 import { settingsScreen } from './standIns';
 
-// README "Notifications": the permission, and a screen that decides about foreground notifications.
+// The README's "Quick start" and "Foreground notifications": the permission, and a screen that decides about foreground
+// notifications.
 
 export async function askForPermission(): Promise<void> {
   // snippet:request-permission
@@ -13,13 +14,11 @@ export async function askForPermission(): Promise<void> {
   settingsScreen.showPermission(granted);
 }
 
-// snippet:will-display
-let chatListener: SallaPushEventSubscription | null = null;
-
-// While a chat screen shows its messages, SallaPush doesn't show that chat's notifications.
-export function chatScreenOpened(chatId: string): void {
-  chatListener?.remove();
-  chatListener = SallaPush.Notifications.addEventListener(
+// While a chat screen shows its messages, SallaPush doesn't show that chat's notifications. The screen removes the
+// listener when it closes.
+export function chatScreenOpened(chatId: string): SallaPushEventSubscription {
+  // snippet:will-display
+  const chatListener = SallaPush.Notifications.addEventListener(
     'foregroundWillDisplay',
     (event) => {
       if (event.notification.getString('chat_id') === chatId) {
@@ -27,10 +26,6 @@ export function chatScreenOpened(chatId: string): void {
       }
     }
   );
+  // end-snippet
+  return chatListener;
 }
-
-export function chatScreenClosed(): void {
-  chatListener?.remove();
-  chatListener = null;
-}
-// end-snippet

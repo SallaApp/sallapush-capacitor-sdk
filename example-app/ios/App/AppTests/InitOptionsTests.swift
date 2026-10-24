@@ -10,7 +10,8 @@ final class InitOptionsTests: XCTestCase {
             ("clearTagsOnLogout", { $0.clearTagsOnLogout }),
             ("requiresUserConsent", { $0.requiresUserConsent }),
             ("openLaunchUrls", { $0.openLaunchURLs }),
-            ("iosAutoClearBadge", { $0.autoClearBadge }),
+            ("autoClearBadge", { $0.autoClearBadge }),
+            ("autoUpdateBadge", { $0.autoUpdateBadge }),
             ("iosRegisterForRemoteNotificationsOnInit", { $0.registerForRemoteNotificationsOnInit })
         ]
         let defaults = SallaPushConfiguration()
@@ -39,17 +40,5 @@ final class InitOptionsTests: XCTestCase {
         let unknown = InitOptions(["logLevel": "Debug", "iosApnsEnvironment": "development"])
         XCTAssertNil(unknown.logLevel)
         XCTAssertNil(unknown.apnsEnvironment)
-    }
-
-    // As on Android, where native trims the URL, then logs config.invalid_base_url and uses production for text that
-    // isn't one; nil would make native fall back to the Info.plist URL without a word.
-    func testTrimsTheAPIURLAndPassesTextThatIsNoURLAsAnInvalidOne() {
-        let padded = InitOptions(["apiBaseUrl": " https://staging.example.com/notifications/v1/sallapush \n"])
-        XCTAssertEqual(padded.configuration().apiBaseURL, URL(string: "https://staging.example.com/notifications/v1/sallapush"))
-        for text in ["", "  "] {
-            let url = InitOptions(["apiBaseUrl": text]).configuration().apiBaseURL
-            XCTAssertNotNil(url, "'\(text)'")
-            XCTAssertNotEqual(url?.scheme, "https", "'\(text)'")
-        }
     }
 }

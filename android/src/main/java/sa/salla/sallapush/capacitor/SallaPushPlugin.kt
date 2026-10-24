@@ -53,7 +53,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   fun initialize(call: PluginCall) {
     val appId = call.getString("appId") ?: return
     val options = InitOptions(call.getObject("config") ?: JSObject())
-    if (seams.earlyInit()?.appId == appId && options.apiBaseUrl == null) {
+    if (seams.earlyInit()?.appId == appId) {
       reportIgnoredOptions(options.startOptions)
     }
     seams.native.initWithContext(applicationContext(), appId, options.toSallaPushConfig())
@@ -246,9 +246,9 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   }
 
   @PluginMethod(returnType = PluginMethod.RETURN_NONE)
-  fun setDisplayOneSignalCompatPayloads(call: PluginCall) {
+  fun setDisplayCompatPayloads(call: PluginCall) {
     val display = call.getBoolean("display") ?: return
-    seams.native.setDisplayOneSignalCompatPayloads(display)
+    seams.native.setDisplayCompatPayloads(display)
   }
 
   @PluginMethod
@@ -304,10 +304,9 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   /**
    * The activity is going away. Capacitor still runs the calls it had queued, and native would hold a listener
    * registered by one of them, with this plugin, its activity and its WebView, and give it every later tap. So every
-   * registration stops, and from now on the plugin refuses new ones and emits nothing. Public, so the tests in this
-   * package can call it; Kotlin allows widening the protected override.
+   * registration stops, and from now on the plugin refuses new ones and emits nothing.
    */
-  public override fun handleOnDestroy() {
+  override fun handleOnDestroy() {
     destroyed = true
     events.stopAll()
     displays.clear()
@@ -342,7 +341,7 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
     onPluginThread { notifyListeners(event.jsName, data) }
   }
 
-  /** A second init with the static app id and API host changes nothing natively, its options included. */
+  /** A second init with the static app id changes nothing natively, its options included. */
   private fun reportIgnoredOptions(options: List<Pair<String, String>>) {
     if (options.isEmpty()) return
     val names = options.joinToString(", ") { it.first }
@@ -356,12 +355,13 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
 
 /** The options of a JavaScript initialize call that apply on Android; null means the option was left out. */
 private class InitOptions(config: JSONObject) {
-  val apiBaseUrl = config.stringOrNull("apiBaseUrl")
   val logLevel = config.stringOrNull("logLevel")?.let(::logLevelNamed)
   val appVersion = config.stringOrNull("appVersion")
   val clearTagsOnLogout = config.booleanOrNull("clearTagsOnLogout")
   val requiresUserConsent = config.booleanOrNull("requiresUserConsent")
   val openLaunchUrls = config.booleanOrNull("openLaunchUrls")
+  val autoClearBadge = config.booleanOrNull("autoClearBadge")
+  val autoUpdateBadge = config.booleanOrNull("autoUpdateBadge")
 
   /** The given options that only the first init applies, each with the meta-data that sets it at launch. */
   val startOptions: List<Pair<String, String>>
@@ -371,17 +371,20 @@ private class InitOptions(config: JSONObject) {
       clearTagsOnLogout?.let { "clearTagsOnLogout" to StaticConfig.CLEAR_TAGS_ON_LOGOUT },
       requiresUserConsent?.let { "requiresUserConsent" to StaticConfig.REQUIRES_USER_CONSENT },
       openLaunchUrls?.let { "openLaunchUrls" to StaticConfig.OPEN_LAUNCH_URLS },
+      autoClearBadge?.let { "autoClearBadge" to StaticConfig.AUTO_CLEAR_BADGE },
+      autoUpdateBadge?.let { "autoUpdateBadge" to StaticConfig.AUTO_UPDATE_BADGE },
     )
 
   /** The native configuration with the options that were given, and native's defaults for the others. */
   fun toSallaPushConfig(): SallaPushConfig {
     val builder = SallaPushConfig.Builder()
-    apiBaseUrl?.let { builder.setApiBaseUrl(it) }
     logLevel?.let { builder.setLogLevel(it) }
     appVersion?.let { builder.setAppVersion(it) }
     clearTagsOnLogout?.let { builder.setClearTagsOnLogout(it) }
     requiresUserConsent?.let { builder.setRequiresUserConsent(it) }
     openLaunchUrls?.let { builder.setOpenLaunchUrls(it) }
+    autoClearBadge?.let { builder.setAutoClearBadge(it) }
+    autoUpdateBadge?.let { builder.setAutoUpdateBadge(it) }
     return builder.build()
   }
 }

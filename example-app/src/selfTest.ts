@@ -11,7 +11,7 @@ import {
 import { eventLog, followLogs } from './eventLog';
 import { SmokeReporter } from './smokeReporter';
 
-/** The app id of the smoke configuration, whose API URL points at a closed local port: nothing reaches a server. */
+/** The app id of the smoke configuration, a made-up id that no store app has. */
 export const SMOKE_APP_ID = 'example_smoke';
 
 const CUSTOMER_ID = 'smoke-customer';
@@ -177,7 +177,7 @@ async function checkNotifications(report: Report): Promise<void> {
     ios ? opened === false : typeof opened === 'boolean',
     opened
   );
-  SallaPush.Migration.setDisplayOneSignalCompatPayloads(true);
+  SallaPush.Migration.setDisplayCompatPayloads(true);
 }
 
 async function checkUser(report: Report): Promise<void> {

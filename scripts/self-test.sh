@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Tests of this repository's shell tooling, on throwaway copies in a temporary directory, with stand-ins for every
 # network or build tool: Yarn's resolution, the JDK selection and the VERIFY_IOS_SDK_CHECKOUT check in common.sh,
-# verified-label.sh, bump-native.sh, release-dist.sh, and the tree step, the summary and the clean-run check of
-# verify.sh. It needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never
-# signed, and nothing is pushed.
+# bump-native.sh, release-dist.sh, and the tree and pack steps, the summary and the clean-run check of verify.sh. It
+# needs bash, git and python3. Scratch commits use an isolated git configuration, so they are never signed, and nothing
+# is pushed.
 #
 #   scripts/self-test.sh
 set -euo pipefail
@@ -223,99 +223,6 @@ EOF
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# verified-label.sh
-
-test_verified_label() {
-  local bin="$work/bin-api" api="$work/github-api" head=1111111111111111111111111111111111111111
-  local newer=2222222222222222222222222222222222222222 older=3333333333333333333333333333333333333333 label
-  section "verified-label.sh (ci.yml, job Native verified)"
-  mkdir -p "$api"
-  # Stands in for curl against GitHub's REST API: serves $FAKE_API/<path>.json, with / ? & = in the path turned into
-  # _; a missing file is a 404, which --fail turns into exit 22. Every call's arguments are recorded.
-  stand_in "$bin/curl" <<'EOF'
-printf "%s\n" "$*" >>"$FAKE_RECORD"
-cat >/dev/null
-for url; do :; done
-path="${url#*://*/}"
-file="$FAKE_API/$(printf "%s" "$path" | tr "/?&=" "____").json"
-[ -f "$file" ] || { echo "curl: (22) The requested URL returned error: 404" >&2; exit 22; }
-cat "$file"
-EOF
-  gate() {
-    env PATH="$bin:$PATH" FAKE_API="$api" FAKE_RECORD="$work/api-curl.args" GITHUB_API_URL=https://api.example.invalid \
-      GITHUB_REPOSITORY=o/r GH_TOKEN=api-token-value PR_NUMBER="$1" HEAD_SHA="$2" "$scripts/verified-label.sh"
-  }
-  # fixture <live head> <labels JSON> <events JSON> <comments JSON>: one page of each.
-  fixture() {
-    rm -f "${api:?}"/*.json
-    printf '{"head": {"sha": "%s"}, "labels": [%s]}\n' "$1" "$2" >"$api/repos_o_r_pulls_5.json"
-    printf '%s\n' "$3" >"$api/repos_o_r_issues_5_events_per_page_100_page_1.json"
-    printf '%s\n' "$4" >"$api/repos_o_r_issues_5_comments_per_page_100_page_1.json"
-  }
-  labeled() { printf '{"id": 1, "event": "labeled", "actor": {"login": "%s"}, "label": {"name": "native-verified-locally"}, "created_at": "%s"}' "$1" "$2"; }
-  unlabeled() { printf '{"id": 2, "event": "unlabeled", "actor": {"login": "%s"}, "label": {"name": "native-verified-locally"}, "created_at": "%s"}' "$1" "$2"; }
-  comment() {
-    python3 -c 'import json, sys; print(json.dumps({"id": 9, "user": {"login": sys.argv[1]}, "created_at": sys.argv[2], "updated_at": sys.argv[4] or sys.argv[2], "body": sys.argv[3], "html_url": "https://github.example.invalid/o/r/pull/5#issuecomment-9"}))' \
-      "$1" "$2" "$3" "${4:-}"
-  }
-  label='{"name": "native-verified-locally"}'
-
-  check "a push without a pull request passes with a warning" ok gate "" "$head"
-  says "it warns" "::warning::"
-  fixture "$head" "" "[]" "[]"
-  check "a pull request without the label fails" fails gate 5 "$head"
-  says "it says what to do" "Add the label native-verified-locally"
-  says "  ... and which comment attests the head" "comment 'native-verified-locally $head'"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "$(printf 'native-verified-locally %s\nstep\tresult\nlint\tpassed' "$head")")]"
-  check "the labeler's comment that names the head, with the run's summary, passes" ok gate 5 "$head"
-  says "it names the commit and the person" "The SDK at $head was verified locally: @alice"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-01T10:00:00Z)]" \
-    "[$(comment alice 2026-10-01T10:05:00Z "native-verified-locally $older"), $(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "after a push, a new comment that names the new head passes, the label untouched" ok gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $older")]"
-  check "a comment that names another commit fails" fails gate 5 "$head"
-  says "it names both commits" "names 333333333333, not this run's head 111111111111"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head"), $(comment alice 2026-10-03T10:06:00Z "native-verified-locally $older")]"
-  check "only the latest attestation counts" fails gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[]"
-  check "a label without an attestation fails" fails gate 5 "$head"
-  says "it says who must say which commit" "@alice added the label native-verified-locally but has not said which commit they verified"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment bob 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "someone else's comment does not attest for the person who added the label" fails gate 5 "$head"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T09:00:00Z), $(unlabeled alice 2026-10-03T09:30:00Z), $(labeled bob 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "once someone else adds the label again, they attest" fails gate 5 "$head"
-  says "it names them" "@bob added the label"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head" 2026-10-03T11:00:00Z)]"
-  check "an edited or hidden attestation fails" fails gate 5 "$head"
-  says "it says why" "was changed after it was posted (edited or hidden), so it attests nothing"
-  fixture "$head" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" \
-    "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $(printf '%s' "$head" | cut -c1-12)")]"
-  check "an abbreviated commit id does not count" fails gate 5 "$head"
-  says "it says what the comment must read" "does not read 'native-verified-locally <the full 40-character commit id>'"
-  fixture "$newer" "$label" "[$(labeled alice 2026-10-03T10:00:00Z)]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "a run of a commit that is no longer the head fails" fails gate 5 "$head"
-  says "it names the newer head" "the pull request's head is now 222222222222"
-  fixture "$head" "$label" "[]" "[$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")]"
-  check "a label without a labeled event fails" fails gate 5 "$head"
-  # More than 100 events and comments: the second pages are read.
-  fixture "$head" "$label" \
-    "[$(python3 -c 'import json; print(", ".join(json.dumps({"id": n, "event": "referenced", "created_at": "2026-10-03T09:%02d:00Z" % (n % 60)}) for n in range(100)))')]" \
-    "[$(python3 -c 'import json; print(", ".join(json.dumps({"id": n, "user": {"login": "carol"}, "created_at": "2026-10-03T09:00:00Z", "updated_at": "2026-10-03T09:00:00Z", "body": "LGTM"}) for n in range(100)))')]"
-  printf '[%s]\n' "$(labeled alice 2026-10-03T10:00:00Z)" >"$api/repos_o_r_issues_5_events_per_page_100_page_2.json"
-  printf '[%s]\n' "$(comment alice 2026-10-03T10:05:00Z "native-verified-locally $head")" >"$api/repos_o_r_issues_5_comments_per_page_100_page_2.json"
-  check "a label and an attestation on second pages pass" ok gate 5 "$head"
-  rm "${api:?}/repos_o_r_issues_5_comments_per_page_100_page_2.json"
-  check "a page GitHub does not serve fails the gate" fails gate 5 "$head"
-  says "it says why" "404"
-  check "the token never reaches curl's command line" fails grep -q api-token-value "$work/api-curl.args"
-  check "no redirect is followed with the token" fails grep -qE -- '(^| )(--location|-L)( |$)' "$work/api-curl.args"
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
 # A copy of this repository's files (what a commit would take), for the cases that change files; each case starts from
 # a fresh copy. The copy is a git repository without commits, so every file is untracked and not ignored.
 
@@ -424,22 +331,25 @@ EOF
   check "  ... in the README's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/README.md"
   check "  ... in the README's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" "$case_dir/README.md"
   check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/README.md"
-  check "  ... in docs/SETUP.md's Podfile lines" ok grep -qF ":tag => '$target'" "$case_dir/docs/SETUP.md"
-  check "  ... in docs/SETUP.md's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" \
-    "$case_dir/docs/SETUP.md"
-  check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/docs/SETUP.md"
+  check "  ... in docs/REFERENCE.md's links to the native docs" ok grep -qF "sallapush-android-sdk/blob/$target/" \
+    "$case_dir/docs/REFERENCE.md"
+  check "  ... and to the iOS ones" ok grep -qF "sallapush-ios-sdk/blob/$target/" "$case_dir/docs/REFERENCE.md"
   check "  ... in docs/REFERENCE.md" ok grep -qF "SallaPush iOS $target and SallaPush Android $target" \
     "$case_dir/docs/REFERENCE.md"
   check "  ... in docs/TROUBLESHOOTING.md's CocoaPods message" ok grep -qF "SallaPush (= $target)" \
     "$case_dir/docs/TROUBLESHOOTING.md"
   check "  ... with the API files of the new tags" ok cmp -s "$served/sallapush-ios-sdk/$target/API.txt" \
     "$case_dir/tool/api-parity/native-ios-API.txt"
+  # The line joins the Changed lines that [Unreleased] already has, or starts that section.
   check "  ... and the CHANGELOG line under Changed" ok python3 -c '
 import sys
 text = open(sys.argv[1], encoding="utf-8").read()
 unreleased = text.split("## [Unreleased]", 1)[1].split("\n## ", 1)[0]
 version = sys.argv[2]
-assert f"### Changed\n\n- SallaPush iOS {version} and SallaPush Android {version}.\n" in unreleased, unreleased
+assert unreleased.count("### Changed\n") == 1, unreleased
+changed = unreleased.split("### Changed\n", 1)[1].split("\n### ", 1)[0]
+assert changed.startswith("\n- "), unreleased
+assert f"\n- SallaPush iOS {version} and SallaPush Android {version}.\n" in changed, unreleased
 assert "### Added" not in unreleased or unreleased.index("### Added") < unreleased.index("### Changed"), unreleased' \
     "$case_dir/CHANGELOG.md" "$target"
   check "  ... and it ran the parity check" ok grep -q 'check-api-parity.mjs' "$work/node.args"
@@ -491,16 +401,17 @@ EOF
   python3 - "$repo/package.json" <<'PY'
 import json, sys
 package = {
-    "name": "@salla.sa/sallapush-capacitor", "version": "1.0.0", "description": "SallaPush.", "private": True,
-    "license": "UNLICENSED", "author": "Salla",
+    "name": "@salla.sa/sallapush-capacitor", "version": "1.0.0", "description": "SallaPush.", "license": "MIT",
+    "author": "Salla",
     "repository": {"type": "git", "url": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git"},
     "bugs": {"url": "https://github.com/SallaApp/sallapush-capacitor-sdk/issues"},
     "homepage": "https://github.com/SallaApp/sallapush-capacitor-sdk#readme", "keywords": ["capacitor"],
     "main": "dist/plugin.cjs.js", "module": "dist/esm/index.js", "types": "dist/esm/index.d.ts",
     "unpkg": "dist/plugin.js", "files": ["dist/**", "android/build.gradle", "android/src/main/**", "ios/Sources/**",
                                          "Package.swift", "Salla.saSallapushCapacitor.podspec"],
-    "capacitor": {"ios": {"src": "ios"}, "android": {"src": "android"}},
-    "scripts": {"build": "tsc && rollup -c rollup.config.mjs"}, "peerDependencies": {"@capacitor/core": "^8.0.0"},
+    "capacitor": {"ios": {"src": "ios"}, "android": {"src": "android"}}, "publishConfig": {"access": "public"},
+    "scripts": {"build": "tsc && rollup -c rollup.config.mjs", "prepack": "tsc && rollup -c rollup.config.mjs"},
+    "peerDependencies": {"@capacitor/core": "^8.0.0"},
     "devDependencies": {"typescript": "6.0.3"}, "workspaces": ["example-app"], "packageManager": "yarn@4.11.0",
     "jest": {"testEnvironment": "node"},
 }
@@ -517,6 +428,8 @@ PY
   printf 'final class SallaPushPlugin {}\n' >"$repo/ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
   printf '# Changelog\n\n## [Unreleased]\n\n### Added\n\n- The SDK.\n' >"$repo/CHANGELOG.md"
   printf 'dist/\n' >"$repo/.gitignore"
+  mkdir -p "$repo/.github/workflows"
+  printf 'name: Publish\n' >"$repo/.github/workflows/publish.yml"
   g() { git -C "$repo" "$@"; }
   g init -q
   g symbolic-ref HEAD refs/heads/master
@@ -554,12 +467,16 @@ PY
   check "  ... with the built library" ok git -C "$clone" cat-file -e "$commit:dist/plugin.cjs.js"
   check "  ... and the native sources" ok git -C "$clone" cat-file -e \
     "$commit:ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
-  check "  ... and a package.json reduced to the allowlist, capacitor kept" ok python3 -c '
+  check "  ... and the publish workflow, which a push of the tag runs" ok test \
+    "$(git -C "$clone" show "$commit:.github/workflows/publish.yml")" = "name: Publish"
+  check "  ... and a package.json reduced to the allowlist, capacitor and publishConfig kept, no scripts" ok python3 -c '
 import json, subprocess, sys
 package = json.loads(subprocess.check_output(["git", "-C", sys.argv[1], "show", sys.argv[2] + ":package.json"]))
-assert list(package) == ["name", "version", "description", "private", "license", "repository", "homepage", "main",
-                         "module", "types", "unpkg", "files", "capacitor", "peerDependencies"], list(package)
-assert package["capacitor"] == {"ios": {"src": "ios"}, "android": {"src": "android"}}, package["capacitor"]' \
+assert list(package) == ["name", "version", "description", "license", "repository", "bugs", "homepage", "keywords",
+                         "main", "module", "types", "unpkg", "files", "capacitor", "publishConfig",
+                         "peerDependencies"], list(package)
+assert package["capacitor"] == {"ios": {"src": "ios"}, "android": {"src": "android"}}, package["capacitor"]
+assert package["publishConfig"] == {"access": "public"}, package["publishConfig"]' \
     "$clone" "$commit"
   check "  ... and this repository has no tag" fails g rev-parse -q --verify refs/tags/1.0.0
   check "  ... and a clean working tree" ok test -z "$(g status --porcelain)"
@@ -600,10 +517,15 @@ PY
   check "a nested folder in files without a glob is refused" fails dry_run "$work/dist-4"
   says "it says what to write" "files lists the folder android/src/main, which Yarn's pack drops: write android/src/main/**"
   g revert --no-edit HEAD >/dev/null
-  printf 's.summary = package["keywords"]\n' >>"$repo/Salla.saSallapushCapacitor.podspec"
-  g commit -q -am "feat: a podspec that reads keywords"
+  printf 's.authors = package["author"]\n' >>"$repo/Salla.saSallapushCapacitor.podspec"
+  g commit -q -am "feat: a podspec that reads author"
   check "a podspec that reads a key the dist drops is refused" fails dry_run "$work/dist-3"
-  says "it names the key" "the podspec reads package.json's keywords, which the dist package.json lacks"
+  says "it names the key" "the podspec reads package.json's author, which the dist package.json lacks"
+  g revert --no-edit HEAD >/dev/null
+  g rm -q .github/workflows/publish.yml
+  g commit -q -m "ci: no publish workflow"
+  check "a release without the publish workflow is refused" fails dry_run "$work/dist-5"
+  says "it says why" ".github/workflows/publish.yml is missing from HEAD: the release tag would publish nothing"
   g revert --no-edit HEAD >/dev/null
   printf '\n## [1.0.0] - 2026-10-20\n\n- The SDK.\n' >>"$repo/CHANGELOG.md"
   g commit -q -am "docs: release 1.0.0"
@@ -637,7 +559,7 @@ test_verify_tree() {
   fresh
   check "this repository's files pass" ok run tree
   check "an unknown step is refused" fails run everything
-  says "it lists the steps" "steps: lint typecheck test build api parity snippets pins tree shell"
+  says "it lists the steps" "steps: lint typecheck test build pack api parity snippets pins tree shell"
   fresh; printf '{}\n' >"$case_dir/example-app/android/app/google-services.json"
   g add -f example-app/android/app/google-services.json
   check "a Firebase configuration added past .gitignore fails" fails run tree
@@ -663,11 +585,11 @@ test_verify_tree() {
   fresh; printf '%s%s\n' '-----BEGIN PGP ' 'PRIVATE KEY BLOCK-----' >"$case_dir/example-app/key.asc"
   check "a PGP private key fails" fails run tree
   says "it names the file" "example-app/key.asc: holds a private key"
-  fresh; printf 'url = https://%s%s@github.com\n' 'x-access-token' ':abc' >"$case_dir/notes.txt"
+  fresh; printf 'url = https://%s%s@github.com\n' 'x-access' '-token:abc' >"$case_dir/notes.txt"
   check "a token in a git URL fails" fails run tree
   says "it names the file" "notes.txt: holds a token in a git URL"
-  fresh; printf 'git config url."https://%s%s{TOKEN}@github.com/".insteadOf\n' 'x-access-token' ':$' >"$case_dir/notes.txt"
-  check "the documented rewrite with a variable passes" ok run tree
+  fresh; printf 'url = https://%s%s{TOKEN}@github.com\n' 'x-access' '-token:$' >"$case_dir/notes.txt"
+  check "a git URL with a variable in place of the token passes" ok run tree
   fresh; printf 'NODE_BINARY = %s%s/someone/node\n' '/Us' 'ers' >"$case_dir/example-app/ios/App/Config/Node.xcconfig"
   check "a personal home path fails" fails run tree
   says "it names the file" "example-app/ios/App/Config/Node.xcconfig: holds a personal home path"
@@ -687,6 +609,12 @@ test_verify_tree() {
   fresh; edit "$case_dir/.github/workflows/ci.yml" "$checkout_pin" "actions/checkout@v7"
   check "an action pinned to a tag fails" fails run tree
   says "it says what to do" "uses actions/checkout@v7; pin it to a full commit id"
+  # An organization's shared action at a branch gets no exception either: a public repository can't run a private one.
+  fresh; printf '      - uses: example-org/shared-actions/check@main\n' >>"$case_dir/.github/workflows/ci.yml"
+  check "an organization's action at a branch fails" fails run tree
+  says "it says what to do" "uses example-org/shared-actions/check@main; pin it to a full commit id"
+  fresh; printf '      - uses: ./.github/actions/setup\n' >>"$case_dir/.github/workflows/ci.yml"
+  check "the repository's own action passes unpinned" ok run tree
   fresh; rm "$case_dir/api/sallapush-capacitor.api"
   check "a missing required file fails" fails run tree
   says "it names it" "api/sallapush-capacitor.api is missing from what a commit takes"
@@ -707,8 +635,65 @@ test_verify_tree() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# verify.sh summary.tsv, the evidence an attestation quotes, and the clean run: in a copy that is committed, as a run's
-# would be.
+# verify.sh pack: what npm would publish, from a stand-in npm pack --dry-run --json listing.
+
+test_verify_pack() {
+  local bin="$work/bin-pack" listing="$work/pack-listing.json"
+  section "verify.sh: the pack step (what npm would publish)"
+  # Stands in for npm pack --dry-run --json: prints $FAKE_PACK, and refuses any other command.
+  stand_in "$bin/npm" <<'EOF'
+[ "$1 $2 $3" = "pack --dry-run --json" ] || exit 64
+cat "$FAKE_PACK"
+EOF
+  # pack_listing [--without <path>] [<extra path>...]: the listing of a correct package, built from the copy's files.
+  pack_listing() {
+    python3 - "$case_dir" "$listing" "$@" <<'PY'
+import json, os, subprocess, sys
+
+case, listing, args = sys.argv[1], sys.argv[2], sys.argv[3:]
+without = {args[index + 1] for index, arg in enumerate(args) if arg == "--without"}
+extra = [arg for index, arg in enumerate(args) if arg != "--without" and (index == 0 or args[index - 1] != "--without")]
+native = subprocess.check_output(["git", "-C", case, "ls-files", "--cached", "--others", "--exclude-standard", "--",
+                                  "ios/Sources", "android/src/main"], text=True).split()
+paths = ["LICENSE", "README.md", "package.json", "Package.swift", "Salla.saSallapushCapacitor.podspec",
+         "android/build.gradle", "android/consumer-rules.pro", "dist/esm/index.js", "dist/esm/index.d.ts",
+         "dist/plugin.cjs.js", "dist/plugin.js", "dist/plugin.js.map"] + native + extra
+with open(listing, "w", encoding="utf-8") as handle:
+    json.dump([{"files": [{"path": path} for path in paths if path not in without]}], handle)
+PY
+  }
+  packed() { (cd "$case_dir" && env PATH="$bin:$PATH" FAKE_PACK="$listing" scripts/verify.sh pack); }
+
+  fresh; pack_listing
+  check "the built library, the native sources and the manifests pass" ok packed
+  says "it says what npm would publish" "the built library, the native sources, Package.swift, the podspec"
+  fresh; pack_listing android/src/test/java/sa/salla/sallapush/capacitor/MappingTest.kt
+  check "an Android unit test in the package fails" fails packed
+  says "it names it" "npm would publish android/src/test/java/sa/salla/sallapush/capacitor/MappingTest.kt"
+  fresh; pack_listing dist/esm/internal/__mocks__/native.js
+  check "a mock in the built library fails" fails packed
+  says "it names it" "npm would publish dist/esm/internal/__mocks__/native.js"
+  fresh; pack_listing .github/workflows/publish.yml
+  check "a dotfile fails" fails packed
+  says "it names it" "npm would publish .github/workflows/publish.yml"
+  fresh; pack_listing --without dist/plugin.cjs.js
+  check "a package without the CommonJS build fails" fails packed
+  says "it names it" "npm would not publish dist/plugin.cjs.js"
+  fresh; pack_listing --without ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift
+  check "a package without a native source fails" fails packed
+  says "it names it" "npm would not publish ios/Sources/SallaPushCapacitorPlugin/SallaPushPlugin.swift"
+  fresh; pack_listing
+  edit "$case_dir/package.json" '"license": "MIT",' '"private": true, "license": "MIT",'
+  check "a private package.json fails" fails packed
+  says "it says why" "package.json is private, so npm refuses to publish it"
+  fresh; pack_listing
+  edit "$case_dir/package.json" '"access": "public"' '"access": "restricted"'
+  check "a package.json without public access fails" fails packed
+  says "it says why" "npm would publish the scoped package as restricted"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# verify.sh summary.tsv, the record of a run, and the clean run: in a copy that is committed, as a run's would be.
 
 test_verify_summary() {
   local logs="$work/summary-logs" head next bin="$work/bin-leftover"
@@ -754,11 +739,11 @@ test_yarn_resolution
 test_xctest_results
 test_java_home
 test_ios_sdk_checkout
-test_verified_label
 make_pristine
 test_bump_native
 test_release_dist
 test_verify_tree
+test_verify_pack
 test_verify_summary
 
 printf '\nself-test: %d passed, %d failed\n' "$passed" "$failed"

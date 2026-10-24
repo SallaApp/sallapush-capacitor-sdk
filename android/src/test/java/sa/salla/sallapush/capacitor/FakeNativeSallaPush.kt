@@ -128,8 +128,8 @@ internal class FakeNativeSallaPush : NativeSallaPush {
     return tracksOpened
   }
 
-  override fun setDisplayOneSignalCompatPayloads(display: Boolean) {
-    calls += "setDisplayOneSignalCompatPayloads($display)"
+  override fun setDisplayCompatPayloads(display: Boolean) {
+    calls += "setDisplayCompatPayloads($display)"
   }
 
   override fun addClickListener(listener: SallaPushClickListener) = add("addClickListener", clickListeners, listener)

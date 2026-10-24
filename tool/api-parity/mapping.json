@@ -196,30 +196,6 @@
       "reason": "Plumbing: initialize copies the configuration, and the synthetic constructor can't be called."
     },
     {
-      "id": "P13a",
-      "status": "W",
-      "ios": [
-        "SallaPush | swift.property | SallaPushConfiguration.apiBaseURL | @objc var apiBaseURL: URL?"
-      ],
-      "android": [
-        "com/salla/push/SallaPushConfig$Builder#setApiBaseUrl (Ljava/lang/String;)Lcom/salla/push/SallaPushConfig$Builder;"
-      ],
-      "ts": [
-        "SallaPushConfig.apiBaseUrl"
-      ],
-      "reason": null
-    },
-    {
-      "id": "P13b",
-      "status": "N",
-      "ios": [],
-      "android": [
-        "com/salla/push/SallaPushConfig#getApiBaseUrl ()Ljava/lang/String;"
-      ],
-      "ts": [],
-      "reason": "The Android bridge builds the configuration with the builder's setters and never reads it back."
-    },
-    {
       "id": "P14a",
       "status": "W",
       "ios": [
@@ -364,16 +340,52 @@
       "reason": null
     },
     {
-      "id": "P21",
-      "status": "I",
+      "id": "P21a",
+      "status": "W",
       "ios": [
         "SallaPush | swift.property | SallaPushConfiguration.autoClearBadge | @objc var autoClearBadge: Bool"
       ],
-      "android": [],
+      "android": [
+        "com/salla/push/SallaPushConfig$Builder#setAutoClearBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;"
+      ],
       "ts": [
-        "SallaPushConfig.ios.autoClearBadge"
+        "SallaPushConfig.autoClearBadge"
       ],
       "reason": null
+    },
+    {
+      "id": "P21b",
+      "status": "N",
+      "ios": [],
+      "android": [
+        "com/salla/push/SallaPushConfig#getAutoClearBadge ()Z"
+      ],
+      "ts": [],
+      "reason": "The Android bridge builds the configuration with the builder's setters and never reads it back."
+    },
+    {
+      "id": "P21c",
+      "status": "W",
+      "ios": [
+        "SallaPush | swift.property | SallaPushConfiguration.autoUpdateBadge | @objc var autoUpdateBadge: Bool"
+      ],
+      "android": [
+        "com/salla/push/SallaPushConfig$Builder#setAutoUpdateBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;"
+      ],
+      "ts": [
+        "SallaPushConfig.autoUpdateBadge"
+      ],
+      "reason": null
+    },
+    {
+      "id": "P21d",
+      "status": "N",
+      "ios": [],
+      "android": [
+        "com/salla/push/SallaPushConfig#getAutoUpdateBadge ()Z"
+      ],
+      "ts": [],
+      "reason": "The Android bridge builds the configuration with the builder's setters and never reads it back."
     },
     {
       "id": "P22",
@@ -1290,7 +1302,7 @@
         "com/salla/push/SallaPushNotifications#onNewToken (Landroid/content/Context;Ljava/lang/String;)V"
       ],
       "ts": [],
-      "reason": "Called by the app's FCM forwarding service, which the README shows for @capacitor/push-notifications and @capacitor-firebase/messaging, or by SallaPush's own. JavaScript can't run inside FCM's service within its time window."
+      "reason": "Called by the app's FCM forwarding service, which the reference shows for an app with another push plugin, or by SallaPush's own. JavaScript can't run inside FCM's service within its time window."
     },
     {
       "id": "P74",
@@ -1311,11 +1323,11 @@
       "ios": [],
       "android": [
         "com/salla/push/SallaPushMigration",
-        "com/salla/push/SallaPushMigration#setDisplayOneSignalCompatPayloads (Z)V"
+        "com/salla/push/SallaPushMigration#setDisplayCompatPayloads (Z)V"
       ],
       "ts": [
         "SallaPushMigrationNamespace",
-        "SallaPush.Migration.setDisplayOneSignalCompatPayloads"
+        "SallaPush.Migration.setDisplayCompatPayloads"
       ],
       "reason": null
     },

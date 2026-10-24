@@ -78,8 +78,7 @@ final class NotificationsBridgeTests: XCTestCase {
 
         XCTAssertEqual(native.deviceTokens, [])
         XCTAssertEqual(console.errors, Array(repeating: "Notifications.forwardApnsToken ignored: the APNs token must be "
-            + "hexadecimal text of even length, as @capacitor-firebase/messaging's apnsTokenReceived event gives it.",
-            count: 6))
+            + "hexadecimal text of even length.", count: 6))
     }
 
     func testDropsNullValuesBeforeNativeChecksAPayload() {
@@ -110,8 +109,8 @@ final class NotificationsBridgeTests: XCTestCase {
         XCTAssertEqual(native.calls, [])
         XCTAssertEqual(console.infos, [
             "Notifications.removeNotification is Android only and does nothing on iOS.",
-            "Notifications.trackOpened is Android only and resolves false on iOS, where taps on OneSignal-format "
-                + "SallaPush notifications reach SallaPush through its notification-center delegate."
+            "Notifications.trackOpened is Android only and resolves false on iOS, where taps on SallaPush "
+                + "notifications in the compatible format reach SallaPush through its notification-center delegate."
         ])
     }
 

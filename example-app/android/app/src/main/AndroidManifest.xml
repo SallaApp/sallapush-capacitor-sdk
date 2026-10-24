@@ -11,9 +11,6 @@
 
         <!-- snippet:meta-data -->
         <meta-data android:name="com.salla.push.APP_ID" android:value="${sallaPushAppId}" />
-        <!-- end-snippet -->
-        <meta-data android:name="com.salla.push.API_BASE_URL" android:value="${sallaPushApiBaseUrl}" />
-        <!-- snippet:meta-data -->
         <meta-data
             android:name="com.salla.push.default_notification_icon"
             android:resource="@drawable/ic_stat_sallapush" />

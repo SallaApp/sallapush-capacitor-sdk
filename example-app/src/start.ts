@@ -3,7 +3,6 @@ import {
   type SallaPushNotification,
 } from '@salla.sa/sallapush-capacitor';
 import { eventLog } from './eventLog';
-import { currentCustomer } from './session';
 
 /** SallaPush's start-up calls. main.ts makes them before the first screen, so the tap that launched the app arrives. */
 export function startSallaPush(): void {
@@ -11,15 +10,6 @@ export function startSallaPush(): void {
   SallaPush.Notifications.addEventListener('click', (event) => {
     route(event.notification);
   });
-  // end-snippet
-
-  // snippet:launch-identity
-  const customer = currentCustomer();
-  if (customer) {
-    SallaPush.login(customer.externalId, customer.identityToken);
-  } else {
-    SallaPush.logout();
-  }
   // end-snippet
 }
 
@@ -30,7 +20,6 @@ const router = {
   open: (url: string) => eventLog.add('route', url),
 };
 
-// snippet:route
 function route(notification: SallaPushNotification): void {
   switch (notification.getString('type')) {
     case 'product': {
@@ -54,4 +43,3 @@ function route(notification: SallaPushNotification): void {
       }
   }
 }
-// end-snippet

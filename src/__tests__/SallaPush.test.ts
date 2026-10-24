@@ -46,16 +46,16 @@ afterEach(() => {
 describe('SallaPush.initialize', () => {
   it('passes the app id and every option', () => {
     SallaPush.initialize('st_42_capacitor', {
-      apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
       logLevel: SallaPushLogLevel.Debug,
       appVersion: '2.1.0',
       clearTagsOnLogout: false,
       requiresUserConsent: true,
       openLaunchUrls: true,
+      autoClearBadge: false,
+      autoUpdateBadge: false,
       ios: {
         appGroupIdentifier: 'group.sa.salla.example',
         apnsEnvironment: SallaPushAPNsEnvironment.Sandbox,
-        autoClearBadge: false,
         registerForRemoteNotificationsOnInit: false,
       },
     });
@@ -64,15 +64,15 @@ describe('SallaPush.initialize', () => {
     expect(plugin.initialize).toHaveBeenCalledWith({
       appId: 'st_42_capacitor',
       config: {
-        apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
         logLevel: 'debug',
         appVersion: '2.1.0',
         clearTagsOnLogout: false,
         requiresUserConsent: true,
         openLaunchUrls: true,
+        autoClearBadge: false,
+        autoUpdateBadge: false,
         iosAppGroupIdentifier: 'group.sa.salla.example',
         iosApnsEnvironment: 'sandbox',
-        iosAutoClearBadge: false,
         iosRegisterForRemoteNotificationsOnInit: false,
       },
     });
@@ -83,7 +83,8 @@ describe('SallaPush.initialize', () => {
     [{ clearTagsOnLogout: false }, { clearTagsOnLogout: false }],
     [{ requiresUserConsent: true }, { requiresUserConsent: true }],
     [{ openLaunchUrls: true }, { openLaunchUrls: true }],
-    [{ ios: { autoClearBadge: false } }, { iosAutoClearBadge: false }],
+    [{ autoClearBadge: false }, { autoClearBadge: false }],
+    [{ autoUpdateBadge: false }, { autoUpdateBadge: false }],
     [
       { ios: { registerForRemoteNotificationsOnInit: false } },
       { iosRegisterForRemoteNotificationsOnInit: false },
@@ -119,6 +120,19 @@ describe('SallaPush.initialize', () => {
       config: { openLaunchUrls: true, iosApnsEnvironment: 'production' },
     });
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  // SallaPush always uses its own server: a server URL from JavaScript that ignores the types never reaches native.
+  it('leaves out a server URL', () => {
+    SallaPush.initialize('st_42_capacitor', {
+      apiBaseUrl: 'https://push.example.com/notifications/v1/sallapush',
+      logLevel: SallaPushLogLevel.Debug,
+    } as unknown as SallaPushConfig);
+
+    expect(plugin.initialize.mock.calls[0]?.[0]).toStrictEqual({
+      appId: 'st_42_capacitor',
+      config: { logLevel: 'debug' },
+    });
   });
 
   it('passes the app id unchanged, for native to validate', () => {
@@ -174,6 +188,20 @@ describe('SallaPush.initialize', () => {
     );
   });
 
+  it.each(['autoClearBadge', 'autoUpdateBadge'])(
+    'drops a call whose %s is not a boolean',
+    (option) => {
+      SallaPush.initialize('st_42_capacitor', {
+        [option]: 'false',
+      } as unknown as SallaPushConfig);
+
+      expect(plugin.initialize).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(
+        `[SallaPush] SallaPush.initialize ignored: config.${option} must be a boolean.`
+      );
+    }
+  );
+
   it('drops a call whose iOS options are not an object', () => {
     SallaPush.initialize('st_42_capacitor', {
       ios: 'sandbox',
@@ -198,7 +226,9 @@ describe('SallaPush.initialize', () => {
   });
 
   it('warns once per method and parameter, and drops every such call', () => {
-    const config = { ios: { autoClearBadge: 1 } } as unknown as SallaPushConfig;
+    const config = {
+      ios: { registerForRemoteNotificationsOnInit: 1 },
+    } as unknown as SallaPushConfig;
 
     SallaPush.initialize('st_42_capacitor', config);
     SallaPush.initialize('st_42_capacitor', config);
@@ -206,7 +236,7 @@ describe('SallaPush.initialize', () => {
     expect(plugin.initialize).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
-      '[SallaPush] SallaPush.initialize ignored: config.ios.autoClearBadge must be a boolean.'
+      '[SallaPush] SallaPush.initialize ignored: config.ios.registerForRemoteNotificationsOnInit must be a boolean.'
     );
   });
 });

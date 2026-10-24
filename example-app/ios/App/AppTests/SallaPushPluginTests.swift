@@ -59,7 +59,7 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
             "requestPermission promise", "registerForProvisionalAuthorization promise", "refreshPermission none",
             "registerForRemoteNotifications none", "forwardApnsToken none", "clearAll none", "removeNotification none",
             "isSallaPushNotification promise", "trackOpened promise", "displayNotification none",
-            "setDisplayOneSignalCompatPayloads none",
+            "setDisplayCompatPayloads none",
             "getLogLevel promise", "setLogLevel none", "setLogHandlerLevel none",
             "startEvents none", "stopEvents none"
         ])
@@ -81,13 +81,14 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
     func testInitializePassesTheAppIdAndTheConfigAsJavaScriptSendsThem() throws {
         makePlugin().initialize(call([
             "appId": "st_42_ios",
-            "config": ["logLevel": "debug", "openLaunchUrls": true, "iosAutoClearBadge": false]
+            "config": ["logLevel": "debug", "openLaunchUrls": true, "autoUpdateBadge": false, "autoClearBadge": false]
         ]))
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])
         let configuration = try XCTUnwrap(native.configurations.first)
         XCTAssertEqual(configuration.logLevel, .debug)
         XCTAssertTrue(configuration.openLaunchURLs)
+        XCTAssertFalse(configuration.autoUpdateBadge)
         XCTAssertFalse(configuration.autoClearBadge)
     }
 

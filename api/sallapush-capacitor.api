@@ -4,7 +4,7 @@ SallaPush.Debug.getLogLevel(): Promise<SallaPushLogLevel>
 SallaPush.Debug.setLogHandler(level: SallaPushLogLevel, handler: ((entry: SallaPushLogEntry) => void) | null): void
 SallaPush.Debug.setLogLevel(level: SallaPushLogLevel): void
 SallaPush.Migration: SallaPushMigrationNamespace [readonly]
-SallaPush.Migration.setDisplayOneSignalCompatPayloads(display: boolean): void
+SallaPush.Migration.setDisplayCompatPayloads(display: boolean): void
 SallaPush.Notifications: SallaPushNotificationsNamespace [readonly]
 SallaPush.Notifications.addEventListener(event: 'click', listener: (event: SallaPushClickEvent) => void): SallaPushEventSubscription
 SallaPush.Notifications.addEventListener(event: 'foregroundWillDisplay', listener: (event: SallaPushWillDisplayEvent) => void): SallaPushEventSubscription
@@ -65,13 +65,13 @@ interface SallaPushClickResult
 SallaPushClickResult.actionId: string | null [readonly]
 SallaPushClickResult.url: string | null [readonly]
 interface SallaPushConfig
-SallaPushConfig.apiBaseUrl?: string
 SallaPushConfig.appVersion?: string
+SallaPushConfig.autoClearBadge?: boolean
+SallaPushConfig.autoUpdateBadge?: boolean
 SallaPushConfig.clearTagsOnLogout?: boolean
 SallaPushConfig.ios?: { ... }
 SallaPushConfig.ios.apnsEnvironment?: SallaPushAPNsEnvironment
 SallaPushConfig.ios.appGroupIdentifier?: string
-SallaPushConfig.ios.autoClearBadge?: boolean
 SallaPushConfig.ios.registerForRemoteNotificationsOnInit?: boolean
 SallaPushConfig.logLevel?: SallaPushLogLevel
 SallaPushConfig.openLaunchUrls?: boolean
@@ -109,7 +109,7 @@ type SallaPushLoginFailure = (typeof SallaPushLoginFailure)[keyof typeof SallaPu
 SallaPushLoginFailure.InvalidRequest: 'invalidRequest' [readonly]
 SallaPushLoginFailure.TokenRejected: 'tokenRejected' [readonly]
 interface SallaPushMigrationNamespace
-SallaPushMigrationNamespace.setDisplayOneSignalCompatPayloads(display: boolean): void
+SallaPushMigrationNamespace.setDisplayCompatPayloads(display: boolean): void
 interface SallaPushNotification
 SallaPushNotification.additionalData: Readonly<Record<string, unknown>> [readonly]
 SallaPushNotification.androidNotificationId: number | null [readonly]

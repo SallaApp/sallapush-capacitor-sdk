@@ -115,8 +115,8 @@ export const native = {
     () => Promise.resolve()
   ),
 
-  setDisplayOneSignalCompatPayloads: jest.fn<
-    SallaPushNativePlugin['setDisplayOneSignalCompatPayloads']
+  setDisplayCompatPayloads: jest.fn<
+    SallaPushNativePlugin['setDisplayCompatPayloads']
   >(() => Promise.resolve()),
 
   getLogLevel: jest.fn<SallaPushNativePlugin['getLogLevel']>(() =>

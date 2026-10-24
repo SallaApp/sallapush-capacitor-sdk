@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# The full verification of the SallaPush Capacitor SDK. A pull request's Native verified check waits for a person's
-# attestation of a full run at its head commit (scripts/verified-label.sh).
+# The full verification of the SallaPush Capacitor SDK, the checks of every pull request and release.
 #
 #   scripts/verify.sh [step...]    run from anywhere; without steps, every step in order, stopping at the first failure
 #
-# CI runs the portable steps (PORTABLE_STEPS) on Linux. The others need read access to the private SallaPush SDKs, and
-# macOS with Xcode 26, JDK 21 and the Android SDK:
+# CI runs the portable steps (PORTABLE_STEPS) and android on Linux, and swiftlint and ios on macOS; smoke and consumer
+# run locally. The native steps need macOS with Xcode 26, JDK 21 and the Android SDK (android also runs on Linux):
 #   swiftlint   SwiftLint 0.63.2, strict
 #   android     the plugin's unit tests and lint, a minified release build of the example, and its merged manifest
 #   ios         the example's release build with its Notification Service Extension, then its XCTest suite
 #   smoke       the example's self-test on a booted iOS simulator and a running Android emulator: a test push, a page
 #               reload, and a second test push that the reloaded page's listener gets once
-#   consumer    fresh Capacitor apps that install a dry-run dist commit with only what the README shows: Swift Package
-#               Manager, CocoaPods with @capacitor/push-notifications, the oldest Capacitor 8 with the storyboard
-#               template, and a Yarn install
+#   consumer    fresh Capacitor apps that install a dry run of the release with only what the README shows: the
+#               package as npm would publish it, with Swift Package Manager and with CocoaPods and
+#               @capacitor/push-notifications; from git, the oldest Capacitor 8 with the storyboard template with npm,
+#               and a Yarn install
 #
 # A run that starts on a clean tree must end on one: the runner fails, naming the paths, when a step leaves a file that
 # the ignore files don't cover.
@@ -22,12 +22,11 @@
 # for a tree with changes; a folder for each commit, as runs of another commit are refused), VERIFY_SIMULATOR_UDID,
 # VERIFY_EMULATOR_SERIAL, VERIFY_IOS_SDK_CHECKOUT (optional: a clean clone of SallaApp/sallapush-ios-sdk at the pinned
 # tag, in a folder named sallapush-ios-sdk; every Swift Package Manager build then uses it instead of the remote
-# package, for Macs whose Xcode has no account that can read it, and the summary of each such step says so), YARN,
-# SHELLCHECK, SWIFTLINT, ANDROID_HOME, SALLAPUSH_JAVA_HOME.
+# package, and the summary of each such step says so), YARN, SHELLCHECK, SWIFTLINT, ANDROID_HOME, SALLAPUSH_JAVA_HOME.
 set -euo pipefail
 
-readonly STEPS="lint typecheck test build api parity snippets pins tree shell swiftlint android ios smoke consumer"
-readonly PORTABLE_STEPS="lint typecheck test build api parity snippets pins tree shell"
+readonly STEPS="lint typecheck test build pack api parity snippets pins tree shell swiftlint android ios smoke consumer"
+readonly PORTABLE_STEPS="lint typecheck test build pack api parity snippets pins tree shell"
 
 scripts="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 root="$(cd "$scripts/.." && pwd -P)"
@@ -127,6 +126,45 @@ if (problems.length > 0) {
   echo "@capacitor/ios $version: NotificationRouter still holds the ${#ROUTER_LINES[@]} lines the delegate's router branch repeats"
 }
 
+# What npm would publish: npm pack --dry-run, whose prepack builds dist/ afresh. The package holds the built library,
+# every native source, Package.swift, the podspec, LICENSE, README.md and package.json, and nothing else: no test, mock
+# or dotfile. package.json isn't private, and publishes with public access, which a scoped package needs.
+step_pack() {
+  (cd "$root" && npm pack --dry-run --json) >"$work/pack.json" || fail "npm pack --dry-run failed"
+  git -C "$root" ls-files --cached --others --exclude-standard -- ios/Sources android/src/main >"$work/native-files"
+  python3 - "$work/pack.json" "$work/native-files" "$root/package.json" <<'PY'
+import json, re, sys
+
+listing, native, manifest = sys.argv[1:4]
+with open(listing, encoding="utf-8") as handle:
+    packed = [entry["path"] for entry in json.load(handle)[0]["files"]]
+with open(manifest, encoding="utf-8") as handle:
+    package = json.load(handle)
+allowed = re.compile(r"^(?:dist/.+|android/src/main/.+|ios/Sources/.+|android/build\.gradle|android/consumer-rules\.pro|"
+                     r"Package\.swift|Salla\.saSallapushCapacitor\.podspec|LICENSE|README\.md|package\.json)$")
+refused = re.compile(r"(?:^|/)(?:__tests__|__mocks__|\.[^/]+)(?:/|$)")
+needed = ["dist/esm/index.js", "dist/esm/index.d.ts", "dist/plugin.cjs.js", "dist/plugin.js", "Package.swift",
+          "Salla.saSallapushCapacitor.podspec", "android/build.gradle", "android/consumer-rules.pro", "LICENSE",
+          "README.md", "package.json"]
+with open(native, encoding="utf-8") as handle:
+    needed += [line.strip() for line in handle if line.strip()]
+problems = [f"npm would publish {name}, which isn't part of the package" for name in packed
+            if not allowed.match(name) or refused.search(name)]
+problems += [f"npm would not publish {name}" for name in needed if name not in packed]
+if package.get("private"):
+    problems.append("package.json is private, so npm refuses to publish it")
+if (package.get("publishConfig") or {}).get("access") != "public":
+    problems.append("package.json's publishConfig.access is not \"public\": npm would publish the scoped package as "
+                    "restricted")
+for problem in problems:
+    print(problem)
+if problems:
+    sys.exit(f"verify.sh: npm pack --dry-run: {len(problems)} problem(s)")
+print(f"npm pack --dry-run: {len(packed)} files, the built library, the native sources, Package.swift, the podspec, "
+      "LICENSE, README.md and package.json, and no test, mock or dotfile; package.json publishes with public access")
+PY
+}
+
 step_api() {
   node "$scripts/dump-api.mjs" --check
   node "$scripts/check-plugin-methods.mjs"
@@ -140,10 +178,10 @@ step_pins() { "$scripts/bump-native.sh" --check; }
 
 # The files a build, the checks and a release need, the docs, and the scripts CI and the docs run directly.
 readonly REQUIRED_FILES=".gitignore .nvmrc .yarnrc.yml .yarn/releases/yarn-4.11.0.cjs .swiftlint.yml package.json
-yarn.lock README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md docs/SETUP.md docs/REFERENCE.md docs/TROUBLESHOOTING.md
+yarn.lock README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md docs/REFERENCE.md docs/TROUBLESHOOTING.md
 LICENSE Package.swift Salla.saSallapushCapacitor.podspec rollup.config.mjs tsconfig.json tsconfig.build.json
 android/build.gradle android/src/main/AndroidManifest.xml src/index.ts src/internal/native.ts .github/workflows/ci.yml
-api/sallapush-capacitor.api tool/api-parity/native-ios-API.txt
+.github/workflows/publish.yml api/sallapush-capacitor.api tool/api-parity/native-ios-API.txt
 tool/api-parity/native-android-sallapush.api tool/api-parity/mapping.json
 example-app/ios/App/App.xcodeproj/project.pbxproj example-app/ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme
 example-app/ios/TestPayloads/native.apns example-app/android/TestPayloads/native.json docs/snippets/Podfile
@@ -151,8 +189,7 @@ docs/snippets/CapacitorPushAppDelegate.swift docs/snippets/SallaPushMessagingSer
 docs/snippets/AndroidManifest-forwarding.xml docs/snippets/app-build.gradle scripts/common.sh scripts/dump-api.mjs
 scripts/check-api-parity.mjs scripts/check-plugin-methods.mjs scripts/check-readme-snippets.mjs
 scripts/add-nse-target.rb"
-readonly EXECUTABLE_FILES="scripts/verify.sh scripts/bump-native.sh scripts/release-dist.sh scripts/verified-label.sh
-scripts/self-test.sh"
+readonly EXECUTABLE_FILES="scripts/verify.sh scripts/bump-native.sh scripts/release-dist.sh scripts/self-test.sh"
 
 # What a commit takes, tracked or untracked and not ignored: no credential file, no secret, personal path, Apple team id or
 # ticket key in any file, every workflow action pinned to a commit, every required file present, every script executable,
@@ -188,7 +225,7 @@ secrets = (
     (re.compile(rb"-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----"), "a private key", revoke),
     (re.compile(rb"---- BEGIN SSH2 ENCRYPTED " + rb"PRIVATE KEY ----"), "a private key", revoke),
     (re.compile(rb"PuTTY-User-Key-File-[0-9]+: "), "a private key", revoke),
-    (re.compile(rb"x-access-token" + rb":[^$]"), "a token in a git URL", revoke),
+    (re.compile(rb"x-access" + rb"-token:[^$]"), "a token in a git URL", revoke),
     (re.compile(rb"/Us" + rb"ers/"), "a personal home path", "use $HOME"),
 )
 texts = (
@@ -220,7 +257,8 @@ if os.path.isfile(project):
                             "compiled: add it to its target")
 uses = re.compile(r"^\s*(?:-\s+)?uses:\s*(['\"]?)([^\s'\"#]+)\1\s*(?:#.*)?$")
 pinned = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[^@\s]+)?@[0-9a-f]{40}$")
-allowed = re.compile(r"^(SallaApp/\.CI/[A-Za-z0-9_./-]+@master|\./\.github/[A-Za-z0-9_./-]+)$")
+# Only the repository's own actions may go unpinned: their code is in the commit.
+allowed = re.compile(r"^\./\.github/[A-Za-z0-9_./-]+$")
 for name in files:
     if re.match(r"^\.github/workflows/[^/]+\.ya?ml$", name) and os.path.isfile(os.path.join(root, name)):
         with open(os.path.join(root, name), encoding="utf-8") as handle:
@@ -433,9 +471,11 @@ step_ios() {
   keep_example_project
   local_ios_sdk "$root/example-app/ios/App"
   example_build ios Release
+  # Serially, on the chosen simulator: parallel testing would make Xcode clone it.
   (cd "$root/example-app/ios/App" && xcodebuild -quiet test -project App.xcodeproj -scheme "$SP_EXAMPLE" \
     -configuration Debug -destination "id=$udid" -derivedDataPath "$work/derived-ios" -scmProvider system \
-    -only-testing:AppTests -resultBundlePath "$work/AppTests.xcresult") || fail "the example's XCTest suite failed"
+    -parallel-testing-enabled NO -only-testing:AppTests -resultBundlePath "$work/AppTests.xcresult") ||
+    fail "the example's XCTest suite failed"
   rm -rf "$work/derived-ios"
   assert_xctests_ran "$work/AppTests.xcresult" || fail "AppTests ran no test"
   echo "AppTests passed"
@@ -589,10 +629,8 @@ smoke_ios() {
   example_sync ios
   keep_example_project
   local_ios_sdk "$root/example-app/ios/App"
-  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it. The push service is
-  # a closed port of the Mac, so no request leaves it.
-  example_build smoke Release SALLAPUSH_APP_ID=example_smoke \
-    SALLAPUSH_API_BASE_URL=http://localhost:9/notifications/v1/sallapush SALLAPUSH_EXAMPLE_BUNDLE_ID="$SP_EXAMPLE_ID"
+  # The example's own bundle id, whatever SallaPush.local.xcconfig sets: every call below names it.
+  example_build smoke Release SALLAPUSH_APP_ID=example_smoke SALLAPUSH_EXAMPLE_BUNDLE_ID="$SP_EXAMPLE_ID"
   app="$work/derived-smoke/Build/Products/Release-iphonesimulator/$SP_EXAMPLE.app"
   xcrun simctl terminate "$udid" "$SP_EXAMPLE_ID" >/dev/null 2>&1 || true
   xcrun simctl uninstall "$udid" "$SP_EXAMPLE_ID" >/dev/null 2>&1 || true
@@ -665,7 +703,6 @@ smoke_android() {
   # The example's own application id, whatever sallapush.properties sets: every call below names it. Google services
   # stay out: a google-services.json for another application id has no client for this one.
   (cd "$root/example-app/android" && ORG_GRADLE_PROJECT_sallapushAppId=example_smoke \
-    ORG_GRADLE_PROJECT_sallapushApiBaseUrl=http://10.0.2.2:9/notifications/v1/sallapush \
     ORG_GRADLE_PROJECT_sallapushApplicationId="$SP_EXAMPLE_ID" \
     ORG_GRADLE_PROJECT_sallapushSkipGoogleServices=true ./gradlew --quiet assembleRelease)
   apk="$root/example-app/android/app/build/outputs/apk/release/app-release.apk"
@@ -751,8 +788,8 @@ ruby_with_xcodeproj() {
 }
 
 # consumer_new <name> <capacitor version> [<package>@<version>...]: a fresh Capacitor app in $work/<name> without
-# SallaPush: package.json (exact versions), a page, capacitor.config.json (webDir dist), npm 12's allow-git=root, the
-# install and the web build, then both native platforms; with $pods, iOS with CocoaPods.
+# SallaPush: package.json (exact versions), a page, capacitor.config.json (webDir dist), the install and the web build,
+# then both native platforms; with $pods, iOS with CocoaPods.
 consumer_new() {
   local name="$1" capacitor="$2" app="$work/$1"
   shift 2
@@ -773,7 +810,6 @@ for file, value in (("package.json", package), ("capacitor.config.json", config)
         json.dump(value, handle, indent=2)
         handle.write("\n")
 PY
-  printf 'allow-git=root\n' >"$app/.npmrc"
   printf '<!doctype html>\n<html>\n  <head><meta charset="utf-8" /><title>%s</title></head>\n  <body>\n    <script type="module" src="/src/main.ts"></script>\n  </body>\n</html>\n' \
     "$name" >"$app/index.html"
   printf "document.body.textContent = '%s';\n" "$name" >"$app/src/main.ts"
@@ -788,10 +824,17 @@ PY
   echo "$name: a Capacitor $capacitor app with both platforms, without SallaPush"
 }
 
-# consumer_install <app>: the README's dependency line, at the dry-run dist commit; then the app imports SallaPush.
+# consumer_install <app> [git]: the README's install, of the package as npm would publish it ($dist_tarball); with git,
+# the README's git fallback instead, at the dry-run dist commit, with npm 12's allow-git=root. Then the app imports
+# SallaPush.
 consumer_install() {
-  local app="$1"
-  python3 -I - "$app/package.json" "git+file://$dist_repo#$dist_commit" <<'PY'
+  local app="$1" dependency="file:$dist_tarball" from="the package as npm would publish it"
+  if [ "${2:-}" = git ]; then
+    dependency="git+file://$dist_repo#$dist_commit"
+    from="git, at the dist commit"
+    printf 'allow-git=root\n' >"$app/.npmrc"
+  fi
+  python3 -I - "$app/package.json" "$dependency" <<'PY'
 import json, sys
 
 path, dependency = sys.argv[1], sys.argv[2]
@@ -804,7 +847,7 @@ with open(path, "w", encoding="utf-8") as handle:
 PY
   (cd "$app" && npm install --no-audit --no-fund --loglevel=error)
   [ -f "$app/node_modules/@salla.sa/sallapush-capacitor/dist/plugin.cjs.js" ] ||
-    fail "${app##*/}: the git install lacks the built dist/"
+    fail "${app##*/}: the install lacks the built dist/"
   cat >"$app/src/main.ts" <<'EOF'
 import { SallaPush } from '@salla.sa/sallapush-capacitor';
 
@@ -813,7 +856,7 @@ void SallaPush.getSdkVersion().then((version) => {
 });
 EOF
   (cd "$app" && node_modules/.bin/vite build --logLevel error)
-  echo "${app##*/}: installed @salla.sa/sallapush-capacitor from the dist commit; the page imports it"
+  echo "${app##*/}: installed @salla.sa/sallapush-capacitor from $from; the page imports it"
 }
 
 # consumer_app_delegate <app>: the README's AppDelegate regions in the template's own AppDelegate.swift: imports after
@@ -855,23 +898,20 @@ PY
   echo "${1##*/}: the README's imports, start and forwarding regions are in the template's AppDelegate.swift"
 }
 
-# consumer_info_plist <app> [<push service URL>]: the README's Info.plist key (the app id from the build setting
-# SALLAPUSH_APP_ID), and for a run, the push service on a closed port of the Mac.
+# consumer_info_plist <app>: the README's Info.plist key (the app id from the build setting SALLAPUSH_APP_ID).
 consumer_info_plist() {
   local app_id
   app_id="$(snippet example-app/ios/App/App/Info.plist#app-id)"
-  python3 -I - "$1/ios/App/App/Info.plist" "$app_id" "${2:-}" <<'PY'
+  python3 -I - "$1/ios/App/App/Info.plist" "$app_id" <<'PY'
 import plistlib, sys
 
-path, region, url = sys.argv[1:4]
+path, region = sys.argv[1:3]
 with open(path, encoding="utf-8") as handle:
     text = handle.read()
 end = text.rfind("</dict>")
 if end < 0:
     sys.exit(f"{path}: no top-level dict")
 lines = region.split("\n")
-if url:
-    lines += ["<key>SallaPushAPIBaseURL</key>", f"<string>{url}</string>"]
 text = text[:end] + "".join(f"\t{line}\n" for line in lines) + text[end:]
 values = plistlib.loads(text.encode("utf-8"))
 if values.get("SallaPushAppId") != "$(SALLAPUSH_APP_ID)":
@@ -925,9 +965,14 @@ PY
   [ -n "$activity" ] || fail "${app##*/}: no MainActivity.java to put the forwarding service beside"
   package="$(sed -nE 's/^package ([A-Za-z0-9_.]+);$/\1/p' "$activity")"
   snippet docs/snippets/SallaPushMessagingService.java |
-    sed "1s/^package com\.example\.app;\$/package $package;/" >"$(dirname "$activity")/SallaPushMessagingService.java"
+    sed -e "1s/^package com\.example\.app;\$/package $package;/" \
+      -e "s/OtherPluginMessagingService/com.capacitorjs.plugins.pushnotifications.MessagingService/" \
+      >"$(dirname "$activity")/SallaPushMessagingService.java"
   grep -qx "package $package;" "$(dirname "$activity")/SallaPushMessagingService.java" ||
     fail "${app##*/}: docs/snippets/SallaPushMessagingService.java does not start with its package line"
+  grep -qF "extends com.capacitorjs.plugins.pushnotifications.MessagingService {" \
+    "$(dirname "$activity")/SallaPushMessagingService.java" ||
+    fail "${app##*/}: docs/snippets/SallaPushMessagingService.java does not extend OtherPluginMessagingService"
   python3 -I - "$app/android/app/google-services.json" "$package" <<'PY'
 import json, sys
 
@@ -1087,7 +1132,7 @@ with open(path, "w", encoding="utf-8") as handle:
 PY
   consumer_extension "$app"
   snippet docs/snippets/CapacitorPushAppDelegate.swift >"$app/ios/App/App/AppDelegate.swift"
-  consumer_info_plist "$app" http://localhost:9/notifications/v1/sallapush
+  consumer_info_plist "$app"
   consumer_android "$app" forwarding
   consumer_sync "$app"
   consumer_ios_build "$app" SALLAPUSH_APP_ID=consumer_check
@@ -1097,15 +1142,16 @@ PY
   rm -rf "$app"
 }
 
-# consumer-min: the oldest Capacitor 8 the plugin supports, whose template is a storyboard app without scenes: the
-# README's regions go into its AppDelegate, which keeps its ApplicationDelegateProxy methods.
+# consumer-min: the oldest Capacitor 8 the plugin supports, whose template is a storyboard app without scenes, with the
+# package from git, as the README's fallback installs it with npm: the README's regions go into its AppDelegate,
+# which keeps its ApplicationDelegateProxy methods.
 consumer_min() {
   local app="$work/consumer-min"
-  echo "== consumer-min: Capacitor $SP_CAPACITOR_MIN, Swift Package Manager, the storyboard template"
+  echo "== consumer-min: Capacitor $SP_CAPACITOR_MIN, Swift Package Manager, the storyboard template, from git"
   consumer_new consumer-min "$SP_CAPACITOR_MIN"
-  consumer_install "$app"
+  consumer_install "$app" git
   consumer_app_delegate "$app"
-  consumer_info_plist "$app" http://localhost:9/notifications/v1/sallapush
+  consumer_info_plist "$app"
   consumer_android "$app"
   consumer_extension "$app" --spm "$ios_pin"
   local_ios_sdk "$app/ios/App"
@@ -1221,9 +1267,18 @@ step_consumer() {
   dist_repo="$(sed -n 's/^dist_repo=//p' "$work/dist.out")"
   dist_commit="$(sed -n 's/^dist_commit=//p' "$work/dist.out")"
   [ -n "$dist_repo" ] && [ -n "$dist_commit" ] || fail "release-dist.sh --dry-run printed no dist commit"
+  # What npm publishes: the dist commit's tree, packed. Its package.json has no scripts, so packing builds nothing.
+  mkdir -p "$work/dist-tree" "$work/tarball"
+  git -C "$dist_repo" archive "$dist_commit" | tar -x -C "$work/dist-tree"
+  (cd "$work/dist-tree" && npm pack --json --pack-destination "$work/tarball") >"$work/tarball.json" ||
+    fail "npm pack of the dist commit failed"
+  dist_tarball="$work/tarball/$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[0]["filename"].split("/")[-1])' \
+    "$work/tarball.json")"
+  [ -f "$dist_tarball" ] || fail "npm pack of the dist commit made no tarball"
+  echo "the package as npm would publish it: ${dist_tarball##*/}"
   npm install --prefix "$work/npm" --no-audit --no-fund --loglevel=error "$CONSUMER_NPM" >/dev/null
   npm_bin="$work/npm/node_modules/.bin"
-  echo "consumer apps install with npm $("$npm_bin/npm" --version) and allow-git=root"
+  echo "consumer apps install with npm $("$npm_bin/npm" --version)"
   PATH="$npm_bin:$PATH" consumer_spm
   PATH="$npm_bin:$PATH" consumer_pods
   PATH="$npm_bin:$PATH" consumer_min
@@ -1247,7 +1302,7 @@ logs="${VERIFY_LOG_DIR:-$work/logs}"
 mkdir -p "$logs"
 summary="$logs/summary.tsv"
 # The commit this run verifies, +dirty when the tree has changes. summary.tsv holds the runs of one commit, named in its
-# first line and in every row, so an attestation can't quote another commit's results.
+# first line and in every row, so no summary mixes the results of two commits.
 commit="$(git -C "$root" rev-parse -q --verify HEAD 2>/dev/null)" || commit=none
 state=clean
 [ "$commit" != none ] && [ -z "$(git -C "$root" status --porcelain 2>/dev/null)" ] || state=dirty

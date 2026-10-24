@@ -1,98 +1,67 @@
 # SallaPush Capacitor SDK
 
-SallaPush is Salla's push notification service. This package brings it to Capacitor apps. Its TypeScript API calls the
-native SallaPush iOS and Android SDKs, so an app behaves as a native SallaPush app does. The API follows OneSignal v5,
-so most calls will look familiar.
+Push notifications for the Capacitor apps of Salla stores, on iOS and Android.
 
-- **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
-  [CHANGELOG.md](CHANGELOG.md).
-- **Private:** this package and the native SDKs it wraps live in private repositories of the SallaApp organization
-  ([Access to the private repositories](#access-to-the-private-repositories)).
+[![npm](https://img.shields.io/npm/v/@salla.sa/sallapush-capacitor?color=004956)](https://www.npmjs.com/package/@salla.sa/sallapush-capacitor) [![Capacitor 8](https://img.shields.io/badge/Capacitor-8-004956?logo=capacitor&logoColor=white)](#requirements) [![License: MIT](https://img.shields.io/github/license/SallaApp/sallapush-capacitor-sdk?color=004956)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/SallaApp/sallapush-capacitor-sdk/ci.yml?branch=master&label=CI)](https://github.com/SallaApp/sallapush-capacitor-sdk/actions/workflows/ci.yml)
 
-## Features
+[Installation](#installation) · [Quick start](#quick-start) · [API reference](docs/REFERENCE.md) ·
+[Troubleshooting](docs/TROUBLESHOOTING.md) · [Changelog](CHANGELOG.md)
 
-- Starts SallaPush natively at launch, from Info.plist keys and manifest meta-data. Taps, background pushes, the
-  opt-out and consent then work as in a native app, also in processes where no JavaScript runs.
-- Registers the device and keeps its push token up to date.
-- Links the signed-in customer to the device. Salla checks the customer's token first.
-- Keeps tags, the language and the opt-in state on the server.
-- Reports `received`, `displayed` and `opened` events on its own, and `dismissed` on Android.
-- Hands taps, foreground notifications, permission, customer and subscription changes, and log entries to JavaScript
-  listeners.
-- Capacitor 8, on iOS with Swift Package Manager or CocoaPods, and on Android.
-- No swizzling. It keeps working beside `@capacitor/push-notifications`, `@capacitor/local-notifications`,
-  `@capacitor-firebase/messaging` and OneSignal.
-- Every call is safe at any time, before or after initialization. No call throws on iOS and Android: bad input is
-  logged and ignored. On the web SallaPush isn't available, and its calls say so.
+> **SallaPush is for the mobile apps of Salla stores.** Contact the Salla team for your app id.
+
+- **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See [CHANGELOG.md](CHANGELOG.md).
+- **Also for:** [iOS](https://github.com/SallaApp/sallapush-ios-sdk) · [Android](https://github.com/SallaApp/sallapush-android-sdk) · [Flutter](https://github.com/SallaApp/sallapush-flutter-sdk) · [React Native](https://github.com/SallaApp/sallapush-react-native-sdk)
+
+**Contents:** [Requirements](#requirements) · [Installation](#installation) · [Platform setup](#platform-setup) ·
+[Quick start](#quick-start) · [Usage](#usage) · [Other push SDKs](#sallapush-and-other-push-sdks) ·
+[Example app](#example-app) · [Troubleshooting](#troubleshooting) · [Support](#support) ·
+[Contributing](#contributing) · [License](#license)
 
 ## Requirements
 
 | Wrapper | SallaPush iOS | SallaPush Android | Framework | iOS | Android | Node |
 |---|---|---|---|---|---|---|
-| Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (8.0 or later; Capacitor 9 isn't supported yet) | 15.0, Xcode 26 | minSdk 24 (SallaPush itself needs 23), compileSdk 36, JDK 21 | 22 or later, for Capacitor 8's CLI |
+| Capacitor 1.0.0 | 1.0.4 | 1.0.4 | Capacitor 8 (Capacitor 9 isn't supported yet) | 15.0, Xcode 26 or later | minSdk 24, compileSdk 36 or later, JDK 21 | 22 or later |
 
-- **An app id for each platform, from the SallaPush team,** such as `st_<store id>_ios` and `st_<store id>_android`.
-  The team sets up the iOS app id with your bundle id and APNs key, and the Android one with your Firebase project.
-  Until then devices register, but no notification arrives.
-- **Read access to the private repositories** ([below](#access-to-the-private-repositories)).
-- **Check the Capacitor version yourself before you upgrade Capacitor:** some tools only warn about Capacitor 9
-  ([Versions](docs/SETUP.md#versions)).
+SallaPush needs an app id for iOS and one for Android. On the web its calls fail: check
+`Capacitor.isNativePlatform()` first.
 
 ## Installation
 
-Add the package to your app's `package.json`, with the release tag:
-
-<!-- unchecked: a dependency line of an app's package.json; scripts/verify.sh consumer installs a release commit the same way -->
-```json
-"@salla.sa/sallapush-capacitor": "git+ssh://git@github.com/SallaApp/sallapush-capacitor-sdk.git#1.0.0"
+```sh
+npm install @salla.sa/sallapush-capacitor
+npx cap sync
 ```
 
-Keep this `git+ssh` form, and the package name as the dependency key. npm 12 fetches git dependencies only when the
-app allows them: add `allow-git=root` to the app's `.npmrc`. Yarn 4.14 and later approve the repository in
-`.yarnrc.yml`, and pnpm, Yarn 1 and Bun aren't verified yet ([Install](docs/SETUP.md#install)).
-
-Then run `npx cap sync`, which adds the plugin to both native projects:
-
-- **Swift Package Manager,** Capacitor 8's default (`ios/App/CapApp-SPM` exists): nothing more. The plugin's Swift
-  package brings SallaPush. Never add the SallaPush pods to such an app.
-- **CocoaPods:** before the first `npx cap sync`, add the SallaPush pods to `ios/App/Podfile`, inside
-  `target 'App' do`, after `capacitor_pods`. Without them, `npx cap sync ios` fails with "Unable to find a
-  specification for SallaPush" ([Swift Package Manager or CocoaPods](docs/SETUP.md#swift-package-manager-or-cocoapods)).
+- **Yarn 4:** `yarn add @salla.sa/sallapush-capacitor`, with `nodeLinker: node-modules` in `.yarnrc.yml`.
+- **From git:** each release is also a git tag of this repository. Add
+  `"@salla.sa/sallapush-capacitor": "git+https://github.com/SallaApp/sallapush-capacitor-sdk.git#<version>"` to your
+  app's dependencies. npm 12 needs `allow-git=root` in the app's `.npmrc`; Yarn 4.14 or later needs the repository's
+  URL in `approvedGitRepositories` of `.yarnrc.yml`.
+- **Android, and iOS with Swift Package Manager** (Capacitor 8's default, with `ios/App/CapApp-SPM`): nothing to add.
+  Never add the SallaPush pods to such an app.
+- **iOS with CocoaPods:** before the first `npx cap sync`, add these lines to `ios/App/Podfile`, in `target 'App' do`,
+  after `capacitor_pods`. Without them, `npx cap sync ios` fails: "Unable to find a specification for SallaPush".
 
 <!-- snippet:docs/snippets/Podfile#podfile-app -->
 ```ruby
-pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
 ```
 
-### Access to the private repositories
+**Updating:** run `npm update @salla.sa/sallapush-capacitor`. When the new release's row in
+[Requirements](#requirements) names another SallaPush iOS version, first set your app's own SallaPush pins to it:
+every `:tag =>` of the Podfile, or the extension's SallaPush package rule. Then run `npx cap sync`.
 
-This repository, `SallaApp/sallapush-ios-sdk` and `SallaApp/sallapush-android-sdk` are private: every developer and
-CI machine that builds the app needs read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in
-to a GitHub account that can read it (**Xcode → Settings → Accounts**). The package install and the pods use your
-git, over SSH. Gradle reads a classic token with the `read:packages` scope from the Gradle properties `gpr.user` (your
-GitHub login) and `gpr.key`, for example in `~/.gradle/gradle.properties`, or from `GITHUB_ACTOR` and `GITHUB_TOKEN`.
-Never commit them. CI machines: [CI machines](docs/SETUP.md#ci-machines).
-
-### Updating the package
-
-Change the tag in your app's dependency line, install, and run `npx cap sync`. When the new release names another
-SallaPush iOS version, also move the SallaPush pins your app holds itself: every SallaPush `:tag =>` of the Podfile,
-or the rule of the extension's SallaPush package
-([Updating the package](docs/SETUP.md#updating-the-package)).
-
-## Setup
+## Platform setup
 
 ### iOS
 
-**Capabilities.** In the App target of `ios/App/App.xcodeproj`, under **Signing & Capabilities**, add **Push
-Notifications** and **Background Modes → Remote notifications**. Capacitor's template doesn't have the background
-mode.
+**1. Capabilities.** In the App target, under **Signing & Capabilities**, add **Push Notifications** and **Background
+Modes → Remote notifications**.
 
-**The app id.** SallaPush starts natively at launch when `ios/App/App/Info.plist` names its app id. Set it from a build
-setting, `SALLAPUSH_APP_ID`, defined for every build configuration, in an xcconfig or the App target's **Build
-Settings**. An undefined setting expands to an empty value, and SallaPush then doesn't start
-([Info.plist](docs/SETUP.md#infoplist)).
+**2. The app id,** in `ios/App/App/Info.plist`, from a build setting, `SALLAPUSH_APP_ID`, that every build
+configuration defines in an xcconfig or the target's **Build Settings**. With an empty value, SallaPush doesn't start.
 
 <!-- snippet:example-app/ios/App/App/Info.plist#app-id -->
 ```xml
@@ -100,18 +69,10 @@ Settings**. An undefined setting expands to an empty value, and SallaPush then d
 <string>$(SALLAPUSH_APP_ID)</string>
 ```
 
-**The AppDelegate.** In `ios/App/App/AppDelegate.swift`, add the import, start SallaPush as the first statement of
-`application(_:didFinishLaunchingWithOptions:)`, and add the three forwarding methods to the class:
-
-<!-- snippet:example-app/ios/App/App/AppDelegate.swift#imports -->
-```swift
-import SallaPushCapacitorPlugin
-```
-
-<!-- snippet:example-app/ios/App/App/AppDelegate.swift#start -->
-```swift
-SallaPushCapacitor.start()
-```
+**3. The AppDelegate.** In `ios/App/App/AppDelegate.swift`, add `import SallaPushCapacitorPlugin`, call
+`SallaPushCapacitor.start()` as the first statement of `application(_:didFinishLaunchingWithOptions:)`, and add these
+methods; add SallaPush's line to those it already has. Set no `UNUserNotificationCenter.current().delegate` after
+`start()`: SallaPush would get no taps.
 
 <!-- snippet:example-app/ios/App/App/AppDelegate.swift#forwarding -->
 ```swift
@@ -131,29 +92,67 @@ func application(_ application: UIApplication,
 }
 ```
 
-- **`SallaPushCapacitor.start()` comes first:** iOS hands the tap that launched the app to the delegate set during
-  launch. Never set `UNUserNotificationCenter.current().delegate` below it: that replaces SallaPush's delegate.
-- **SallaPush never calls your completion handlers:** call each one, once.
-- **With another push plugin, an Objective-C app delegate, or an app created with Capacitor 8.0 to 8.4:** see
-  [AppDelegate](docs/SETUP.md#appdelegate) and [Another push plugin](docs/SETUP.md#another-push-plugin).
+**4. The Notification Service Extension,** recommended: it shows images, reports `received` and counts the
+[badge](#badges). Add a **Notification Service Extension** target, `SallaPushNotificationService`, with the app's
+deployment target, version and build, and give it the `SallaPushExtension` library, never `SallaPush`: with Swift
+Package Manager, `https://github.com/SallaApp/sallapush-ios-sdk.git` at the **Exact Version** of
+[Requirements](#requirements), for the extension target only; with CocoaPods, this target at the Podfile's top level:
 
-**The Notification Service Extension,** optional and recommended, shows the images of SallaPush notifications and
-reports `received`. Add a `SallaPushNotificationService` target with SallaPush's `SallaPushExtension` library and the
-example's `NotificationService.swift`
-([Notification Service Extension](docs/SETUP.md#notification-service-extension)).
+<!-- snippet:docs/snippets/Podfile#podfile-extension -->
+```ruby
+target 'SallaPushNotificationService' do
+  pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+  pod 'SallaPushExtension', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.4'
+end
+```
+
+Replace its `NotificationService.swift` with this one. `didReceive` returns false and doesn't handle the notification
+when it isn't a SallaPush notification.
+
+<!-- snippet:example-app/ios/App/SallaPushNotificationService/NotificationService.swift -->
+```swift
+import SallaPushExtension
+import UserNotifications
+
+final class NotificationService: UNNotificationServiceExtension {
+    private var sallaPushService: SallaPushServiceExtension?
+
+    override func didReceive(_ request: UNNotificationRequest,
+                             withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        if SallaPushServiceExtension.isSallaPushNotification(request) {
+            // Reads the App Group from this extension's Info.plist key SallaPushAppGroup.
+            sallaPushService = SallaPushServiceExtension()
+            sallaPushService?.didReceive(request, withContentHandler: contentHandler)
+        } else {
+            // Not a SallaPush notification: hand it to your other SDKs here, or deliver it unchanged.
+            contentHandler(request.content)
+        }
+    }
+
+    override func serviceExtensionTimeWillExpire() {
+        sallaPushService?.serviceExtensionTimeWillExpire()
+    }
+}
+```
+
+**5. An App Group,** which the badge count and `received` need: add the App Groups capability with the same group to
+both targets, and this key to both Info.plist files, with `SALLAPUSH_APP_GROUP` defined for both targets (in the
+project's base xcconfig or **Build Settings**).
+
+<!-- snippet:example-app/ios/App/App/Info.plist#app-group -->
+```xml
+<key>SallaPushAppGroup</key>
+<string>$(SALLAPUSH_APP_GROUP)</string>
+```
 
 ### Android
 
-**GitHub Packages.** The package's Gradle script adds SallaPush's GitHub Packages repository to every project of your
-build, and Gradle needs the token of [Access to the private repositories](#access-to-the-private-repositories). Build
-with a JDK 21. A build whose settings refuse project repositories declares the repository itself
-([Builds that refuse project repositories](docs/SETUP.md#builds-that-refuse-project-repositories)).
+**1. Firebase.** Android receives pushes through Firebase Cloud Messaging: put your app's `google-services.json` in
+`android/app`, and leave Firebase's auto-init on.
 
-**Firebase.** Put the `google-services.json` of the Firebase project that the SallaPush team set up for your app id in
-`android/app`, and leave Firebase's auto-init on. With another project's file, no notification arrives
-([Firebase](docs/SETUP.md#firebase)).
-
-**The app id and the notification icon.** Inside `<application>` in `android/app/src/main/AndroidManifest.xml`:
+**2. The app id and the notification icon,** inside `<application>` in `android/app/src/main/AndroidManifest.xml`,
+and the app id's placeholder in `defaultConfig` of `android/app/build.gradle`. The icon must be white on transparent:
+`ic_stat_sallapush` is the example's drawable, so name your own.
 
 <!-- snippet:example-app/android/app/src/main/AndroidManifest.xml#meta-data -->
 ```xml
@@ -163,96 +162,25 @@ with a JDK 21. A build whose settings refuse project repositories declares the r
     android:resource="@drawable/ic_stat_sallapush" />
 ```
 
-Define the placeholder in `defaultConfig` in `android/app/build.gradle`:
-
 <!-- snippet:docs/snippets/app-build.gradle#placeholders -->
 ```groovy
 manifestPlaceholders += [sallaPushAppId: "your_app_id"]
 ```
 
-The icon must be white on transparent: use your own
-([App id and notification icon](docs/SETUP.md#app-id-and-notification-icon)).
+**3. Another push plugin.** Android hands each push message to one service. When another plugin in your app declares
+one, it takes every message, and SallaPush shows nothing: add the
+[forwarding service](docs/REFERENCE.md#another-push-plugin-on-android), which hands each message to SallaPush first.
 
-**Another FCM plugin.** With `@capacitor/push-notifications`, `@capacitor-firebase/messaging` or another FCM SDK in
-the app, its service takes every message, and SallaPush shows nothing. Add a service that hands each message to
-SallaPush first ([Another FCM plugin](docs/SETUP.md#another-fcm-plugin)).
+## Quick start
 
-## Usage
+In your app's entry module, before your framework renders its first screen (Angular's `src/main.ts`, React's
+`src/main.tsx`, Vue's `src/main.ts`), import SallaPush and add the click listener. Taps made before it, such as the tap
+that launched the app, wait and arrive once it is added.
 
-The same code serves Angular, React, Vue and plain TypeScript apps. In an Angular app that uses zone.js, run the work
-of a listener that navigates or changes a screen in `NgZone.run` ([Quick start](docs/SETUP.md#quick-start)). Every
-member is described in [docs/REFERENCE.md](docs/REFERENCE.md#api-reference).
-
-### Initialize
-
-SallaPush starts natively from the app id of the [Setup](#setup), before JavaScript runs. In your app's entry module,
-before your framework renders the first screen (Angular's `src/main.ts`, React's `src/main.tsx`, Vue's
-`src/main.ts`), add the [click listener](#handling-notifications-and-deep-links) and make the launch identity call.
-The example's start-up code:
-
-<!-- snippet:example-app/src/start.ts#launch-identity -->
+<!-- snippet:example-app/src/readmeSnippets/platform.ts#import -->
 ```ts
-const customer = currentCustomer();
-if (customer) {
-  SallaPush.login(customer.externalId, customer.identityToken);
-} else {
-  SallaPush.logout();
-}
+import { SallaPush } from '@salla.sa/sallapush-capacitor';
 ```
-
-- `currentCustomer()` stands for your app's session.
-- **An app id known only at run time:** call `SallaPush.initialize(appId)` instead of the static app id. It costs
-  native behaviour wherever no JavaScript runs yet
-  ([Initializing from JavaScript](docs/SETUP.md#initializing-from-javascript)).
-- **Consent first (PDPL):** set `SallaPushRequiresUserConsent` to `YES` in the Info.plist and
-  `com.salla.push.REQUIRES_USER_CONSENT` to `true` in the manifest, or, with `initialize`, call
-  `SallaPush.setConsentRequired(true)` before it at every launch. Then call `SallaPush.setConsentGiven(true)` once the
-  user agrees ([Consent](docs/SETUP.md#consent)).
-
-### Customer login and logout
-
-At every launch, call exactly one of `login` or `logout`, as above. Then call `login` when the customer signs in, and
-`logout` when they sign out. The example's session:
-
-<!-- snippet:example-app/src/session.ts#sign-in-out -->
-```ts
-export function customerDidSignIn(signedIn: Customer): void {
-  customer = signedIn;
-  SallaPush.login(signedIn.externalId, signedIn.identityToken);
-}
-
-export function customerDidSignOut(): void {
-  customer = null;
-  SallaPush.logout();
-}
-```
-
-- **Pass the customer's id and their Salla token,** without a `Bearer ` prefix. Salla checks the token, and the device
-  is linked only when the token belongs to that id. SallaPush keeps the token in memory only: call `login` again when
-  your app refreshes it.
-- **`logout()` needs no token and works offline.** The device stays registered as a guest. Call it before the next
-  customer's `login`.
-- **Watch for login failures** with `SallaPush.User.addEventListener('loginFailure', …)`: `tokenRejected` or
-  `invalidRequest`. Don't call `login` again from that listener
-  ([Sign-in and sign-out](docs/SETUP.md#sign-in-and-sign-out)).
-
-### Notification permission
-
-SallaPush never shows the system prompt on its own. Ask where it fits your app:
-
-<!-- snippet:example-app/src/readmeSnippets/notifications.ts#request-permission -->
-```ts
-const granted = await SallaPush.Notifications.requestPermission(true);
-```
-
-`true` opens the app's notification settings when the system no longer shows the prompt. To let customers turn
-SallaPush notifications off and on in your app, call `SallaPush.User.pushSubscription.optOut()` and `optIn()`
-([Notification permission](docs/SETUP.md#notification-permission)).
-
-### Handling notifications and deep links
-
-Add the click listener at app start, in your entry module, as the example does. It gets every tap on a SallaPush
-notification: `event.notification`, and `event.result.url`, its launch URL.
 
 <!-- snippet:example-app/src/start.ts#click-listener -->
 ```ts
@@ -261,19 +189,72 @@ SallaPush.Notifications.addEventListener('click', (event) => {
 });
 ```
 
-- **Cold starts.** Taps made before the first click listener, such as the tap that launched the app, wait natively,
-  and arrive once it is added: a listener added later, in a screen, misses them. The tap can arrive before your
-  navigation is ready: keep the destination, and open it once your navigation is.
-- **Route with the typed getters** in `route`, your app's navigation, never with raw payload keys: `getString`,
-  `getInt` and `getBool`, and `getNumber` on iOS, read your data from both payload formats, such as
-  `notification.getInt('id')` ([Routing with the typed getters](docs/SETUP.md#routing-with-the-typed-getters)).
-- **Launch URLs.** SallaPush opens a notification's https launch URL itself only with the open-launch-URLs option;
-  otherwise route it yourself. A launch URL is whatever the sender set: check its scheme and host before you open it
-  ([Taps](docs/SETUP.md#taps)).
+Ask for permission where it fits your app; SallaPush never shows the system prompt on its own:
 
-### Tags
+<!-- snippet:example-app/src/readmeSnippets/notifications.ts#request-permission -->
+```ts
+const granted = await SallaPush.Notifications.requestPermission(true);
+```
 
-Tags are string keys and values stored on the server for this device:
+`route` stands for your app's navigation; in an Angular app with zone.js, run it in `NgZone.run`. An app that knows its
+app id only at run time calls [`SallaPush.initialize(appId)`](docs/REFERENCE.md#sallapush) first.
+
+## Usage
+
+### Login and logout
+
+Pass the customer's id and the Salla token your app received for them, without `Bearer `:
+
+<!-- snippet:example-app/src/readmeSnippets/user.ts#login-logout -->
+```ts
+// After the customer signs in, and at each app launch while they are signed in:
+SallaPush.login(externalId, identityToken);
+
+// After the customer signs out:
+SallaPush.logout();
+```
+
+At each app launch while nobody is signed in, call `SallaPush.logout()` too: on iOS, a reinstall keeps the earlier
+install's customer linked until then.
+
+### Notification permission
+
+`requestPermission(true)` also opens the app's notification settings when the prompt no longer shows; `getPermission()`
+resolves whether notifications are allowed.
+
+### Notification taps and deep links
+
+- **Taps:** the click listener gets `event.notification`, the launch URL in `event.result.url`, and on iOS the tapped
+  action button in `event.result.actionId`. Route with the typed getters, such as `notification.getString('type')`
+  and `notification.getInt('id')`.
+- **Launch URLs:** SallaPush opens https launch URLs itself only when `SallaPushOpenLaunchURLs` (Info.plist),
+  `com.salla.push.OPEN_LAUNCH_URLS` (manifest) or `openLaunchUrls` in `initialize`'s config is on: then don't open
+  `result.url` again. Check a launch URL's scheme and host before you open it.
+- **Other events:** `'foregroundWillDisplay'` and `'permissionChange'` on `SallaPush.Notifications`, `'change'` and
+  `'loginFailure'` on `SallaPush.User`, and `'change'` on `SallaPush.User.pushSubscription`. `remove()` on the
+  subscription `addEventListener` returns stops a listener; a page load removes them all, so add them at start-up.
+
+### Foreground notifications
+
+Without a `'foregroundWillDisplay'` listener, SallaPush shows its notifications in the foreground itself. A listener
+can hold each one back, such as on a chat screen, which removes it when it closes:
+
+<!-- snippet:example-app/src/readmeSnippets/notifications.ts#will-display -->
+```ts
+const chatListener = SallaPush.Notifications.addEventListener(
+  'foregroundWillDisplay',
+  (event) => {
+    if (event.notification.getString('chat_id') === chatId) {
+      event.preventDefault(); // before any await: it counts only while the listener runs
+    }
+  }
+);
+```
+
+`event.notification.display()` shows a held notification later, once, within 10 minutes. On iOS, a notification shown
+while a listener exists is SallaPush's local copy, without its image and action buttons.
+
+### Tags and language
 
 <!-- snippet:example-app/src/readmeSnippets/user.ts#tags -->
 ```ts
@@ -284,110 +265,102 @@ SallaPush.User.addTags({
 });
 ```
 
-- Remove tags with `removeTag` and `removeTags`.
-- Keys are trimmed and lowercased, then must be 1 to 64 characters of `a-z`, `0-9` and `_`. Values are cut at 255
-  characters, and an empty value removes the tag. A device holds at most 100 tags.
-- Set tags after the launch `login` or `logout` call. By default (`clearTagsOnLogout`), a logout and an account switch
-  delete the device's tags.
-- Pass your app's language, such as `ar`, with `SallaPush.User.setLanguage(code)` whenever it changes
-  ([Tags and language](docs/SETUP.md#tags-and-language)).
+- `removeTag` and `removeTags` remove tags, and `getTags()` resolves them. Keys are lowercased, at most 64 characters
+  of `a-z`, `0-9` and `_`; values are cut at 255 characters; a device holds at most 100 tags.
+- A logout and an account switch delete the tags, unless `SallaPushClearTagsOnLogout` (Info.plist),
+  `com.salla.push.CLEAR_TAGS_ON_LOGOUT` (manifest) or `clearTagsOnLogout` in `initialize`'s config is `false`.
+- `SallaPush.User.setLanguage(code)` sets the customer's language, such as `ar`; `null` means the device language.
 
-### Events
+### Push subscription
 
-SallaPush reports `received`, `displayed` and `opened` for its own notifications, and `dismissed` on Android. You call
-nothing. Your listeners get the rest:
+`SallaPush.User.pushSubscription.optOut()` turns SallaPush notifications off on this device, and `optIn()` turns them
+back on, with the permission prompt while it can still show. Its `'change'` listener gets the device id, the push token
+and the opted-in state once the device is registered, then every change: read them there, since right after a cold start
+the getters show only this launch's calls. The push token is private: don't send it to analytics or third parties.
 
-- **`SallaPush.User.pushSubscription`'s `'change'`** gets the current state once the device is registered, then every
-  change of the device id, the push token and the opted-in state. The push token is private: don't send it to analytics or third parties.
-- **`SallaPush.User`'s `'change'`** reports login changes, and `'loginFailure'` each refusal of the current login.
-- **`SallaPush.Notifications`' `'permissionChange'`** reports changes between allowed and not allowed.
-- **`addEventListener` returns a subscription,** whose `remove()` removes the listener. A page load removes every
-  listener: add them in start-up code that runs at every page load ([Events](docs/SETUP.md#events)).
+### Consent
 
-**Foreground notifications.** Without a `'foregroundWillDisplay'` listener, SallaPush shows its notifications in the
-foreground itself. A listener can hold one back with `event.preventDefault()`, called before any `await`. On iOS, a
-notification shown while a listener exists is SallaPush's local copy, without its image and action buttons, so add the
-listener only where your app decides per notification, such as a chat screen, and remove it when the screen goes
-([Foreground notifications](docs/SETUP.md#foreground-notifications)).
+If your app needs the user's consent first (PDPL), require it at every launch: set `SallaPushRequiresUserConsent`
+(Info.plist) to `YES` and `com.salla.push.REQUIRES_USER_CONSENT` (manifest) to `true`, or, with `initialize`, call
+`setConsentRequired(true)` before it:
+
+<!-- snippet:example-app/src/readmeSnippets/configuration.ts#consent-required -->
+```ts
+SallaPush.setConsentRequired(true);
+SallaPush.initialize(appId);
+```
+
+Then pass the user's choice to `SallaPush.setConsentGiven(…)` whenever they make it. Until consent is given, SallaPush
+sends nothing; withdrawing it opts the device out, deletes its tags and unlinks it.
 
 ### Logging
 
-The default level is `warn`. Turn on more detail while you integrate:
+The default level is `warn`. While you integrate, set `SallaPushLogLevel` (Info.plist) and `com.salla.push.LOG_LEVEL`
+(manifest) to `verbose`, and filter the logs on `SallaPush` (Xcode, `adb logcat -s SallaPush`): a first launch logs
+`init.started`, then `token.received` and `register.ok`. `SallaPush.Debug.setLogLevel(level)` changes the level at run
+time, and `SallaPush.Debug.setLogHandler(level, handler)` forwards entries at `level` or more severe to your
+telemetry. Match entries on their stable `code`
+([iOS codes](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference),
+[Android codes](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/docs/LOGGING.md#log-code-reference)).
+Ship with the level at `warn`, and never set Capacitor's `loggingBehavior` to `'production'`: it logs `login`'s token.
 
-<!-- snippet:example-app/src/readmeSnippets/configuration.ts#log-level -->
-```ts
-SallaPush.Debug.setLogLevel(SallaPushLogLevel.Verbose);
-```
+### Badges
 
-To forward entries to your own telemetry:
+On iOS, each SallaPush notification adds 1 to the app icon's badge, which goes back to 0 when the app opens; counting
+needs the [Notification Service Extension](#ios) and the App Group. On Android, the launcher counts the notifications
+in the shade; opening the app removes nothing by default. Set these keys next to the static app id, or pass the
+settings to `initialize`, where a setting given applies to both platforms and one left out keeps each one's default:
 
-<!-- snippet:example-app/src/readmeSnippets/configuration.ts#log-handler -->
-```ts
-SallaPush.Debug.setLogHandler(SallaPushLogLevel.Error, (entry) => {
-  telemetry.report('sallapush', entry.code, entry.message, entry.metadata);
-});
-```
+| Setting | Info.plist | Manifest meta-data | Default |
+|---|---|---|---|
+| `autoClearBadge`: clear the badge when the app opens | `SallaPushAutoClearBadge` | `com.salla.push.AUTO_CLEAR_BADGE` | `true` on iOS, `false` on Android |
+| `autoUpdateBadge`: count SallaPush notifications | `SallaPushAutoUpdateBadge` | `com.salla.push.AUTO_UPDATE_BADGE` | `true` |
 
-- **The consoles.** SallaPush logs to the unified log on iOS, subsystem `com.salla.push`, and to Logcat on Android,
-  tag `SallaPush`. The static keys `SallaPushLogLevel` and `com.salla.push.LOG_LEVEL` set the level too.
-- **Every entry has a stable `code`,** such as `register.ok`. Match on it, not on the message. Secrets and identity
-  tokens are never logged.
-- **Privacy, with SallaPush iOS 1.0.4:** the info entries `status.launch` and `status.changed` hold the full push token
-  and the customer's id. Keep the console level at `warn` in release builds, and don't forward info entries to third
-  parties ([Logging](docs/SETUP.md#logging)).
+On Android, `autoClearBadge` removes SallaPush's notifications from the shade when the app comes to the foreground.
+`clearAll()` removes SallaPush's notifications, and on iOS sets the badge to 0 while `autoUpdateBadge` is on; on
+iOS 15, only when no other SDK's notification is delivered ([Badges](docs/REFERENCE.md#badges)).
 
-## Migrating from OneSignal
+## SallaPush and other push SDKs
 
-**Keep the OneSignal SDK in your app until the SallaPush team confirms you can remove it.** Add SallaPush next to it,
-keep OneSignal initialized, and keep `ios.handleApplicationNotifications` set to `false` in `capacitor.config`, as
-OneSignal's Capacitor setup asks.
+SallaPush never swizzles, and handles only its own notifications: its calls return false for every other one, so the
+order of your forwarding lines doesn't matter.
 
-| `@onesignal/capacitor-plugin` 1.2 | SallaPush |
-|---|---|
-| `OneSignal.initialize(appId)` | The static app id, or `SallaPush.initialize(appId)` |
-| `OneSignal.login(externalId)` | `SallaPush.login(externalId, identityToken)`, with the customer's Salla token |
-| `OneSignal.logout()` | `SallaPush.logout()`, at every launch while signed out too |
-| `OneSignal.User.addTag`, `addTags`, `removeTag`, `removeTags`, `getTags` | The same names on `SallaPush.User` |
-| `OneSignal.User.pushSubscription.getIdAsync`, `getTokenAsync`, `getOptedInAsync` | `SallaPush.User.pushSubscription.getId`, `getToken`, `getOptedIn` |
-| `OneSignal.User.pushSubscription.optIn`, `optOut`, `addEventListener('change')` | The same names on `SallaPush.User.pushSubscription` |
-| `OneSignal.Notifications.requestPermission(fallbackToSettings)` | `SallaPush.Notifications.requestPermission(fallbackToSettings)` |
-| `OneSignal.Notifications.addEventListener('click')`, `('foregroundWillDisplay')`, `('permissionChange')` | The same events on `SallaPush.Notifications` |
-| `OneSignal.Notifications.clearAll()` | `SallaPush.Notifications.clearAll()`, which removes SallaPush notifications only |
-| `OneSignal.Debug.setLogLevel(level)` | `SallaPush.Debug.setLogLevel(level)` |
-| `OneSignal.setConsentRequired(required)`, `setConsentGiven(given)` | The same names on `SallaPush` |
+- **iOS:** `SallaPush.Notifications.didReceiveRemoteNotification(_:)` returns true for a SallaPush notification: hand
+  another SDK only the notifications for which it returns false. When another SDK takes the APNs token, also pass it to
+  `SallaPush.Notifications.forwardApnsToken` in JavaScript, as hexadecimal text.
+- **A shared Notification Service Extension:** call SallaPush first, and hand the other SDK only the notifications for
+  which `SallaPushServiceExtension.isSallaPushNotification(request)` is false.
+- **Android:** add the forwarding service of [Platform setup](#android).
+- **Calls that reach every SDK:** don't unregister the app from remote notifications or delete its push token from
+  another SDK, and remove SallaPush's notifications with `clearAll()`, not with a call that removes all of the app's.
 
-While both SDKs are in the app, route each notification once, decide foreground notifications with one synchronous
-policy, and opt in and out on both SDKs. [Migrating from OneSignal](docs/SETUP.md#migrating-from-onesignal) has the
-code for each.
+## Example app
+
+[example-app](example-app) is a Capacitor 8.5 app that runs the plugin from this repository's sources and makes every
+API call. Its [README](example-app/README.md) says how to set your app ids and run it.
 
 ## Troubleshooting
 
-| Problem | Fix |
+| Problem or log code | Fix |
 |---|---|
-| `npx cap sync ios` or `pod install`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. It needs SSH access to `SallaApp/sallapush-ios-sdk`. |
-| Xcode can't resolve `sallapush-ios-sdk` | Sign in to Xcode with an account that can read `SallaApp/sallapush-ios-sdk`; on CI, see [CI machines](docs/SETUP.md#ci-machines). |
-| Gradle: `Could not find com.salla.push:sallapush`, 401, or `Username must not be null!` | Give Gradle a classic token with `read:packages` in `gpr.user` and `gpr.key` ([Access to the private repositories](#access-to-the-private-repositories)). |
-| No notification on Android, or `token.firebase_missing` | Add the right project's `google-services.json`, and with another FCM plugin, the [forwarding service](docs/SETUP.md#another-fcm-plugin). |
-| The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first in `didFinishLaunchingWithOptions`, and add the click listener in your entry module ([Initialize](#initialize)). |
+| `npx cap sync ios`: "Unable to find a specification for SallaPush" | A CocoaPods app: add the [Podfile lines](#installation), then run `npx cap sync ios` again. |
+| `token.firebase_missing`, or no notification on Android | Add your app's `google-services.json`; with another push plugin, the [forwarding service](#android). |
+| The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first in `didFinishLaunchingWithOptions`, and add the click listener in your entry module. |
 
-[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) has the full list.
+[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) has more.
 
-## More documentation
+## Support
 
-- [docs/SETUP.md](docs/SETUP.md): the full setup guide: access and CI machines, every install path and package
-  manager, the whole iOS and Android setup, the start-up code, events, consent, logging, initializing from JavaScript,
-  coexistence with other push plugins, migrating from OneSignal, checking your integration and updating the native
-  SDKs.
-- [docs/REFERENCE.md](docs/REFERENCE.md): how the package works, the static configuration, the full API, events,
-  foreground display, errors, data mapping, coexistence, logging and compatibility.
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): every known problem and its fix.
-- [example-app/README.md](example-app/README.md): the example app, test pushes without a server, and its self-test.
-- [CONTRIBUTING.md](CONTRIBUTING.md): working on this package, its checks and its pull requests.
-- [RELEASING.md](RELEASING.md): versions, releases, native updates and the checks on devices.
-- [CHANGELOG.md](CHANGELOG.md): the changes of each release.
-- The native SDKs' docs: [iOS](https://github.com/SallaApp/sallapush-ios-sdk/blob/1.0.4/README.md) and
-  [Android](https://github.com/SallaApp/sallapush-android-sdk/blob/1.0.4/README.md).
+- **SDK bugs and feature requests:**
+  [open an issue](https://github.com/SallaApp/sallapush-capacitor-sdk/issues/new/choose) with the SDK, Capacitor and OS
+  versions and the SallaPush log codes you saw. Never paste tokens, keys or customer data.
+- **App ids:** Contact the Salla team for your app id.
+
+## Contributing
+
+Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-Copyright Salla. All rights reserved. See [LICENSE](LICENSE).
+The SallaPush Capacitor SDK is available under the [MIT License](LICENSE).

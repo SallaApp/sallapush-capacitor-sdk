@@ -43,7 +43,7 @@ export function startSallaPush(): void {
 `;
 const PODFILE = `target 'App' do
   # snippet:pods
-  pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'
+  pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'
   # end-snippet
 end
 `;
@@ -139,7 +139,7 @@ describe('region', () => {
       '});',
     ]);
     assert.deepEqual(region(PODFILE, 'pods', 'Podfile'), [
-      "pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'",
+      "pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'",
     ]);
     assert.deepEqual(region(MANIFEST, 'meta-data', 'AndroidManifest.xml'), [
       '<meta-data android:name="com.salla.push.APP_ID" android:value="${sallaPushAppId}" />',
@@ -212,7 +212,7 @@ describe('checkSnippets', () => {
 ${CLICK}
 <!-- snippet:docs/snippets/Podfile#pods -->
 \`\`\`ruby
-pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'
+pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'
 \`\`\`
 
 <!-- snippet:example-app/src/start.ts#split -->
@@ -390,7 +390,7 @@ describe('snippetLines and --print', () => {
     assert.deepEqual(
       snippetLines(root, 'docs/snippets/Podfile#pods', tracked),
       [
-        "pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'",
+        "pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '1.0.2'",
       ]
     );
     execFileSync('git', ['init', '--quiet', root]);
@@ -444,8 +444,8 @@ describe('snippetLines and --print', () => {
         [script, '--print', 'docs/snippets/Podfile#podfile-app'],
         { encoding: 'utf8' }
       ),
-      `pod 'SallaPushCore', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n` +
-        `pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n`
+      `pod 'SallaPushCore', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n` +
+        `pod 'SallaPush', :git => 'https://github.com/SallaApp/sallapush-ios-sdk.git', :tag => '${ios}'\n`
     );
     assert.throws(
       () =>

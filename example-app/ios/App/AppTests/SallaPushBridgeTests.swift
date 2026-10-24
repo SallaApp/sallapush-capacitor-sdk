@@ -12,21 +12,20 @@ final class SallaPushBridgeTests: XCTestCase {
 
     func testInitializesWithTheAppIdAndEveryOption() throws {
         makeBridge().initialize(appId: "st_42_ios", options: [
-            "apiBaseUrl": "https://push.example.com/notifications/v1/sallapush",
             "logLevel": "debug",
             "appVersion": "2.1.0",
             "clearTagsOnLogout": false,
             "requiresUserConsent": true,
             "openLaunchUrls": true,
+            "autoClearBadge": false,
+            "autoUpdateBadge": false,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "sandbox",
-            "iosAutoClearBadge": false,
             "iosRegisterForRemoteNotificationsOnInit": false
         ])
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])
         let configuration = try XCTUnwrap(native.configurations.first)
-        XCTAssertEqual(configuration.apiBaseURL, URL(string: "https://push.example.com/notifications/v1/sallapush"))
         XCTAssertEqual(configuration.logLevel, .debug)
         XCTAssertEqual(configuration.appVersion, "2.1.0")
         XCTAssertFalse(configuration.clearTagsOnLogout)
@@ -35,6 +34,7 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertEqual(configuration.appGroupIdentifier, "group.sa.salla.example")
         XCTAssertEqual(configuration.apnsEnvironment, .sandbox)
         XCTAssertFalse(configuration.autoClearBadge)
+        XCTAssertFalse(configuration.autoUpdateBadge)
         XCTAssertFalse(configuration.registerForRemoteNotificationsOnInit)
         XCTAssertEqual(console.errors, [])
     }
@@ -44,7 +44,6 @@ final class SallaPushBridgeTests: XCTestCase {
 
         let configuration = try XCTUnwrap(native.configurations.first)
         let defaults = SallaPushConfiguration()
-        XCTAssertNil(configuration.apiBaseURL)
         XCTAssertEqual(configuration.logLevel, defaults.logLevel)
         XCTAssertNil(configuration.appVersion)
         XCTAssertEqual(configuration.clearTagsOnLogout, defaults.clearTagsOnLogout)
@@ -53,6 +52,7 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertNil(configuration.appGroupIdentifier)
         XCTAssertEqual(configuration.apnsEnvironment, defaults.apnsEnvironment)
         XCTAssertEqual(configuration.autoClearBadge, defaults.autoClearBadge)
+        XCTAssertEqual(configuration.autoUpdateBadge, defaults.autoUpdateBadge)
         XCTAssertEqual(configuration.registerForRemoteNotificationsOnInit, defaults.registerForRemoteNotificationsOnInit)
     }
 
@@ -62,11 +62,11 @@ final class SallaPushBridgeTests: XCTestCase {
         let bridge = makeBridge(earlyInit: StaticConfig(appId: "st_42_ios"))
 
         bridge.initialize(appId: "st_42_ios", options: [
-            "logLevel": "debug", "openLaunchUrls": true, "iosAutoClearBadge": false
+            "logLevel": "debug", "openLaunchUrls": true, "autoClearBadge": false
         ])
 
         XCTAssertEqual(console.errors, [
-            "initialize ignored logLevel, openLaunchUrls, ios.autoClearBadge: SallaPush already started with this app "
+            "initialize ignored logLevel, openLaunchUrls, autoClearBadge: SallaPush already started with this app "
                 + "id from SallaPushAppId, so the call changes nothing. Set them with the Info.plist keys "
                 + "SallaPushLogLevel, SallaPushOpenLaunchURLs, SallaPushAutoClearBadge instead."
         ])
@@ -82,20 +82,21 @@ final class SallaPushBridgeTests: XCTestCase {
             "clearTagsOnLogout": true,
             "requiresUserConsent": true,
             "openLaunchUrls": false,
+            "autoClearBadge": true,
+            "autoUpdateBadge": true,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "production",
-            "iosAutoClearBadge": true,
             "iosRegisterForRemoteNotificationsOnInit": true
         ])
 
         XCTAssertEqual(console.errors, [
             "initialize ignored logLevel, appVersion, clearTagsOnLogout, requiresUserConsent, openLaunchUrls, "
-                + "ios.appGroupIdentifier, ios.apnsEnvironment, ios.autoClearBadge, "
+                + "autoClearBadge, autoUpdateBadge, ios.appGroupIdentifier, ios.apnsEnvironment, "
                 + "ios.registerForRemoteNotificationsOnInit: SallaPush already started with this app id from "
                 + "SallaPushAppId, so the call changes nothing. Set them with the Info.plist keys SallaPushLogLevel, "
                 + "SallaPushAppVersion, SallaPushClearTagsOnLogout, SallaPushRequiresUserConsent, "
-                + "SallaPushOpenLaunchURLs, SallaPushAppGroup, SallaPushAPNsEnvironment, SallaPushAutoClearBadge, "
-                + "SallaPushRegisterForRemoteNotificationsOnInit instead."
+                + "SallaPushOpenLaunchURLs, SallaPushAutoClearBadge, SallaPushAutoUpdateBadge, SallaPushAppGroup, "
+                + "SallaPushAPNsEnvironment, SallaPushRegisterForRemoteNotificationsOnInit instead."
         ])
     }
 
@@ -112,12 +113,16 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertEqual(console.errors, [])
     }
 
-    func testReportsNothingWhenTheCallSetsTheAPIHost() {
+    // SallaPush always uses its own server, so a server URL is no option: it changes nothing natively and isn't named.
+    func testReportsTheIgnoredOptionsOfACallThatAlsoGivesAServerURL() {
         let bridge = makeBridge(earlyInit: StaticConfig(appId: "st_42_ios"))
 
         bridge.initialize(appId: "st_42_ios", options: ["apiBaseUrl": "http://localhost:9/v1", "logLevel": "debug"])
 
-        XCTAssertEqual(console.errors, [])
+        XCTAssertEqual(console.errors, [
+            "initialize ignored logLevel: SallaPush already started with this app id from SallaPushAppId, so the call "
+                + "changes nothing. Set them with the Info.plist keys SallaPushLogLevel instead."
+        ])
     }
 
     func testReportsNothingWithoutEarlyInit() {
@@ -270,12 +275,12 @@ final class SallaPushBridgeTests: XCTestCase {
     func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
         let bridge = makeBridge()
 
-        bridge.setDisplayOneSignalCompatPayloads()
-        bridge.setDisplayOneSignalCompatPayloads()
+        bridge.setDisplayCompatPayloads()
+        bridge.setDisplayCompatPayloads()
 
         XCTAssertEqual(native.calls, [])
         XCTAssertEqual(console.infos, [
-            "Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS."
+            "Migration.setDisplayCompatPayloads is Android only and does nothing on iOS."
         ])
     }
 
