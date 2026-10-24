@@ -9,7 +9,8 @@ Push notifications for the Capacitor apps of [Salla](https://salla.dev) stores, 
 
 > **SallaPush is for the mobile apps of Salla stores.** Contact the Salla team for your app id.
 
-**Version 1.0.0.** It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See [CHANGELOG.md](CHANGELOG.md).
+- **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See [CHANGELOG.md](CHANGELOG.md).
+- **Also for:** [iOS](https://github.com/SallaApp/sallapush-ios-sdk) · [Android](https://github.com/SallaApp/sallapush-android-sdk) · [Flutter](https://github.com/SallaApp/sallapush-flutter-sdk) · [React Native](https://github.com/SallaApp/sallapush-react-native-sdk)
 
 ## Requirements
 
