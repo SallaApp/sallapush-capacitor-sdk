@@ -12,7 +12,7 @@ The first public release of the SallaPush Capacitor SDK, for the mobile apps of 
 - The `@salla.sa/sallapush-capacitor` package on npm, for Capacitor 8 apps on iOS and Android.
 - Customer login and logout, the notification permission, click and foreground listeners, tags, the push
   subscription, consent, logging and the app icon badge. The [README](README.md) shows the setup and each task, and
-  [docs/REFERENCE.md](docs/REFERENCE.md) the whole API.
+  [docs/REFERENCE.md](docs/REFERENCE.md) the API in detail.
 - The MIT License.
 
 ## [1.0.0] - 2026-10-19
