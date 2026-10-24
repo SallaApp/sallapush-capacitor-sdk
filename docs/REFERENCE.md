@@ -74,7 +74,7 @@ push plugin declares one, add this service next to `MainActivity.java`, with you
 `android/app/build.gradle`). It extends your push plugin's service class, which `OtherPluginMessagingService` stands
 for: import that class from the plugin. It hands each message and token to SallaPush first, then to the plugin:
 
-<!-- unchecked: OtherPluginMessagingService stands for the other push plugin's service class; scripts/verify.sh consumer compiles this class, extending a real plugin's service, from docs/snippets/SallaPushMessagingService.java -->
+<!-- snippet:docs/snippets/SallaPushMessagingService.java -->
 ```java
 package com.example.app;
 

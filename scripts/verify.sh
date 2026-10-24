@@ -965,9 +965,14 @@ PY
   [ -n "$activity" ] || fail "${app##*/}: no MainActivity.java to put the forwarding service beside"
   package="$(sed -nE 's/^package ([A-Za-z0-9_.]+);$/\1/p' "$activity")"
   snippet docs/snippets/SallaPushMessagingService.java |
-    sed "1s/^package com\.example\.app;\$/package $package;/" >"$(dirname "$activity")/SallaPushMessagingService.java"
+    sed -e "1s/^package com\.example\.app;\$/package $package;/" \
+      -e "s/OtherPluginMessagingService/com.capacitorjs.plugins.pushnotifications.MessagingService/" \
+      >"$(dirname "$activity")/SallaPushMessagingService.java"
   grep -qx "package $package;" "$(dirname "$activity")/SallaPushMessagingService.java" ||
     fail "${app##*/}: docs/snippets/SallaPushMessagingService.java does not start with its package line"
+  grep -qF "extends com.capacitorjs.plugins.pushnotifications.MessagingService {" \
+    "$(dirname "$activity")/SallaPushMessagingService.java" ||
+    fail "${app##*/}: docs/snippets/SallaPushMessagingService.java does not extend OtherPluginMessagingService"
   python3 -I - "$app/android/app/google-services.json" "$package" <<'PY'
 import json, sys
 
