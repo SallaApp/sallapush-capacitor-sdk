@@ -109,7 +109,6 @@ class SallaPushPluginTest {
           "autoClearBadge" to !defaults.autoClearBadge,
           "autoUpdateBadge" to !defaults.autoUpdateBadge,
           "iosAppGroupIdentifier" to "group.sa.salla.example",
-          "iosAutoClearBadge" to defaults.autoClearBadge,
         ),
       )
     )
@@ -125,22 +124,6 @@ class SallaPushPluginTest {
     assertEquals(!defaults.autoClearBadge, config.autoClearBadge)
     assertEquals(!defaults.autoUpdateBadge, config.autoUpdateBadge)
     assertTrue(errors().isEmpty())
-  }
-
-  // The deprecated ios.autoClearBadge is iOS only: Android keeps its own default.
-  @Test
-  fun ignoresTheDeprecatedIOSBadgeOption() {
-    plugin().initialize(
-      call(
-        "initialize",
-        "appId" to "st_42_android",
-        "config" to json("iosAutoClearBadge" to !defaults.autoClearBadge),
-      )
-    )
-
-    val config = native.initConfigs.single()
-    assertEquals(defaults.autoClearBadge, config.autoClearBadge)
-    assertEquals(defaults.autoUpdateBadge, config.autoUpdateBadge)
   }
 
   // Each boolean alone, at the value that isn't native's default, so options swapped with each other can't pass.
@@ -247,7 +230,7 @@ class SallaPushPluginTest {
       call(
         "initialize",
         "appId" to "st_42_android",
-        "config" to json("logLevel" to "debug", "openLaunchUrls" to true, "iosAutoClearBadge" to false),
+        "config" to json("logLevel" to "debug", "openLaunchUrls" to true, "iosApnsEnvironment" to "sandbox"),
       )
     )
 
@@ -300,7 +283,9 @@ class SallaPushPluginTest {
     val plugin = plugin(earlyInit = StaticConfig(appId = "st_42_android"))
 
     plugin.initialize(call("initialize", "appId" to "st_42_android", "config" to json()))
-    plugin.initialize(call("initialize", "appId" to "st_42_android", "config" to json("iosAutoClearBadge" to false)))
+    plugin.initialize(
+      call("initialize", "appId" to "st_42_android", "config" to json("iosApnsEnvironment" to "sandbox"))
+    )
 
     assertTrue(errors().isEmpty())
     assertEquals(2, native.initConfigs.size)

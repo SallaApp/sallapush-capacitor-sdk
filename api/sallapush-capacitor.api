@@ -72,7 +72,6 @@ SallaPushConfig.clearTagsOnLogout?: boolean
 SallaPushConfig.ios?: { ... }
 SallaPushConfig.ios.apnsEnvironment?: SallaPushAPNsEnvironment
 SallaPushConfig.ios.appGroupIdentifier?: string
-SallaPushConfig.ios.autoClearBadge?: boolean
 SallaPushConfig.ios.registerForRemoteNotificationsOnInit?: boolean
 SallaPushConfig.logLevel?: SallaPushLogLevel
 SallaPushConfig.openLaunchUrls?: boolean

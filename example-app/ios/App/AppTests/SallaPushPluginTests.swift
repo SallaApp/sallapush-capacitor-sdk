@@ -81,7 +81,7 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
     func testInitializePassesTheAppIdAndTheConfigAsJavaScriptSendsThem() throws {
         makePlugin().initialize(call([
             "appId": "st_42_ios",
-            "config": ["logLevel": "debug", "openLaunchUrls": true, "autoUpdateBadge": false, "iosAutoClearBadge": false]
+            "config": ["logLevel": "debug", "openLaunchUrls": true, "autoUpdateBadge": false, "autoClearBadge": false]
         ]))
 
         XCTAssertEqual(native.initializedAppIds, ["st_42_ios"])

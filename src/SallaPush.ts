@@ -154,7 +154,6 @@ function configSpec(config: SallaPushConfig): ConfigSpec | null {
         ios.apnsEnvironment,
         optional(apnsEnvironment),
       ],
-      'config.ios.autoClearBadge': [ios.autoClearBadge, optional(boolean)],
       'config.ios.registerForRemoteNotificationsOnInit': [
         ios.registerForRemoteNotificationsOnInit,
         optional(boolean),
@@ -173,7 +172,6 @@ function configSpec(config: SallaPushConfig): ConfigSpec | null {
     autoUpdateBadge: config.autoUpdateBadge,
     iosAppGroupIdentifier: ios.appGroupIdentifier,
     iosApnsEnvironment: ios.apnsEnvironment,
-    iosAutoClearBadge: ios.autoClearBadge,
     iosRegisterForRemoteNotificationsOnInit:
       ios.registerForRemoteNotificationsOnInit,
   });

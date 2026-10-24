@@ -56,7 +56,6 @@ describe('SallaPush.initialize', () => {
       ios: {
         appGroupIdentifier: 'group.sa.salla.example',
         apnsEnvironment: SallaPushAPNsEnvironment.Sandbox,
-        autoClearBadge: false,
         registerForRemoteNotificationsOnInit: false,
       },
     });
@@ -74,7 +73,6 @@ describe('SallaPush.initialize', () => {
         autoUpdateBadge: false,
         iosAppGroupIdentifier: 'group.sa.salla.example',
         iosApnsEnvironment: 'sandbox',
-        iosAutoClearBadge: false,
         iosRegisterForRemoteNotificationsOnInit: false,
       },
     });
@@ -87,7 +85,6 @@ describe('SallaPush.initialize', () => {
     [{ openLaunchUrls: true }, { openLaunchUrls: true }],
     [{ autoClearBadge: false }, { autoClearBadge: false }],
     [{ autoUpdateBadge: false }, { autoUpdateBadge: false }],
-    [{ ios: { autoClearBadge: false } }, { iosAutoClearBadge: false }],
     [
       { ios: { registerForRemoteNotificationsOnInit: false } },
       { iosRegisterForRemoteNotificationsOnInit: false },
@@ -97,23 +94,6 @@ describe('SallaPush.initialize', () => {
 
     expect(plugin.initialize.mock.calls).toEqual([
       [{ appId: 'st_42_capacitor', config: spec }],
-    ]);
-  });
-
-  // The bridges decide between them: iOS takes autoClearBadge first, and Android never reads the iOS option.
-  it('passes the deprecated ios.autoClearBadge beside autoClearBadge', () => {
-    SallaPush.initialize('st_42_capacitor', {
-      autoClearBadge: true,
-      ios: { autoClearBadge: false },
-    });
-
-    expect(plugin.initialize.mock.calls).toEqual([
-      [
-        {
-          appId: 'st_42_capacitor',
-          config: { autoClearBadge: true, iosAutoClearBadge: false },
-        },
-      ],
     ]);
   });
 
@@ -246,7 +226,9 @@ describe('SallaPush.initialize', () => {
   });
 
   it('warns once per method and parameter, and drops every such call', () => {
-    const config = { ios: { autoClearBadge: 1 } } as unknown as SallaPushConfig;
+    const config = {
+      ios: { registerForRemoteNotificationsOnInit: 1 },
+    } as unknown as SallaPushConfig;
 
     SallaPush.initialize('st_42_capacitor', config);
     SallaPush.initialize('st_42_capacitor', config);
@@ -254,7 +236,7 @@ describe('SallaPush.initialize', () => {
     expect(plugin.initialize).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
-      '[SallaPush] SallaPush.initialize ignored: config.ios.autoClearBadge must be a boolean.'
+      '[SallaPush] SallaPush.initialize ignored: config.ios.registerForRemoteNotificationsOnInit must be a boolean.'
     );
   });
 });

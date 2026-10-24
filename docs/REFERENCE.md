@@ -155,7 +155,6 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `ios?.appGroupIdentifier?: string` | `SallaPushAppGroup` |
 | `ios?.apnsEnvironment?: SallaPushAPNsEnvironment` | `automatic`: from the provisioning profile |
 | `ios?.registerForRemoteNotificationsOnInit?: boolean` | `true`. Set it to `false` only if the app registers at every launch itself. |
-| `ios?.autoClearBadge?: boolean` | Deprecated: use `autoClearBadge`, which wins over it |
 
 ### SallaPush.User
 

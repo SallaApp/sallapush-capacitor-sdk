@@ -21,7 +21,6 @@ final class SallaPushBridgeTests: XCTestCase {
             "autoUpdateBadge": false,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "sandbox",
-            "iosAutoClearBadge": true,
             "iosRegisterForRemoteNotificationsOnInit": false
         ])
 
@@ -34,7 +33,7 @@ final class SallaPushBridgeTests: XCTestCase {
         XCTAssertTrue(configuration.openLaunchURLs)
         XCTAssertEqual(configuration.appGroupIdentifier, "group.sa.salla.example")
         XCTAssertEqual(configuration.apnsEnvironment, .sandbox)
-        XCTAssertFalse(configuration.autoClearBadge, "autoClearBadge wins over the deprecated ios.autoClearBadge")
+        XCTAssertFalse(configuration.autoClearBadge)
         XCTAssertFalse(configuration.autoUpdateBadge)
         XCTAssertFalse(configuration.registerForRemoteNotificationsOnInit)
         XCTAssertEqual(console.errors, [])
@@ -63,11 +62,11 @@ final class SallaPushBridgeTests: XCTestCase {
         let bridge = makeBridge(earlyInit: StaticConfig(appId: "st_42_ios"))
 
         bridge.initialize(appId: "st_42_ios", options: [
-            "logLevel": "debug", "openLaunchUrls": true, "iosAutoClearBadge": false
+            "logLevel": "debug", "openLaunchUrls": true, "autoClearBadge": false
         ])
 
         XCTAssertEqual(console.errors, [
-            "initialize ignored logLevel, openLaunchUrls, ios.autoClearBadge: SallaPush already started with this app "
+            "initialize ignored logLevel, openLaunchUrls, autoClearBadge: SallaPush already started with this app "
                 + "id from SallaPushAppId, so the call changes nothing. Set them with the Info.plist keys "
                 + "SallaPushLogLevel, SallaPushOpenLaunchURLs, SallaPushAutoClearBadge instead."
         ])
@@ -87,11 +86,9 @@ final class SallaPushBridgeTests: XCTestCase {
             "autoUpdateBadge": true,
             "iosAppGroupIdentifier": "group.sa.salla.example",
             "iosApnsEnvironment": "production",
-            "iosAutoClearBadge": true,
             "iosRegisterForRemoteNotificationsOnInit": true
         ])
 
-        // ios.autoClearBadge isn't named beside autoClearBadge, which wins over it.
         XCTAssertEqual(console.errors, [
             "initialize ignored logLevel, appVersion, clearTagsOnLogout, requiresUserConsent, openLaunchUrls, "
                 + "autoClearBadge, autoUpdateBadge, ios.appGroupIdentifier, ios.apnsEnvironment, "

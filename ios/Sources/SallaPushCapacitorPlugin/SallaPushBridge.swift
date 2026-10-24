@@ -241,8 +241,6 @@ struct InitOptions {
     var autoUpdateBadge: Bool?
     var appGroupIdentifier: String?
     var apnsEnvironment: SallaPushAPNsEnvironment?
-    /// The deprecated `ios.autoClearBadge`: it applies only when `autoClearBadge` is left out.
-    var iosAutoClearBadge: Bool?
     var registerForRemoteNotificationsOnInit: Bool?
 }
 
@@ -258,7 +256,6 @@ extension InitOptions {
             autoUpdateBadge: options["autoUpdateBadge"] as? Bool,
             appGroupIdentifier: options["iosAppGroupIdentifier"] as? String,
             apnsEnvironment: (options["iosApnsEnvironment"] as? String).flatMap(SallaPushAPNsEnvironment.init(name:)),
-            iosAutoClearBadge: options["iosAutoClearBadge"] as? Bool,
             registerForRemoteNotificationsOnInit: options["iosRegisterForRemoteNotificationsOnInit"] as? Bool
         )
     }
@@ -280,9 +277,9 @@ extension InitOptions {
         return configuration
     }
 
-    /// The badge options: autoClearBadge, else the deprecated ios.autoClearBadge, and autoUpdateBadge.
+    /// The badge options: autoClearBadge and autoUpdateBadge.
     private func applyBadgeOptions(to configuration: SallaPushConfiguration) {
-        if let autoClearBadge = autoClearBadge ?? iosAutoClearBadge { configuration.autoClearBadge = autoClearBadge }
+        if let autoClearBadge { configuration.autoClearBadge = autoClearBadge }
         if let autoUpdateBadge { configuration.autoUpdateBadge = autoUpdateBadge }
     }
 
@@ -298,10 +295,6 @@ extension InitOptions {
             autoUpdateBadge.map { _ in ("autoUpdateBadge", StaticConfig.Key.autoUpdateBadge) },
             appGroupIdentifier.map { _ in ("ios.appGroupIdentifier", "SallaPushAppGroup") },
             apnsEnvironment.map { _ in ("ios.apnsEnvironment", StaticConfig.Key.apnsEnvironment) },
-            // The deprecated alias counts only without autoClearBadge, which would win over it.
-            (autoClearBadge == nil ? iosAutoClearBadge : nil).map { _ in
-                ("ios.autoClearBadge", StaticConfig.Key.autoClearBadge)
-            },
             registerForRemoteNotificationsOnInit.map { _ in
                 ("ios.registerForRemoteNotificationsOnInit", StaticConfig.Key.registerForRemoteNotificationsOnInit)
             }

@@ -10,8 +10,6 @@ export type ConfigSpec = {
   autoUpdateBadge?: boolean;
   iosAppGroupIdentifier?: string;
   iosApnsEnvironment?: string;
-  // The deprecated ios.autoClearBadge: iOS applies it only without autoClearBadge.
-  iosAutoClearBadge?: boolean;
   iosRegisterForRemoteNotificationsOnInit?: boolean;
 };
 export type NotificationSpec = {

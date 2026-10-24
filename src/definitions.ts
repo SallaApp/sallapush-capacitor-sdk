@@ -240,11 +240,6 @@ export interface SallaPushConfig {
     /** The APNs environment of this build. Default `automatic`: read from the provisioning profile. */
     apnsEnvironment?: SallaPushAPNsEnvironment;
     /**
-     * @deprecated Use the top-level `autoClearBadge`, which applies on both platforms. This one still applies on iOS
-     * when `autoClearBadge` is left out.
-     */
-    autoClearBadge?: boolean;
-    /**
      * Registers for remote notifications when SallaPush starts, unless consent is required and not given. Default
      * `true`; set it to `false` only if the app registers at every launch itself.
      */

@@ -349,8 +349,7 @@
         "com/salla/push/SallaPushConfig$Builder#setAutoClearBadge (Z)Lcom/salla/push/SallaPushConfig$Builder;"
       ],
       "ts": [
-        "SallaPushConfig.autoClearBadge",
-        "SallaPushConfig.ios.autoClearBadge"
+        "SallaPushConfig.autoClearBadge"
       ],
       "reason": null
     },

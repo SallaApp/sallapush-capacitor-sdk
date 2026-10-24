@@ -24,15 +24,6 @@ final class InitOptionsTests: XCTestCase {
         }
     }
 
-    // The deprecated ios.autoClearBadge still applies alone; autoClearBadge, for both platforms, wins over it.
-    func testTakesAutoClearBadgeBeforeTheDeprecatedIOSOption() {
-        XCTAssertFalse(InitOptions(["iosAutoClearBadge": false]).configuration().autoClearBadge)
-        XCTAssertTrue(InitOptions(["autoClearBadge": true, "iosAutoClearBadge": false]).configuration().autoClearBadge)
-        XCTAssertFalse(InitOptions(["autoClearBadge": false, "iosAutoClearBadge": true]).configuration().autoClearBadge)
-        XCTAssertEqual(InitOptions(["iosAutoClearBadge": false]).configuration().autoUpdateBadge,
-                       SallaPushConfiguration().autoUpdateBadge)
-    }
-
     func testMapsEveryLogLevelAndAPNsEnvironmentByName() {
         let levels: [String: SallaPushLogLevel] = [
             "off": .off, "error": .error, "warn": .warn, "info": .info, "debug": .debug, "verbose": .verbose
