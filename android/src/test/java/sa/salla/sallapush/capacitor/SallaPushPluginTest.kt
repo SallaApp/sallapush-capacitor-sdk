@@ -679,12 +679,12 @@ class SallaPushPluginTest {
   fun passesTheCompatibilitySetting() {
     val plugin = plugin()
 
-    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to false))
-    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to true))
-    plugin.setDisplayOneSignalCompatPayloads(call("setDisplayOneSignalCompatPayloads", "display" to "true"))
+    plugin.setDisplayCompatPayloads(call("setDisplayCompatPayloads", "display" to false))
+    plugin.setDisplayCompatPayloads(call("setDisplayCompatPayloads", "display" to true))
+    plugin.setDisplayCompatPayloads(call("setDisplayCompatPayloads", "display" to "true"))
 
     assertEquals(
-      listOf("setDisplayOneSignalCompatPayloads(false)", "setDisplayOneSignalCompatPayloads(true)"),
+      listOf("setDisplayCompatPayloads(false)", "setDisplayCompatPayloads(true)"),
       native.calls
     )
   }

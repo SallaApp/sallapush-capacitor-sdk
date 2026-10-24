@@ -246,9 +246,9 @@ class SallaPushPlugin internal constructor(private val seams: Seams) : Plugin() 
   }
 
   @PluginMethod(returnType = PluginMethod.RETURN_NONE)
-  fun setDisplayOneSignalCompatPayloads(call: PluginCall) {
+  fun setDisplayCompatPayloads(call: PluginCall) {
     val display = call.getBoolean("display") ?: return
-    seams.native.setDisplayOneSignalCompatPayloads(display)
+    seams.native.setDisplayCompatPayloads(display)
   }
 
   @PluginMethod

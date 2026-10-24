@@ -420,7 +420,7 @@ export interface SallaPushMigrationNamespace {
   /**
    * Android only; does nothing on iOS. Whether SallaPush shows the notifications in the compatible format that reach it
    * (default true): turn it off when the app's other push SDK shows them. Applies to this process only: for every
-   * process, set the meta-data com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS instead.
+   * process, set the meta-data com.salla.push.DISPLAY_COMPAT_PAYLOADS instead.
    */
-  setDisplayOneSignalCompatPayloads(display: boolean): void;
+  setDisplayCompatPayloads(display: boolean): void;
 }

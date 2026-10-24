@@ -177,7 +177,7 @@ async function checkNotifications(report: Report): Promise<void> {
     ios ? opened === false : typeof opened === 'boolean',
     opened
   );
-  SallaPush.Migration.setDisplayOneSignalCompatPayloads(true);
+  SallaPush.Migration.setDisplayCompatPayloads(true);
 }
 
 async function checkUser(report: Report): Promise<void> {

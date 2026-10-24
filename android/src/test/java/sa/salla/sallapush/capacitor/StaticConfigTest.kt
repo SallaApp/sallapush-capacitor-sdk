@@ -34,7 +34,7 @@ class StaticConfigTest {
       putString(StaticConfig.REQUIRES_USER_CONSENT, "YES")
       putString(StaticConfig.CLEAR_TAGS_ON_LOGOUT, "0")
       putString(StaticConfig.APP_VERSION, " 2.1.0 ")
-      putString(StaticConfig.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS, "No")
+      putString(StaticConfig.DISPLAY_COMPAT_PAYLOADS, "No")
       putString(StaticConfig.AUTO_CLEAR_BADGE, "false")
       putString(StaticConfig.AUTO_UPDATE_BADGE, "NO")
     }
@@ -48,7 +48,7 @@ class StaticConfigTest {
         requiresUserConsent = true,
         clearTagsOnLogout = false,
         appVersion = "2.1.0",
-        displayOneSignalCompatPayloads = false,
+        displayCompatPayloads = false,
         autoClearBadge = false,
         autoUpdateBadge = false,
       ),
@@ -63,7 +63,7 @@ class StaticConfigTest {
       putBoolean(StaticConfig.OPEN_LAUNCH_URLS, true)
       putBoolean(StaticConfig.REQUIRES_USER_CONSENT, false)
       putBoolean(StaticConfig.CLEAR_TAGS_ON_LOGOUT, true)
-      putBoolean(StaticConfig.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS, false)
+      putBoolean(StaticConfig.DISPLAY_COMPAT_PAYLOADS, false)
       putBoolean(StaticConfig.AUTO_CLEAR_BADGE, false)
       putBoolean(StaticConfig.AUTO_UPDATE_BADGE, true)
     }
@@ -75,7 +75,7 @@ class StaticConfigTest {
         openLaunchUrls = true,
         requiresUserConsent = false,
         clearTagsOnLogout = true,
-        displayOneSignalCompatPayloads = false,
+        displayCompatPayloads = false,
         autoClearBadge = false,
         autoUpdateBadge = true,
       ),
@@ -207,7 +207,7 @@ class StaticConfigTest {
       requiresUserConsent = true,
       clearTagsOnLogout = true,
       appVersion = "2.1.0",
-      displayOneSignalCompatPayloads = false,
+      displayCompatPayloads = false,
       autoClearBadge = !defaults.autoClearBadge,
       autoUpdateBadge = !defaults.autoUpdateBadge,
     ).toSallaPushConfig()

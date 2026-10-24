@@ -59,7 +59,7 @@ final class SallaPushPluginTests: SallaPushPluginTestCase {
             "requestPermission promise", "registerForProvisionalAuthorization promise", "refreshPermission none",
             "registerForRemoteNotifications none", "forwardApnsToken none", "clearAll none", "removeNotification none",
             "isSallaPushNotification promise", "trackOpened promise", "displayNotification none",
-            "setDisplayOneSignalCompatPayloads none",
+            "setDisplayCompatPayloads none",
             "getLogLevel promise", "setLogLevel none", "setLogHandlerLevel none",
             "startEvents none", "stopEvents none"
         ])

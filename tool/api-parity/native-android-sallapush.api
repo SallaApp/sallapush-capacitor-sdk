@@ -104,7 +104,7 @@ public final class com/salla/push/SallaPushLoginFailure : java/lang/Enum {
 }
 
 public abstract interface class com/salla/push/SallaPushMigration {
-	public abstract fun setDisplayOneSignalCompatPayloads (Z)V
+	public abstract fun setDisplayCompatPayloads (Z)V
 }
 
 public final class com/salla/push/SallaPushNotification {

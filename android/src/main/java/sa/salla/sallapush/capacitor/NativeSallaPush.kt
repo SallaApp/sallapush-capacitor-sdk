@@ -98,7 +98,7 @@ internal interface NativeSallaPush {
 
   fun removePermissionObserver(observer: SallaPushPermissionObserver)
 
-  fun setDisplayOneSignalCompatPayloads(display: Boolean)
+  fun setDisplayCompatPayloads(display: Boolean)
 
   var logLevel: SallaPushLogLevel
 
@@ -255,8 +255,8 @@ internal object LiveNativeSallaPush : NativeSallaPush {
     SallaPush.Notifications.removePermissionObserver(observer)
   }
 
-  override fun setDisplayOneSignalCompatPayloads(display: Boolean) {
-    SallaPush.Migration.setDisplayOneSignalCompatPayloads(display)
+  override fun setDisplayCompatPayloads(display: Boolean) {
+    SallaPush.Migration.setDisplayCompatPayloads(display)
   }
 
   override var logLevel: SallaPushLogLevel

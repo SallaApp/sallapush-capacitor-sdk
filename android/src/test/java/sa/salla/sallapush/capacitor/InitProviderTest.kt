@@ -64,19 +64,19 @@ class InitProviderTest {
 
   @Test
   fun appliesTheCompatibilityFlagBeforeInit() {
-    EarlyInit.start(context, StaticConfig(appId = "st_42_android", displayOneSignalCompatPayloads = false), native)
+    EarlyInit.start(context, StaticConfig(appId = "st_42_android", displayCompatPayloads = false), native)
 
     assertEquals(
-      listOf("setDisplayOneSignalCompatPayloads(false)", "initWithContext(st_42_android)"),
+      listOf("setDisplayCompatPayloads(false)", "initWithContext(st_42_android)"),
       native.calls
     )
   }
 
   @Test
   fun appliesTheCompatibilityFlagWithoutAnAppId() {
-    EarlyInit.start(context, StaticConfig(displayOneSignalCompatPayloads = true), native)
+    EarlyInit.start(context, StaticConfig(displayCompatPayloads = true), native)
 
-    assertEquals(listOf("setDisplayOneSignalCompatPayloads(true)"), native.calls)
+    assertEquals(listOf("setDisplayCompatPayloads(true)"), native.calls)
     assertNull(EarlyInit.config)
   }
 
@@ -93,19 +93,19 @@ class InitProviderTest {
       Bundle().apply {
         putString(StaticConfig.APP_ID, "st_42_android")
         putString(StaticConfig.REQUIRES_USER_CONSENT, "true")
-        putBoolean(StaticConfig.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS, false)
+        putBoolean(StaticConfig.DISPLAY_COMPAT_PAYLOADS, false)
       }
     )
 
     attachProvider()
 
     assertEquals(
-      listOf("setDisplayOneSignalCompatPayloads(false)", "initWithContext(st_42_android)"),
+      listOf("setDisplayCompatPayloads(false)", "initWithContext(st_42_android)"),
       native.calls
     )
     assertTrue(native.initConfigs.single().requiresUserConsent)
     assertEquals(
-      StaticConfig(appId = "st_42_android", requiresUserConsent = true, displayOneSignalCompatPayloads = false),
+      StaticConfig(appId = "st_42_android", requiresUserConsent = true, displayCompatPayloads = false),
       EarlyInit.config
     )
   }

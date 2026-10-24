@@ -125,9 +125,7 @@ export interface SallaPushNativePlugin {
   }): Promise<Value<boolean>>;
   displayNotification(options: { handle: string }): Promise<void>;
 
-  setDisplayOneSignalCompatPayloads(options: {
-    display: boolean;
-  }): Promise<void>;
+  setDisplayCompatPayloads(options: { display: boolean }): Promise<void>;
 
   getLogLevel(): Promise<Value<string>>;
   setLogLevel(options: { level: string }): Promise<void>;

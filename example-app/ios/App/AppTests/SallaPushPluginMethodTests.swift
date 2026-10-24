@@ -236,12 +236,12 @@ final class SallaPushPluginDebugTests: SallaPushPluginTestCase {
     func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
         let plugin = makePlugin()
 
-        plugin.setDisplayOneSignalCompatPayloads(call(["display": true]))
-        plugin.setDisplayOneSignalCompatPayloads(call(["display": false]))
+        plugin.setDisplayCompatPayloads(call(["display": true]))
+        plugin.setDisplayCompatPayloads(call(["display": false]))
 
         XCTAssertEqual(native.calls, [])
         XCTAssertEqual(console.infos, [
-            "Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS."
+            "Migration.setDisplayCompatPayloads is Android only and does nothing on iOS."
         ])
     }
 }

@@ -49,7 +49,7 @@ public final class SallaPushPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "trackOpened", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "displayNotification", returnType: CAPPluginReturnNone),
 
-        CAPPluginMethod(name: "setDisplayOneSignalCompatPayloads", returnType: CAPPluginReturnNone),
+        CAPPluginMethod(name: "setDisplayCompatPayloads", returnType: CAPPluginReturnNone),
 
         CAPPluginMethod(name: "getLogLevel", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setLogLevel", returnType: CAPPluginReturnNone),
@@ -307,8 +307,8 @@ extension SallaPushPlugin {
 // MARK: - Migration and debug
 
 extension SallaPushPlugin {
-    @objc func setDisplayOneSignalCompatPayloads(_ call: CAPPluginCall) {
-        onMain { self.logic?.setDisplayOneSignalCompatPayloads() }
+    @objc func setDisplayCompatPayloads(_ call: CAPPluginCall) {
+        onMain { self.logic?.setDisplayCompatPayloads() }
     }
 
     @objc func getLogLevel(_ call: CAPPluginCall) {

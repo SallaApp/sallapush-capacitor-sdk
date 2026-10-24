@@ -278,12 +278,12 @@ final class SallaPushBridgeTests: XCTestCase {
     func testTheCompatibilitySettingIsAndroidOnlyAndSaysItOncePerProcess() {
         let bridge = makeBridge()
 
-        bridge.setDisplayOneSignalCompatPayloads()
-        bridge.setDisplayOneSignalCompatPayloads()
+        bridge.setDisplayCompatPayloads()
+        bridge.setDisplayCompatPayloads()
 
         XCTAssertEqual(native.calls, [])
         XCTAssertEqual(console.infos, [
-            "Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS."
+            "Migration.setDisplayCompatPayloads is Android only and does nothing on iOS."
         ])
     }
 

@@ -186,8 +186,8 @@ final class SallaPushBridge {
         events.setLogLevel(level)
     }
 
-    func setDisplayOneSignalCompatPayloads() {
-        once.info("Migration.setDisplayOneSignalCompatPayloads is Android only and does nothing on iOS.", to: console)
+    func setDisplayCompatPayloads() {
+        once.info("Migration.setDisplayCompatPayloads is Android only and does nothing on iOS.", to: console)
     }
 
     // MARK: - Events

@@ -18,7 +18,7 @@ internal data class StaticConfig(
   val requiresUserConsent: Boolean? = null,
   val clearTagsOnLogout: Boolean? = null,
   val appVersion: String? = null,
-  val displayOneSignalCompatPayloads: Boolean? = null,
+  val displayCompatPayloads: Boolean? = null,
   val autoClearBadge: Boolean? = null,
   val autoUpdateBadge: Boolean? = null,
 ) {
@@ -41,7 +41,7 @@ internal data class StaticConfig(
     const val REQUIRES_USER_CONSENT = "com.salla.push.REQUIRES_USER_CONSENT"
     const val CLEAR_TAGS_ON_LOGOUT = "com.salla.push.CLEAR_TAGS_ON_LOGOUT"
     const val APP_VERSION = "com.salla.push.APP_VERSION"
-    const val DISPLAY_ONESIGNAL_COMPAT_PAYLOADS = "com.salla.push.DISPLAY_ONESIGNAL_COMPAT_PAYLOADS"
+    const val DISPLAY_COMPAT_PAYLOADS = "com.salla.push.DISPLAY_COMPAT_PAYLOADS"
     const val AUTO_CLEAR_BADGE = "com.salla.push.AUTO_CLEAR_BADGE"
     const val AUTO_UPDATE_BADGE = "com.salla.push.AUTO_UPDATE_BADGE"
 
@@ -55,7 +55,7 @@ internal data class StaticConfig(
         requiresUserConsent = values.flag(REQUIRES_USER_CONSENT),
         clearTagsOnLogout = values.flag(CLEAR_TAGS_ON_LOGOUT),
         appVersion = values.text(APP_VERSION),
-        displayOneSignalCompatPayloads = values.flag(DISPLAY_ONESIGNAL_COMPAT_PAYLOADS),
+        displayCompatPayloads = values.flag(DISPLAY_COMPAT_PAYLOADS),
         autoClearBadge = values.flag(AUTO_CLEAR_BADGE),
         autoUpdateBadge = values.flag(AUTO_UPDATE_BADGE),
       )

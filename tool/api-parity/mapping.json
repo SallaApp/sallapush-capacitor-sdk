@@ -1324,11 +1324,11 @@
       "ios": [],
       "android": [
         "com/salla/push/SallaPushMigration",
-        "com/salla/push/SallaPushMigration#setDisplayOneSignalCompatPayloads (Z)V"
+        "com/salla/push/SallaPushMigration#setDisplayCompatPayloads (Z)V"
       ],
       "ts": [
         "SallaPushMigrationNamespace",
-        "SallaPush.Migration.setDisplayOneSignalCompatPayloads"
+        "SallaPush.Migration.setDisplayCompatPayloads"
       ],
       "reason": null
     },

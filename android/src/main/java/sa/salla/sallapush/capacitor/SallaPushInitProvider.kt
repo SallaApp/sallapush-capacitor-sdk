@@ -46,7 +46,7 @@ internal object EarlyInit {
 
   fun start(context: Context, config: StaticConfig, native: NativeSallaPush) {
     // Native shows FCM messages before and without init, so the flag applies with or without an app id.
-    config.displayOneSignalCompatPayloads?.let { native.setDisplayOneSignalCompatPayloads(it) }
+    config.displayCompatPayloads?.let { native.setDisplayCompatPayloads(it) }
     val appId = config.appId ?: return
     native.initWithContext(context, appId, config.toSallaPushConfig())
     this.config = config
