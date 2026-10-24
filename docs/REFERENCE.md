@@ -136,7 +136,7 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `getAppId(): Promise<string \| null>` | The app id SallaPush runs with |
 | `getSdkVersion(): Promise<string>` | The native SDK's version on this platform |
 | `setConsentRequired(required: boolean): void` | Not saved: call it before `initialize` at every launch. With a static app id, set the static key instead. |
-| `setConsentGiven(given: boolean): void` | Saved. `false`, while consent is required, withdraws consent: the device is opted out and its tags deleted. |
+| `setConsentGiven(given: boolean): void` | Saved. `false`, while consent is required, withdraws consent: the device is opted out, its tags are deleted and it is unlinked. |
 | `login(externalId: string, identityToken: string): void` | Links the device to the customer, with the Salla token your app received for them, without `Bearer `. The id has 1 to 128 characters and the token at most 4,096. Call it after the customer signs in, and at each app launch while they are signed in. A refused token is a `'loginFailure'` event. |
 | `logout(): void` | Unlinks the device, after the customer signs out; works offline |
 | `User`, `Notifications`, `Debug` | The namespaces below |

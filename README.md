@@ -279,7 +279,7 @@ SallaPush.initialize(appId);
 ```
 
 Then pass the user's choice to `SallaPush.setConsentGiven(…)` whenever they make it. Until consent is given, SallaPush
-sends nothing; withdrawing it opts the device out and deletes its tags.
+sends nothing; withdrawing it opts the device out, deletes its tags and unlinks it.
 
 ### Logging
 
