@@ -265,7 +265,7 @@ A setting given in `initialize`'s config applies to both platforms; one left out
 | How it counts | The Notification Service Extension adds 1 for each SallaPush notification. It needs the same App Group in the app and the extension, and starts once the app has run this version and, with consent required, once it is given. | The launcher counts the app's notifications in the shade. Pixel shows a dot; some launchers show the number. |
 | `autoClearBadge` | On by default: the badge goes to 0 every time the app becomes active. `false` keeps it. | Off by default: the badge follows the notifications in the shade. On: SallaPush removes its notifications from the shade when the app comes to the foreground. |
 | `autoUpdateBadge`, on by default | `false` stops the count: a push's own `badge` applies. | `false` creates SallaPush's channel without badges; a channel created before keeps its setting (`badge.channel_badges_on`). |
-| `clearAll()` | Removes SallaPush's notifications, and sets the badge to 0 | Removes SallaPush's notifications, which lowers the badge |
+| `clearAll()` | Removes SallaPush's notifications, and sets the badge to 0 while `autoUpdateBadge` is on | Removes SallaPush's notifications, which lowers the badge |
 
 - **One badge per app:** on iOS the icon shows the last number any SDK or the app wrote; on Android the launcher adds
   up all of the app's notifications.
