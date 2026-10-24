@@ -40,7 +40,7 @@ docs explain every log code
 | You see | Fix |
 |---|---|
 | No `token.received`, and `token.missing` | Add the Push Notifications capability and the [AppDelegate methods](../README.md#ios). With `registerForRemoteNotificationsOnInit` off, call `SallaPush.Notifications.registerForRemoteNotifications()` at every launch. |
-| `token.registration_failed` | The message ends with iOS's reason. "remote notifications are not supported in the simulator": use iOS 16 or later on a Mac with Apple silicon, or a device. "no valid aps-environment entitlement": add the Push Notifications capability. |
+| `token.registration_failed` | The message ends with iOS's reason. "remote notifications are not supported in the simulator": use iOS 16 or later on a Mac with Apple silicon or a T2 chip, or a device. "no valid aps-environment entitlement": add the Push Notifications capability. |
 | The tap that launched the app never reaches the click listener | Call `SallaPushCapacitor.start()` first, set your own delegate before it, and add the click listener in your entry module, in the page that stays. |
 | No image, no `received`, or the badge doesn't count | Add the [Notification Service Extension](../README.md#ios), with the same App Group in both targets and in their `SallaPushAppGroup`. Images must be https, at most 10 MB. With `SallaPushLogLevel` at `info` in the extension's Info.plist, `nse.badge_skipped` says why it doesn't count. |
 | The badge always shows 1 | The extension isn't counting: see the row above. |
