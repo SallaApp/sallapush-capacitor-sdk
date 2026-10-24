@@ -15,11 +15,9 @@ Thank you for helping improve the SallaPush Capacitor SDK.
 - For a large change, open an issue first, so that we can agree on the approach before you write the code.
 - Keep each pull request to one change, with its tests and docs, and a line under `## [Unreleased]` in
   [CHANGELOG.md](CHANGELOG.md). Run `scripts/verify.sh` before you push.
-- A maintainer reviews it, and may land it as a commit of their own that credits you as a co-author.
+- A maintainer reviews it, and may land it as a commit of their own that credits you as a co-author (`Co-authored-by`).
 - By contributing, you agree that your contribution is licensed under the [MIT License](LICENSE); no contributor
   license agreement or sign-off is needed. Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
-- Commits: one short lowercase line, `feat: …`, `fix: …`, `docs: …`, `test: …` or `ci: …`, each of which builds and
-  passes its checks, with the tests of a change in the same commit.
 
 ## Prerequisites
 
