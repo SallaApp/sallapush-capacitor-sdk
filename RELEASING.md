@@ -13,7 +13,7 @@ The package follows [Semantic Versioning](https://semver.org), and pins the nati
 
 A release is a git tag of this repository, the version without a `v`, such as `1.1.0` or `1.2.0-beta.1`, and the same
 version on npm. A pushed tag never moves and is never deleted, and npm never takes a version twice: a defect in a
-release is fixed by the next version. Every release after 1.0.0 is on npm; 1.0.0 is a git tag only.
+release is fixed by the next version.
 
 ## Before a release
 
@@ -23,7 +23,7 @@ In a pull request, merged to `master`:
   versions table. `git grep -nF <previous version>` lists every place; earlier CHANGELOG entries keep theirs. The
   `snippets` step fails when the versions table and `package.json` disagree.
 - **The CHANGELOG entry:** rename `## [Unreleased]` to the version, with the release date, such as
-  `## [1.0.0] - 2026-10-20`, and start a new, empty `## [Unreleased]` above it.
+  `## [1.1.0] - 2026-10-25`, and start a new, empty `## [Unreleased]` above it.
 - **The checks:** CI passed on the merged commit, and `scripts/verify.sh`, with no step names, passes in a clean
   checkout of it on a Mac, `smoke` and `consumer` included.
 - **The devices:** a release that changes the native pins or the plugin's native code also passes the
