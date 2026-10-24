@@ -208,6 +208,9 @@ SallaPush.login(externalId, identityToken);
 SallaPush.logout();
 ```
 
+At each app launch while nobody is signed in, call `SallaPush.logout()` too: on iOS, a reinstall keeps the earlier
+install's customer linked until then.
+
 ### Permission and listeners
 
 - **Permission:** `requestPermission(true)` also opens the app's notification settings when the prompt no longer

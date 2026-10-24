@@ -137,8 +137,8 @@ Everything is imported from `@salla.sa/sallapush-capacitor`.
 | `getSdkVersion(): Promise<string>` | The native SDK's version on this platform |
 | `setConsentRequired(required: boolean): void` | Not saved: call it before `initialize` at every launch. With a static app id, set the static key instead. |
 | `setConsentGiven(given: boolean): void` | Saved. `false`, while consent is required, withdraws consent: the device is opted out, its tags are deleted and it is unlinked. |
-| `login(externalId: string, identityToken: string): void` | Links the device to the customer, with the Salla token your app received for them, without `Bearer `. The id has 1 to 128 characters and the token at most 4,096. Call it after the customer signs in, and at each app launch while they are signed in. A refused token is a `'loginFailure'` event. |
-| `logout(): void` | Unlinks the device, after the customer signs out; works offline |
+| `login(externalId: string, identityToken: string): void` | Links the device to the customer, with the Salla token your app received for them, without `Bearer `. The id has 1 to 128 characters and the token at most 4,096. Call it after the customer signs in, at each app launch while they are signed in, and whenever your app refreshes the token: SallaPush keeps it in memory only. A refused token is a `'loginFailure'` event. |
+| `logout(): void` | Unlinks the device, also offline. Call it after the customer signs out, before another customer's `login`, and at each app launch while nobody is signed in: on iOS, a reinstall keeps the earlier install's customer linked until then. |
 | `User`, `Notifications`, `Debug` | The namespaces below |
 
 `SallaPushConfig`, the options of `initialize`; an option left out keeps the static key's value, else the default:
