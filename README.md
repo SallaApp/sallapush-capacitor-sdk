@@ -317,8 +317,8 @@ settings to `initialize`, where a setting given applies to both platforms and on
 | `autoUpdateBadge`: count SallaPush notifications | `SallaPushAutoUpdateBadge` | `com.salla.push.AUTO_UPDATE_BADGE` | `true` |
 
 On Android, `autoClearBadge` removes SallaPush's notifications from the shade when the app comes to the foreground.
-`clearAll()` removes SallaPush's notifications, and on iOS sets the badge to 0 while `autoUpdateBadge` is on
-([Badges](docs/REFERENCE.md#badges)).
+`clearAll()` removes SallaPush's notifications, and on iOS sets the badge to 0 while `autoUpdateBadge` is on; on
+iOS 15, only when no other SDK's notification is delivered ([Badges](docs/REFERENCE.md#badges)).
 
 ## SallaPush and other push SDKs
 
