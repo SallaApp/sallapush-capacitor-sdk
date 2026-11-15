@@ -37,7 +37,7 @@ Capacitor 8". So check the version yourself before you upgrade Capacitor.
 
 ## Before you start
 
-- **Read access to three private repositories,** for every developer and CI machine that builds the app: this one,
+- **Read access to two private repositories,** for every developer and CI machine that builds the app:
   `SallaApp/sallapush-ios-sdk`, which serves the iOS Swift package and pods, and `SallaApp/sallapush-android-sdk`,
   whose GitHub Packages registry serves the Android library. Ask the repositories' admins for access.
 - **A network that the SallaApp organization allows,** CI machines included: the organization accepts git and package

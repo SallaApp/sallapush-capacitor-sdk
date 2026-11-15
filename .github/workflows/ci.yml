@@ -23,7 +23,7 @@ defaults:
 jobs:
   js:
     name: JavaScript, types and unit tests
-    # GitHub-hosted runners fail the organization's IP allow list; RUNS_ON is the organization's Linux runner label.
+    # RUNS_ON is the organization's Linux runner label.
     runs-on: ${{ fromJson(vars.RUNS_ON) }}
     timeout-minutes: 20
     steps:

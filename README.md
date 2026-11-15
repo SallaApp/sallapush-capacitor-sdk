@@ -6,8 +6,8 @@ so most calls will look familiar.
 
 - **Version:** 1.0.0. It wraps SallaPush iOS 1.0.4 and SallaPush Android 1.0.4. See
   [CHANGELOG.md](CHANGELOG.md).
-- **Private:** this package and the native SDKs it wraps live in private repositories of the SallaApp organization
-  ([Access to the private repositories](#access-to-the-private-repositories)).
+- **Native SDKs are private:** this package is public, but the native SDKs it wraps live in private repositories of the
+  SallaApp organization ([Access to the private repositories](#access-to-the-private-repositories)).
 
 ## Features
 
@@ -67,7 +67,7 @@ pod 'SallaPush', :git => 'git@github.com:SallaApp/sallapush-ios-sdk.git', :tag =
 
 ### Access to the private repositories
 
-This repository, `SallaApp/sallapush-ios-sdk` and `SallaApp/sallapush-android-sdk` are private: every developer and
+`SallaApp/sallapush-ios-sdk` and `SallaApp/sallapush-android-sdk` are private: every developer and
 CI machine that builds the app needs read access. Swift Package Manager fetches the iOS SDK through Xcode, signed in
 to a GitHub account that can read it (**Xcode → Settings → Accounts**). The package install and the pods use your
 git, over SSH. Gradle reads a classic token with the `read:packages` scope from the Gradle properties `gpr.user` (your
